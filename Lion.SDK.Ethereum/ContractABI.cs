@@ -18,37 +18,58 @@ namespace Lion.SDK.Ethereum
         /// <returns>eth_call data field.</returns>
         public string ToData()
         {
-            string[] _header = new string[this.Count];
+            string[] _head = new string[this.Count];
             string _body = "";
 
             for (int i = 0; i < this.Count; i++)
             {
-                _header[i] = HexPlus.ByteArrayToHexString(this.ToData(this[i], ref _body)).PadLeft(64, '0');
+                _head[i] = HexPlus.ByteArrayToHexString(this.ToData(this[i], ref _body)).PadLeft(64, '0');
             }
 
-            return this.MethodId + _header + _body;
+            return this.MethodId + String.Concat(_head) + _body;
         }
         #endregion
 
         #region ToData(object,ref string)
         private byte[] ToData(object _item, ref string _body)
         {
-            string _data = "";
             byte[] _position = BitConverter.GetBytes(_body.Length);
 
             if (_item is Array)
             {
+                #region array
                 Array _array = (Array)_item;
-                _data += HexPlus.ByteArrayToHexString(BitConverter.GetBytes(_array.Length));
+                _body += HexPlus.ByteArrayToHexString(BitConverter.GetBytes(_array.Length));
 
-                string _subBody = "";
                 for (int i = 0; i < _array.Length; i++)
                 {
-                    _data += HexPlus.ByteArrayToHexString(this.ToData(_array.GetValue(i), ref _subBody));
+                    string _subBody = "";
+                    string _subData = HexPlus.ByteArrayToHexString(this.ToData(_array.GetValue(i), ref _subBody));
+
+                    switch (_array.GetValue(i).GetType().ToString())
+                    {
+                        case "System.Bool": 
+                        case "System.Int16":
+                        case "System.Int32":
+                        case "System.Int64":
+                        case "System.UInt16":
+                        case "System.UInt32":
+                        case "System.UInt64":
+                        case "Lion.SDK.Ethereum.Address":
+                            _body += _subData;
+                            break;
+
+                        case "System.String":
+                            _body += _subBody;
+                            break;
+                    }
                 }
+                #endregion
             }
             else
             {
+                #region single
+                string _data = "";
                 switch (_item.GetType().ToString())
                 {
                     case "System.Bool": return BitConverter.GetBytes((bool)_item);
@@ -66,6 +87,7 @@ namespace Lion.SDK.Ethereum
                         break;
                 }
                 _body += _data.PadRight((_data.Length / 64 + (_data.Length % 64 > 0 ? 1 : 0)) * 64, '0');
+                #endregion
             }
             return _position;
         }
