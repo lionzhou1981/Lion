@@ -100,6 +100,7 @@ namespace Lion.SDK.Ethereum
                     case "System.UInt32": _data = BitConverter.GetBytes((UInt32)_item); break;
                     case "System.UInt64": _data = BitConverter.GetBytes((UInt64)_item); break;
                     case "Lion.SDK.Ethereum.Address": return ((Address)_item).ToData();
+                    case "Lion.SDK.Ethereum.Number": _data = ((Number)_item).ToData();break;
                     case "System.String":
                         byte[] _stringBytes = Encoding.UTF8.GetBytes((string)_item);
                         byte[] _stringlengthBytes = BitConverter.GetBytes(_stringBytes.Length);

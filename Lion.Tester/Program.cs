@@ -12,6 +12,7 @@ namespace Lion.Tester
             _abi.Add("dave");
             _abi.Add(true);
             _abi.Add(new int[] { 1, 2, 3 });
+            _abi.Add(new Number(100.9M, 18));
 
             string _data = _abi.ToData();
             Console.WriteLine(_data.Substring(0, 10));
