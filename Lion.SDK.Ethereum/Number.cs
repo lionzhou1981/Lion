@@ -36,7 +36,12 @@ namespace Lion.SDK.Ethereum
 
         public byte[] ToData()
         {
-            return this.Integer.ToByteArray();
+            byte[] _result = this.Integer.ToByteArray();
+            if (_result.Length > 32)
+            {
+                throw new Exception("Value is overflow.");
+            }
+            return _result;
         }
     }
 }
