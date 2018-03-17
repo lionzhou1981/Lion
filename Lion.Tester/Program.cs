@@ -8,12 +8,19 @@ namespace Lion.Tester
     {
         static void Main(string[] args)
         {
-            ContractABI _abi = new ContractABI("0x12345678");
-            _abi.Add(new int[] { 1, 2, 3, 4, 5 });
-            _abi.Add(new uint[] { 1, 2, 3, 4, 5 });
+            ContractABI _abi = new ContractABI("0x70a08231");
+            _abi.Add("dave");
+            _abi.Add(true);
+            _abi.Add(new int[] { 1, 2, 3 });
 
-
-            Console.WriteLine(_abi.ToData());
+            string _data = _abi.ToData();
+            Console.WriteLine(_data.Substring(0, 10));
+            int _position = 10;
+            while(_position<_data.Length)
+            {
+                Console.WriteLine(_data.Substring(_position, 64));
+                _position += 64;
+            }
 
             Console.ReadLine();
         }

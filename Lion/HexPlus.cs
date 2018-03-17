@@ -41,5 +41,47 @@ namespace Lion
             return Enumerable.Range(0, _hex.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(_hex.Substring(x, 2), 16)).ToArray();
         }
         #endregion
+
+        #region Concat
+        public static byte[] Concat(params byte[][] _values)
+        {
+            byte[] _result = new byte[0];
+            foreach (byte[] _value in _values)
+            {
+                int _start = _result.Length;
+                Array.Resize(ref _result, _result.Length + _value.Length);
+                Array.Copy(_value, 0, _result, _start, _value.Length);
+            }
+            return _result;
+        }
+        #endregion
+
+        #region PadLeft
+        public static byte[] PadLeft(byte[] _source, int _length, byte _fill = 0x00)
+        {
+            if (_source.Length > _length) { return _source; }
+
+            byte[] _result = new byte[_length];
+            for (int i = 0; i < _result.Length; i++) { _result[i] = _fill; }
+
+            Array.Copy(_source, 0, _result, _result.Length - _source.Length, _source.Length);
+
+            return _result;
+        }
+        #endregion
+
+        #region PadRight
+        public static byte[] PadRight(byte[] _source, int _length, byte _fill = 0x00)
+        {
+            if (_source.Length > _length) { return _source; }
+
+            byte[] _result = new byte[_length];
+            for (int i = 0; i < _result.Length; i++) { _result[i] = _fill; }
+
+            Array.Copy(_source, 0, _result, 0, _source.Length);
+
+            return _result;
+        }
+        #endregion
     }
 }

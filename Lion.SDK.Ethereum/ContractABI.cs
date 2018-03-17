@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -21,9 +22,23 @@ namespace Lion.SDK.Ethereum
             string[] _head = new string[this.Count];
             string _body = "";
 
+            int _position = this.Count * 32;
             for (int i = 0; i < this.Count; i++)
             {
-                _head[i] = HexPlus.ByteArrayToHexString(this.ToData(this[i], ref _body)).PadLeft(64, '0');
+                int _length = 0;
+                byte[] _data = this.ToData(this[i], ref _length);
+                if (_length == -1)
+                {
+                    _head[i] = HexPlus.ByteArrayToHexString(_data).PadLeft(64, '0');
+                }
+                else
+                {
+                    byte[] _positionByte = BitConverter.GetBytes(_position);
+                    if (BitConverter.IsLittleEndian) { Array.Reverse(_positionByte); }
+                    _head[i] = HexPlus.ByteArrayToHexString(_positionByte).PadLeft(64, '0');
+                    _body += HexPlus.ByteArrayToHexString(_data);
+                    _position += _length;
+                }
             }
 
             return this.MethodId + String.Concat(_head) + _body;
@@ -31,65 +46,78 @@ namespace Lion.SDK.Ethereum
         #endregion
 
         #region ToData(object,ref string)
-        private byte[] ToData(object _item, ref string _body)
+        private byte[] ToData(object _item, ref int _length)
         {
-            byte[] _position = BitConverter.GetBytes(_body.Length);
-
             if (_item is Array)
             {
-                #region array
+                #region Array
                 Array _array = (Array)_item;
-                _body += HexPlus.ByteArrayToHexString(BitConverter.GetBytes(_array.Length));
+
+                byte[] _arrayCount = BitConverter.GetBytes(_array.Length);
+                if (BitConverter.IsLittleEndian) { Array.Reverse(_arrayCount); }
+
+                IList<byte[]> _dataList = new List<byte[]>();
+                _dataList.Add(HexPlus.PadLeft(_arrayCount, 32));
 
                 for (int i = 0; i < _array.Length; i++)
                 {
-                    string _subBody = "";
-                    string _subData = HexPlus.ByteArrayToHexString(this.ToData(_array.GetValue(i), ref _subBody));
+                    int _itemLength = 0;
+                    byte[] _itemData = this.ToData(_array.GetValue(i), ref _itemLength);
 
                     switch (_array.GetValue(i).GetType().ToString())
                     {
-                        case "System.Bool": 
+                        case "System.Bool":
                         case "System.Int16":
                         case "System.Int32":
                         case "System.Int64":
                         case "System.UInt16":
                         case "System.UInt32":
                         case "System.UInt64":
-                        case "Lion.SDK.Ethereum.Address":
-                            _body += _subData;
+                            _dataList.Add(HexPlus.PadLeft(_itemData, 32));
                             break;
-
+                        case "Lion.SDK.Ethereum.Address":
+                            break;
                         case "System.String":
-                            _body += _subBody;
+                            _dataList.Add(_itemData);
                             break;
                     }
                 }
+                return HexPlus.Concat(_dataList.ToArray());
                 #endregion
             }
             else
             {
-                #region single
-                string _data = "";
+                #region Single
+                _length = -1;
+                byte[] _data = new byte[0];
                 switch (_item.GetType().ToString())
                 {
-                    case "System.Bool": return BitConverter.GetBytes((bool)_item);
-                    case "System.Int16": return BitConverter.GetBytes((Int16)_item);
-                    case "System.Int32": return BitConverter.GetBytes((Int32)_item);
-                    case "System.Int64": return BitConverter.GetBytes((Int64)_item);
-                    case "System.UInt16": return BitConverter.GetBytes((UInt16)_item);
-                    case "System.UInt32": return BitConverter.GetBytes((UInt32)_item);
-                    case "System.UInt64": return BitConverter.GetBytes((UInt64)_item);
+                    case "System.Boolean": _data = BitConverter.GetBytes((bool)_item); break;
+                    case "System.Int16": _data = BitConverter.GetBytes((Int16)_item); break;
+                    case "System.Int32": _data = BitConverter.GetBytes((Int32)_item); break;
+                    case "System.Int64": _data = BitConverter.GetBytes((Int64)_item); break;
+                    case "System.UInt16": _data = BitConverter.GetBytes((UInt16)_item); break;
+                    case "System.UInt32": _data = BitConverter.GetBytes((UInt32)_item); break;
+                    case "System.UInt64": _data = BitConverter.GetBytes((UInt64)_item); break;
                     case "Lion.SDK.Ethereum.Address": return ((Address)_item).ToData();
-
                     case "System.String":
-                        _data += HexPlus.ByteArrayToHexString(BitConverter.GetBytes(((string)_item).Length)).PadLeft(64, '0');
-                        _data += HexPlus.ByteArrayToHexString(Encoding.UTF8.GetBytes((string)_item));
-                        break;
+                        byte[] _stringBytes = Encoding.UTF8.GetBytes((string)_item);
+                        byte[] _stringlengthBytes = BitConverter.GetBytes(_stringBytes.Length);
+                        if (BitConverter.IsLittleEndian) { Array.Reverse(_stringlengthBytes); }
+
+                        _stringBytes = HexPlus.PadRight(_stringBytes, (_stringBytes.Length / 32 + (_stringBytes.Length % 32 > 0 ? 1 : 0)) * 32);
+                        _stringlengthBytes = HexPlus.PadLeft(_stringlengthBytes, 32);
+
+                        byte[] _stringResult = HexPlus.Concat(_stringlengthBytes, _stringBytes);
+                        _length = _stringResult.Length;
+                        return _stringResult;
+                    default:
+                        throw new Exception($"Type {_item.GetType().ToString()} is not support.");
                 }
-                _body += _data.PadRight((_data.Length / 64 + (_data.Length % 64 > 0 ? 1 : 0)) * 64, '0');
+                if (BitConverter.IsLittleEndian) { Array.Reverse(_data); }
+                return _data;
                 #endregion
             }
-            return _position;
         }
         #endregion
     }
