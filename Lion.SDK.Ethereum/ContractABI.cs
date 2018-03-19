@@ -20,13 +20,14 @@ namespace Lion.SDK.Ethereum
         public string ToData()
         {
             string[] _head = new string[this.Count];
-            string _body = "";
+            string[] _body = new string[this.Count];
 
-            int _position = this.Count * 32;
+            int _position = this.Count*32;
             for (int i = 0; i < this.Count; i++)
             {
                 int _length = 0;
                 byte[] _data = this.ToData(this[i], ref _length);
+
                 if (_length == -1)
                 {
                     _head[i] = HexPlus.ByteArrayToHexString(_data).PadLeft(64, '0');
@@ -36,12 +37,12 @@ namespace Lion.SDK.Ethereum
                     byte[] _positionByte = BitConverter.GetBytes(_position);
                     if (BitConverter.IsLittleEndian) { Array.Reverse(_positionByte); }
                     _head[i] = HexPlus.ByteArrayToHexString(_positionByte).PadLeft(64, '0');
-                    _body += HexPlus.ByteArrayToHexString(_data);
+                    _body[i] = HexPlus.ByteArrayToHexString(_data);
                     _position += _length;
                 }
             }
 
-            return this.MethodId + String.Concat(_head) + _body;
+            return this.MethodId + String.Concat(_head) + String.Concat(_body);
         }
         #endregion
 
@@ -73,15 +74,16 @@ namespace Lion.SDK.Ethereum
                         case "System.UInt16":
                         case "System.UInt32":
                         case "System.UInt64":
-                            _dataList.Add(HexPlus.PadLeft(_itemData, 32));
-                            break;
                         case "Lion.SDK.Ethereum.Address":
+                        case "Lion.SDK.Ethereum.Number":
+                            _dataList.Add(HexPlus.PadLeft(_itemData, 32));
                             break;
                         case "System.String":
                             _dataList.Add(_itemData);
                             break;
                     }
                 }
+                _length = _dataList.Sum(c => c.Length);
                 return HexPlus.Concat(_dataList.ToArray());
                 #endregion
             }
