@@ -35,7 +35,7 @@ namespace Lion.SDK.Ethereum
         #region Eth_EstimateGas
         public JObject Eth_EstimateGas(ContractABI _abi)
         {
-            JObject _value = new JObject();
+            JObject _value = new JObject();   
             _value["data"] = _abi.ToData();
 
             JObject _json = this.Build("eth_estimateGas", _value);
@@ -435,9 +435,15 @@ namespace Lion.SDK.Ethereum
         #endregion
 
         #region Eth_NewFilter
-        public JObject Eth_NewFilter(string _address, object[] _topics, string fromBlock = "latest", string toBlock = "latest")
+        public JObject Eth_NewFilter(string _address, object[] _topics, string _fromBlock = "latest", string _toBlock = "latest")
         {
-            JObject _json = this.Build("eth_newFilter", _address, _topics, fromBlock, toBlock);
+			JObject _value = new JObject();
+			_value["fromBlock"] = _fromBlock;
+			_value["toBlock"] = _toBlock;    
+			if (_address != "") { _value["address"] = _address; }
+			if (_topics != null) { _value["topics"] = _topics.ToString(); }
+
+			JObject _json = this.Build("eth_newFilter", _value);
             Console.WriteLine(_json.ToString());
 
             return this.Request(_json);
