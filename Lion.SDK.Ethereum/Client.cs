@@ -435,15 +435,15 @@ namespace Lion.SDK.Ethereum
         #endregion
 
         #region Eth_NewFilter
-        public JObject Eth_NewFilter(string _address, object[] _topics, string _fromBlock = "latest", string _toBlock = "latest")
+        public JObject Eth_NewFilter(string _address, string[] _topics, string _fromBlock = "latest", string _toBlock = "latest")
         {
 			JObject _value = new JObject();
 			_value["fromBlock"] = _fromBlock;
 			_value["toBlock"] = _toBlock;    
 			if (_address != "") { _value["address"] = _address; }
-			if (_topics != null) { _value["topics"] = _topics.ToString(); }
+            _value["topics"] = new JArray(_topics);
 
-			JObject _json = this.Build("eth_newFilter", _value);
+            JObject _json = this.Build("eth_newFilter", _value);
             Console.WriteLine(_json.ToString());
 
             return this.Request(_json);
