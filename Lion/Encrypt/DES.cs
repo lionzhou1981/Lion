@@ -14,6 +14,7 @@ namespace  Lion.Encrypt
         {
             DESCryptoServiceProvider _des = new DESCryptoServiceProvider();
             _des.Mode = _mode;
+            _des.Padding = PaddingMode.PKCS7;
             _des.Key = ASCIIEncoding.ASCII.GetBytes(_key);
             _des.IV = ASCIIEncoding.ASCII.GetBytes(_key);
             MemoryStream _memoryStream = new MemoryStream();
@@ -34,6 +35,7 @@ namespace  Lion.Encrypt
         {
             DESCryptoServiceProvider _des = new DESCryptoServiceProvider();
             _des.Mode = _mode;
+            _des.Padding = PaddingMode.PKCS7;
             _des.Key = ASCIIEncoding.ASCII.GetBytes(_key);
             _des.IV = ASCIIEncoding.ASCII.GetBytes(_key);
             MemoryStream _memoryStream = new MemoryStream();

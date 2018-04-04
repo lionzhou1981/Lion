@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion", "Lion\Lion.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{0582A87D-2BD1-4BE1-BBAF-8710C6D1FE48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Data.MySqlClient", "Lion.Data.MySqlClient\Lion.Data.MySqlClient.csproj", "{D5AF5C93-BFB9-467F-830C-DB0B479A99EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.MySqlClient", "Lion.Data.MySqlClient\Lion.Data.MySqlClient.csproj", "{D5AF5C93-BFB9-467F-830C-DB0B479A99EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Data.SqlClient", "Lion.Data.SqlClient\Lion.Data.SqlClient.csproj", "{1FE5A8AA-13F5-4DBE-8808-1421739156CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.SqlClient", "Lion.Data.SqlClient\Lion.Data.SqlClient.csproj", "{1FE5A8AA-13F5-4DBE-8808-1421739156CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
