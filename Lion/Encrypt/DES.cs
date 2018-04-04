@@ -10,11 +10,11 @@ namespace  Lion.Encrypt
     public class DES
     {
         #region Decode
-        public static byte[] Decode2ByteArray(byte[] _buffer, string _key, CipherMode _mode = CipherMode.CBC)
+        public static byte[] Decode2ByteArray(byte[] _buffer, string _key, CipherMode _mode = CipherMode.CBC, PaddingMode _padding = PaddingMode.PKCS7)
         {
             DESCryptoServiceProvider _des = new DESCryptoServiceProvider();
             _des.Mode = _mode;
-            _des.Padding = PaddingMode.PKCS7;
+            _des.Padding = _padding;
             _des.Key = ASCIIEncoding.ASCII.GetBytes(_key);
             _des.IV = ASCIIEncoding.ASCII.GetBytes(_key);
             MemoryStream _memoryStream = new MemoryStream();
@@ -31,11 +31,11 @@ namespace  Lion.Encrypt
         #endregion
 
         #region Encode
-        public static byte[] Encode2ByteArray(byte[] _buffer, string _key, CipherMode _mode = CipherMode.CBC)
+        public static byte[] Encode2ByteArray(byte[] _buffer, string _key, CipherMode _mode = CipherMode.CBC, PaddingMode _padding = PaddingMode.PKCS7)
         {
             DESCryptoServiceProvider _des = new DESCryptoServiceProvider();
             _des.Mode = _mode;
-            _des.Padding = PaddingMode.PKCS7;
+            _des.Padding = _padding;
             _des.Key = ASCIIEncoding.ASCII.GetBytes(_key);
             _des.IV = ASCIIEncoding.ASCII.GetBytes(_key);
             MemoryStream _memoryStream = new MemoryStream();

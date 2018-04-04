@@ -63,7 +63,7 @@ namespace Lion.Net.Sockets
             {
                 byte[] _contentArray = new byte[_length - 20];
                 Array.Copy(_byteArray, 4, _contentArray, 0, _contentArray.Length);
-                string _decoded = System.Text.Encoding.UTF8.GetString(DES.Decode2ByteArray(_contentArray, _key, System.Security.Cryptography.CipherMode.ECB));
+                string _decoded = System.Text.Encoding.UTF8.GetString(DES.Decode2ByteArray(_contentArray, _key, System.Security.Cryptography.CipherMode.CBC));
                 return true;
             }
             catch
@@ -108,7 +108,7 @@ namespace Lion.Net.Sockets
             {
                 byte[] _contentArray = new byte[_packageSize - 20];
                 Array.Copy(_byteArray, 4, _contentArray, 0, _contentArray.Length);
-                string _decoded = System.Text.Encoding.UTF8.GetString(DES.Decode2ByteArray(_contentArray, _key, System.Security.Cryptography.CipherMode.ECB));
+                string _decoded = System.Text.Encoding.UTF8.GetString(DES.Decode2ByteArray(_contentArray, _key, System.Security.Cryptography.CipherMode.CBC));
                 JObject _json = JObject.Parse(_decoded);
                 return _json;
             }
@@ -134,7 +134,7 @@ namespace Lion.Net.Sockets
             if (_key == "") { throw new Exception("EnPackage failed: TxKey is empty."); }
 
             string _content = ((JObject)_object).ToString(Newtonsoft.Json.Formatting.None);
-            byte[] _contentArray = DES.Encode2ByteArray(System.Text.Encoding.UTF8.GetBytes(_content), _key, System.Security.Cryptography.CipherMode.ECB);
+            byte[] _contentArray = DES.Encode2ByteArray(System.Text.Encoding.UTF8.GetBytes(_content), _key, System.Security.Cryptography.CipherMode.CBC);
             uint _length = uint.Parse(_contentArray.Length.ToString()) + 4 + 16;
             byte[] _lengthArray = BitConverter.GetBytes(_length);
             if (BitConverter.IsLittleEndian) { Array.Reverse(_lengthArray); }
