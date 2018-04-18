@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK.Ethereum", "Lion.SDK.Ethereum\Lion.SDK.Ethereum.csproj", "{F98CA7FE-4515-49C6-9C6E-895E972E7E4C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion", "Lion\Lion.csproj", "{6FFEB78C-0371-4642-966A-9D67EE9CBF74}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{0582A87D-2BD1-4BE1-BBAF-8710C6D1FE48}"
@@ -12,8 +10,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.MySqlClient", "Lion.Data.MySqlClient\Lion.Data.MySqlClient.csproj", "{D5AF5C93-BFB9-467F-830C-DB0B479A99EA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.SqlClient", "Lion.Data.SqlClient\Lion.Data.SqlClient.csproj", "{1FE5A8AA-13F5-4DBE-8808-1421739156CA}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK.BitcoinMarkets", "Lion.SDK.BitcoinMarkets\Lion.SDK.BitcoinMarkets.csproj", "{2436CB55-DDD6-4F21-BAFA-C7ABFD701453}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.SDK.Bitcoin", "Lion.SDK.Bitcoin\Lion.SDK.Bitcoin.csproj", "{71FBD20A-7D55-4142-9CB1-35351183647D}"
 EndProject
@@ -23,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F98CA7FE-4515-49C6-9C6E-895E972E7E4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F98CA7FE-4515-49C6-9C6E-895E972E7E4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F98CA7FE-4515-49C6-9C6E-895E972E7E4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F98CA7FE-4515-49C6-9C6E-895E972E7E4C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6FFEB78C-0371-4642-966A-9D67EE9CBF74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6FFEB78C-0371-4642-966A-9D67EE9CBF74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FFEB78C-0371-4642-966A-9D67EE9CBF74}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,10 +35,6 @@ Global
 		{1FE5A8AA-13F5-4DBE-8808-1421739156CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FE5A8AA-13F5-4DBE-8808-1421739156CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FE5A8AA-13F5-4DBE-8808-1421739156CA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2436CB55-DDD6-4F21-BAFA-C7ABFD701453}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2436CB55-DDD6-4F21-BAFA-C7ABFD701453}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2436CB55-DDD6-4F21-BAFA-C7ABFD701453}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2436CB55-DDD6-4F21-BAFA-C7ABFD701453}.Release|Any CPU.Build.0 = Release|Any CPU
 		{71FBD20A-7D55-4142-9CB1-35351183647D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{71FBD20A-7D55-4142-9CB1-35351183647D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71FBD20A-7D55-4142-9CB1-35351183647D}.Release|Any CPU.ActiveCfg = Release|Any CPU
