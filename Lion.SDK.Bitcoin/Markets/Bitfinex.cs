@@ -1,23 +1,132 @@
 ﻿using System;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Bitfinex
+    public class Bitfinex : IDisposable
     {
-        public static string Url = "https://api.bitfinex.com";
+        private static string url = "https://api.bitfinex.com";
+        private static string ws = "wss://api.bitfinex.com/ws";
 
         private string key;
         private string secret;
+        private bool running = false;
+        private ClientWebSocket socket = null;
+        private Thread thread;
 
         public Bitfinex(string _key, string _secret)
         {
             this.key = _key;
             this.secret = _secret;
         }
+
+        #region Start
+        public void Start()
+        {
+            if (this.running) { return; }
+
+            this.running = true;
+            this.thread = new Thread(new ThreadStart(this.StartThread));
+            this.thread.Start();
+        }
+        #endregion
+
+        #region StartThread
+        private void StartThread()
+        {
+            string _buffered = "";
+            while (this.running)
+            {
+                if (this.socket == null || this.socket.State != WebSocketState.Open)
+                {
+                    #region 建立连接
+                    _buffered = "";
+                    this.socket = new ClientWebSocket();
+                    this.socket.Options.KeepAliveInterval = new TimeSpan(0, 0, 0, 1, 0);
+
+                    Task _task = this.socket.ConnectAsync(new Uri(Bitfinex.ws), CancellationToken.None);
+                    while (_task.Status != TaskStatus.Canceled
+                        && _task.Status != TaskStatus.Faulted
+                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
+
+                    if (_task.Status != TaskStatus.RanToCompletion) { this.socket = null; }
+                    #endregion
+                }
+                else
+                {
+                    #region 处理数据
+                    byte[] _buffer = new byte[8192];
+                    Task<WebSocketReceiveResult> _task = this.socket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
+                    while (_task.Status != TaskStatus.Canceled
+                        && _task.Status != TaskStatus.Faulted
+                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
+
+                    if (_task.Result.MessageType == WebSocketMessageType.Close) { this.socket = null; continue; }
+
+                    _buffered += Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count);
+
+                    int _start = 0;
+                    while (true)
+                    {
+                        if (_buffered.Length == 0) { break; }
+                        int _s1 = _buffered.IndexOf("}", _start);
+                        int _s2 = _buffered.IndexOf("]", _start);
+                        _s1 = _s1 == -1 ? int.MaxValue : _s1;
+                        _s2 = _s2 == -1 ? int.MaxValue : _s2;
+                        if (_s1 == _s2) { break; }
+
+                        int _index = _s1 > _s2 ? _s2 : _s1;
+                        string _testJson = _buffered.Substring(0, _index + 1);
+
+                        JToken _json = null;
+                        try { _json = JObject.Parse(_testJson); } catch { _json = null; }
+                        if (_json == null) { try { _json = JArray.Parse(_testJson); } catch { _json = null; } }
+                        if (_json == null) { _start = _index + 1; continue; }
+                        _buffered = _buffered.Substring(_index + 1);
+
+                        // EVENT => JTOKEN
+
+                        //if (_json.GetType() == typeof(JArray))
+                        //{
+                        //    JArray _array = (JArray)_json;
+                        //    if (_array.Count == 2)
+                        //    {
+                        //        foreach (JArray _item in _array)
+                        //        {
+                        //            this.PutPrice(_item[0].Value<decimal>(), _item[1].Value<decimal>());
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        //        this.PutPrice(_array[1].Value<decimal>(), _array[2].Value<decimal>());
+                        //    }
+                        //}
+                    }
+                    #endregion
+                }
+            }
+        }
+        #endregion
+
+        #region Stop
+        public void Stop()
+        {
+            this.running = false;
+        }
+        #endregion
+
+        #region Dispose
+        public void Dispose()
+        {
+            this.running = false;
+        }
+        #endregion
 
         #region Account
         public JArray AccountInfo() => JArray.Parse(this.Post("/v1/account_infos"));
@@ -258,7 +367,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Post
         private string Post(string _path,params object[] _keyValue)
         {
-            string _url = Bitfinex.Url + _path;
+            string _url = Bitfinex.url + _path;
             JObject _json = new JObject();
             _json["request"] = _path;
             _json["nonce"] = DateTime.Now.Ticks.ToString();
