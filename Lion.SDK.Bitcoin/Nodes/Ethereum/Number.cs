@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Numerics;
 
-namespace Lion.SDK.Nodes.Ethereum
+namespace Lion.SDK.Bitcoin.Nodes.Ethereum
 {
     public class Number
     {

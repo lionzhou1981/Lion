@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Nodes.Ethereum
+namespace Lion.SDK.Bitcoin.Nodes.Ethereum
 {
     public class Address
     {

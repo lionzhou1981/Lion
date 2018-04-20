@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Bitfinex : IDisposable
+    public class Bitfinex :  MarketBase, IDisposable
     {
         private static string url = "https://api.bitfinex.com";
         private static string ws = "wss://api.bitfinex.com/ws";
@@ -56,6 +56,8 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
 
                     if (_task.Status != TaskStatus.RanToCompletion) { this.socket = null; }
+
+                    base.OnWebSocketConnected();
                     #endregion
                 }
                 else
@@ -67,7 +69,12 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
 
-                    if (_task.Result.MessageType == WebSocketMessageType.Close) { this.socket = null; continue; }
+                    if (_task.Result.MessageType == WebSocketMessageType.Close)
+                    {
+                        base.OnWebSocketDisconnected();
+                        this.socket = null;
+                        continue;
+                    }
 
                     _buffered += Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count);
 
@@ -90,23 +97,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         if (_json == null) { _start = _index + 1; continue; }
                         _buffered = _buffered.Substring(_index + 1);
 
-                        // EVENT => JTOKEN
-
-                        //if (_json.GetType() == typeof(JArray))
-                        //{
-                        //    JArray _array = (JArray)_json;
-                        //    if (_array.Count == 2)
-                        //    {
-                        //        foreach (JArray _item in _array)
-                        //        {
-                        //            this.PutPrice(_item[0].Value<decimal>(), _item[1].Value<decimal>());
-                        //        }
-                        //    }
-                        //    else
-                        //    {
-                        //        this.PutPrice(_array[1].Value<decimal>(), _array[2].Value<decimal>());
-                        //    }
-                        //}
+                        base.OnWebSocketReceived(_json);
                     }
                     #endregion
                 }
@@ -125,6 +116,48 @@ namespace Lion.SDK.Bitcoin.Markets
         public void Dispose()
         {
             this.running = false;
+        }
+        #endregion
+
+        #region Send
+        public void Send(JObject _json)
+        {
+            if (this.socket == null || this.socket.State != WebSocketState.Open) { return; }
+
+            this.socket.SendAsync(
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None))),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None).Wait();
+        }
+        #endregion
+
+        #region Subscribe
+        public void Subscribe(string _channel,string _symbol, params object[] _keyValues)
+        {
+            JObject _json = new JObject();
+            _json["event"] = "subscribe";
+            _json["channel"] = _channel;
+            _json["pair"] = _symbol;
+
+            for (int i = 0; i < _keyValues.Length - 1; i += 2)
+            {
+                if (_keyValues[i + 1].GetType() == typeof(int)) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
+                else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
+            }
+
+            this.Send(_json);
+        }
+        #endregion
+
+        #region Unsubscribe
+        public void Unsubscribe(string _channelId)
+        {
+            JObject _json = new JObject();
+            _json["event"] = "unsubscribe";
+            _json["chanId"] = _channelId;
+
+            this.Send(_json);
         }
         #endregion
 

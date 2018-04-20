@@ -4,7 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace Lion.SDK.Nodes.Ethereum
+namespace Lion.SDK.Bitcoin.Nodes.Ethereum
 {
     public class ContractABI : List<object>
     {

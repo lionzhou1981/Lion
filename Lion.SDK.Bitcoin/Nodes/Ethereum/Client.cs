@@ -4,7 +4,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
 
-namespace Lion.SDK.Nodes.Ethereum
+namespace Lion.SDK.Bitcoin.Nodes.Ethereum
 {
     public class Client
     {
