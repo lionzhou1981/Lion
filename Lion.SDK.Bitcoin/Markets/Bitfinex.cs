@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -14,16 +15,20 @@ namespace Lion.SDK.Bitcoin.Markets
         private static string url = "https://api.bitfinex.com";
         private static string ws = "wss://api.bitfinex.com/ws";
 
+        public string symbol;
         private string key;
         private string secret;
         private bool running = false;
         private ClientWebSocket socket = null;
         private Thread thread;
+        private ConcurrentDictionary<string, string[]> SubscribedChannels;
 
-        public Bitfinex(string _key, string _secret)
+        public Bitfinex(string _symbol, string _key, string _secret)
         {
+            this.symbol = _symbol;
             this.key = _key;
             this.secret = _secret;
+            this.SubscribedChannels = new ConcurrentDictionary<string, string[]>();
         }
 
         #region Start
@@ -97,7 +102,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         if (_json == null) { _start = _index + 1; continue; }
                         _buffered = _buffered.Substring(_index + 1);
 
-                        base.OnWebSocketReceived(_json);
+                        this.Receive(_json);
                     }
                     #endregion
                 }
@@ -132,13 +137,84 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region Receive
+        public void Receive(JToken _json)
+        {
+            if (_json is JObject)
+            {
+                JObject _item = (JObject)_json;
+                switch (_item["event"].Value<string>())
+                {
+                    case "info": break;
+                    case "error": this.OnError(_item["code"].Value<string>(), _item["msg"].Value<string>()); break;
+                    case "subscribed":
+                        this.SubscribedChannels.AddOrUpdate(
+                            _item["chanId"].Value<string>(),
+                            new string[] { _item["channel"].Value<string>(), this.symbol },
+                            (k, v) => new string[] { _item["channel"].Value<string>(), this.symbol }
+                            );
+                        break;
+                    case "unsubscribed":
+                        string[] _values;
+                        if (!this.SubscribedChannels.TryRemove(_item["chanId"].Value<string>(), out _values))
+                        {
+                            this.OnError(_item["code"].Value<string>(), _item["msg"].Value<string>()); break;
+                        }
+                        break;
+                    default: base.OnWebSocketReceived(_json); break;
+                }
+            }
+            else if (_json is JArray)
+            {
+                JArray _array = (JArray)_json;
+                string _channelId = _array[0].Value<string>();
+
+                if (_array.Count == 2)
+                {
+                    if (_array[1].GetType() == typeof(JArray))
+                    {
+                        foreach (JArray _item in _array[1])
+                        {
+                            this.ReceiveSubscribe(_channelId, _item);
+                        }
+                    }
+                }
+                else
+                {
+                    this.ReceiveSubscribe(_channelId, _array);
+                }
+            }
+        }
+        #endregion
+
+        #region ReceiveSubscribe
+        public void ReceiveSubscribe(string _channelId, JArray _item)
+        {
+            string[] _channel = this.SubscribedChannels[_channelId];
+            if (_channel[0] == "book")
+            {
+                decimal _price = _item.Count == 3 ? _item[0].Value<decimal>() : _item[1].Value<decimal>();
+                int _count = _item.Count == 3 ? _item[1].Value<int>() : _item[2].Value<int>();
+                decimal _amount = _item.Count == 3 ? _item[2].Value<decimal>() : _item[3].Value<decimal>();
+
+                this.OnBookChanged(_amount > 0 ? "bid" : "ask", _price, _count == 0 ? 0 : Math.Abs(_amount));
+            }
+        }
+        #endregion
+
         #region Subscribe
-        public void Subscribe(string _channel,string _symbol, params object[] _keyValues)
+        public void Subscribe(string _channel, string _symbol, params object[] _keyValues)
         {
             JObject _json = new JObject();
             _json["event"] = "subscribe";
             _json["channel"] = _channel;
             _json["pair"] = _symbol;
+            if (_keyValues.Length == 0)
+            {
+                _json["prec"] = "P0";
+                _json["freq"] = "F0";
+                _json["len"] = 100;
+            }
 
             for (int i = 0; i < _keyValues.Length - 1; i += 2)
             {
