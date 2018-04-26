@@ -10,14 +10,16 @@ namespace Lion.Net.Sockets
 {
     public class Dktp : ISocketProtocol
     {
+        public string Code = "";
         private string socketKey = "";
         private string socketTxKey = "";
         private string socketRxKey = "";
         private string socketChecksum = "";
         private RSA rsa;
 
-        public Dktp(string _key, string _rsaPub, string _rsaPri)
+        public Dktp(string _code, string _key, string _rsaPub, string _rsaPri)
         {
+            this.Code = _code;
             this.socketKey = _key;
             this.rsa = new RSA(RSAType.RSA, System.Text.Encoding.UTF8, _rsaPri, _rsaPub);
         }
@@ -179,6 +181,7 @@ namespace Lion.Net.Sockets
             Console.WriteLine("KEY :" + this.socketRxKey);
 
             JObject _json = new JObject();
+            _json["code"] = this.Code;
             _json["time"] = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
             _json["num"] = this.socketChecksum;
             _json["key"] = this.socketRxKey;
