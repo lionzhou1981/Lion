@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Bitfinex :  MarketBase, IDisposable
+    public class Bitfinex :  MarketBase, IDisposable 
     {
         private static string url = "https://api.bitfinex.com";
         private static string ws = "wss://api.bitfinex.com/ws";
