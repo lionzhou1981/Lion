@@ -37,7 +37,7 @@ namespace Lion.Data.MySqlClient
         /// <param name="_dbDatabase">数据库名</param>
         public DbCommon(string _dbAddress,string _dbPort, string _dbUsername, string _dbPassword, string _dbDatabase)
         {
-            this.DbConnection = new MySqlConnection($"Persist Security Info=False;server={_dbAddress};port={_dbPort};user id={_dbUsername};pwd={_dbPassword};database={_dbDatabase}");
+            this.DbConnection = new MySqlConnection($"Persist Security Info=False;server={_dbAddress};port={_dbPort};user id={_dbUsername};pwd={_dbPassword};database={_dbDatabase};SslMode=None");
             this.DbTransaction = null;
         }
         #endregion
