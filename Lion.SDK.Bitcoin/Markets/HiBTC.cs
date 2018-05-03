@@ -102,6 +102,11 @@ namespace Lion.SDK.Bitcoin.Markets
                         if (_json == null) { _start = _index + 1; continue; }
                         _buffered = _buffered.Substring(_index + 1);
 
+                        while (_buffered.Length > 0 && _buffered[0] != '[' && _buffered[0] != '{')
+                        {
+                            Console.WriteLine("Bitfinex" + _buffered);
+                            _buffered = _buffered.Substring(1);
+                        }
                         this.Receive(_json);
                     }
                     #endregion
