@@ -89,8 +89,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     {
                         if (_buffered.Length == 0) { break; }
 
-                        int _s1 = _buffered.IndexOf("}", _start);
-                        int _s2 = _buffered.IndexOf("]", _start);
+                        int _s1 = _buffered.IndexOf("}", _start, StringComparison.Ordinal);
+                        int _s2 = _buffered.IndexOf("]", _start, StringComparison.Ordinal);
                         _s1 = _s1 == -1 ? int.MaxValue : _s1;
                         _s2 = _s2 == -1 ? int.MaxValue : _s2;
                         if (_s1 == _s2) { break; }
@@ -104,7 +104,11 @@ namespace Lion.SDK.Bitcoin.Markets
                         if (_json == null) { _start = _index + 1; continue; }
                         _buffered = _buffered.Substring(_index + 1);
 
-                        Console.WriteLine(_buffered.Length + ".");
+                        while (_buffered.Length > 0 && _buffered[0] != '[' && _buffered[0] != '{')
+                        {
+                            Console.WriteLine(_buffered);
+                            _buffered = _buffered.Substring(1);
+                        }
                         this.Receive(_json);
                     }
                     #endregion
