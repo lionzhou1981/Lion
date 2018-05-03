@@ -48,6 +48,7 @@ namespace Lion.SDK.Bitcoin.Markets
             string _buffered = "";
             while (this.running)
             {
+                Thread.Sleep(10);
                 if (this.socket == null || this.socket.State != WebSocketState.Open)
                 {
                     #region 建立连接
@@ -74,7 +75,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
 
-                    if (_task.Result == null || _task.Status== TaskStatus.Faulted || _task.Result.MessageType == WebSocketMessageType.Close)
+                    if (_task.Result == null || _task.Status != TaskStatus.RanToCompletion || _task.Result.MessageType == WebSocketMessageType.Close)
                     {
                         base.OnWebSocketDisconnected();
                         this.socket = null;
@@ -87,6 +88,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     while (true)
                     {
                         if (_buffered.Length == 0) { break; }
+
                         int _s1 = _buffered.IndexOf("}", _start);
                         int _s2 = _buffered.IndexOf("]", _start);
                         _s1 = _s1 == -1 ? int.MaxValue : _s1;
@@ -102,6 +104,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         if (_json == null) { _start = _index + 1; continue; }
                         _buffered = _buffered.Substring(_index + 1);
 
+                        Console.WriteLine(_buffered.Length + ".");
                         this.Receive(_json);
                     }
                     #endregion
