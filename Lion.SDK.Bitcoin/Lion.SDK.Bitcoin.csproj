@@ -13,8 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
     <ProjectReference Include="..\Lion\Lion.csproj" />
+    <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
   </ItemGroup>
-
 </Project>
