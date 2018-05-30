@@ -13,7 +13,7 @@ namespace Lion.SDK.Bitcoin.Markets
     public class HiBTC : MarketBase, IDisposable
     {
         private static string url = "https://api.hibtc.com";
-        private static string ws = "wss://api.hibtc.com/wsjoint";
+        private static string ws = "ws://39.104.99.185:8088/req/wsjoint";
 
         public string symbol;
         private string key;

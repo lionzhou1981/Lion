@@ -10,7 +10,6 @@ namespace Lion.Net.Sockets
 {
     public class Dktp : ISocketProtocol
     {
-        public string Code = "";
         private string socketKey = "";
         private string socketTxKey = "";
         private string socketRxKey = "";
@@ -19,10 +18,13 @@ namespace Lion.Net.Sockets
 
         public Dktp(string _code, string _key, string _rsaPub, string _rsaPri)
         {
-            this.Code = _code;
+            this.code = _code;
             this.socketKey = _key;
             this.rsa = new RSA(RSAType.RSA, System.Text.Encoding.UTF8, _rsaPri, _rsaPub);
         }
+
+        private string code = "";
+        public string Code { get { return this.code; } set { this.code = value; } }
 
         private uint keepAlive = 0;
         public uint KeepAlive { get { return this.keepAlive; } set { this.keepAlive = value; } }

@@ -38,6 +38,9 @@ namespace Lion.Net.Sockets
         private UInt32 CRCKey = 0xEDB88320;
         private UInt32[] CRCTable;
 
+        private string code = "";
+        public string Code { get { return this.code; } set { this.code = value; } }
+
         #region 构造函数
         public Lztp(string _head, uint _keepAlive = 0)
         {

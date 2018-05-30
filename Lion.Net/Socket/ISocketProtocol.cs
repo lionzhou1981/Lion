@@ -3,6 +3,11 @@
     public interface ISocketProtocol
     {
         /// <summary>
+        /// 协议编号
+        /// </summary>
+        string Code { get; set; }
+
+        /// <summary>
         /// 设置持续连接时间(如为0,不开启KeepAlive模式)
         /// </summary>
         uint KeepAlive { get; set; }
