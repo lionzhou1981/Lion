@@ -74,7 +74,16 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
 
-                    if (_task.Result == null || _task.Status == TaskStatus.Faulted || _task.Result.MessageType == WebSocketMessageType.Close)
+                    try
+                    {
+                        if (_task.Status == TaskStatus.Faulted
+                            || _task.Result.MessageType == WebSocketMessageType.Close
+                            ||_task.Result == null)
+                        {
+                            throw new Exception("Task result failed.");
+                        }
+                    }
+                    catch
                     {
                         base.OnWebSocketDisconnected();
                         this.socket = null;
@@ -87,8 +96,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     while (true)
                     {
                         if (_buffered.Length == 0) { break; }
-                        int _s1 = _buffered.IndexOf("}", _start);
-                        int _s2 = _buffered.IndexOf("]", _start);
+                        int _s1 = _buffered.IndexOf("}", _start, StringComparison.Ordinal);
+                        int _s2 = _buffered.IndexOf("]", _start, StringComparison.Ordinal);
                         _s1 = _s1 == -1 ? int.MaxValue : _s1;
                         _s2 = _s2 == -1 ? int.MaxValue : _s2;
                         if (_s1 == _s2) { break; }
@@ -104,7 +113,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                         while (_buffered.Length > 0 && _buffered[0] != '[' && _buffered[0] != '{')
                         {
-                            Console.WriteLine("Bitfinex" + _buffered);
+                            Console.WriteLine("HiBTC" + _buffered);
                             _buffered = _buffered.Substring(1);
                         }
                         this.Receive(_json);
@@ -191,7 +200,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Subscribe
         //{"event":"subscribe", "channel":"depth","pair":"ETH_BTC","depth":20, "prec":0}
         public void Subscribe(string _channel, string _symbol, params object[] _keyValues)
-        {//
+        {
             JObject _json = new JObject();
             _json["event"] = "subscribe";
             _json["channel"] = _channel;

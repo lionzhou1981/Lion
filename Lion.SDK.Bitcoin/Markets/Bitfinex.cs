@@ -75,7 +75,16 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
 
-                    if (_task.Result == null || _task.Status != TaskStatus.RanToCompletion || _task.Result.MessageType == WebSocketMessageType.Close)
+                    try
+                    {
+                        if (_task.Status != TaskStatus.RanToCompletion 
+                            || _task.Result.MessageType == WebSocketMessageType.Close
+                            || _task.Result == null)
+                        {
+                            throw new Exception("Task result failed.");
+                        }
+                    }
+                    catch(Exception)
                     {
                         base.OnWebSocketDisconnected();
                         this.socket = null;
@@ -225,7 +234,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             for (int i = 0; i < _keyValues.Length - 1; i += 2)
             {
-                if (_keyValues[i + 1].GetType() == typeof(int)) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
+                if (_keyValues[i + 1] is int) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
                 else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
             }
 
@@ -493,6 +502,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 Type _valueType = _keyValue[i + 1].GetType();
                 if (_valueType == typeof(int)) { _json[_keyValue[i]] = (int)_keyValue[i + 1]; }
+                else if (_valueType == typeof(bool)) { _json[_keyValue[i]] = (bool)_keyValue[i + 1]; }
                 else if (_valueType == typeof(long)) { _json[_keyValue[i]] = (long)_keyValue[i + 1]; }
                 else if (_valueType == typeof(JArray)) { _json[_keyValue[i]] = (JArray)_keyValue[i + 1]; }
                 else { _json[_keyValue[i]] = _keyValue[i + 1].ToString(); }
