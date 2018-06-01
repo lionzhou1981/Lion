@@ -195,17 +195,16 @@ namespace Lion.SDK.Bitcoin.Markets
                 Dictionary<decimal, decimal> _bidList = new Dictionary<decimal, decimal>();
                 for(int i = 0; i < _bids.Count; i++)
                 {
-                    
-                    this.OnBookChanged("bid", _bids[i][0].Value<decimal>(), _bids[i][1].Value<decimal>());
+                    _bidList.Add(_bids[i][0].Value<decimal>(), _bids[i][1].Value<decimal>());
                 }
 
                 JArray _asks = (JArray)_json["tick"]["asks"];
                 Dictionary<decimal, decimal> _askList = new Dictionary<decimal, decimal>();
                 for (int i = 0; i < _asks.Count; i++)
                 {
-                    this.OnBookChanged("ask", _asks[i][0].Value<decimal>(), _asks[i][1].Value<decimal>());
+                    _askList.Add(_asks[i][0].Value<decimal>(), _asks[i][1].Value<decimal>());
                 }
-                Console.WriteLine(_bids.Count + " - " + _asks.Count);
+                this.OnBookUpdated(_askList, _bidList);
             }
         }
         #endregion
