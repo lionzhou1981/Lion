@@ -46,6 +46,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region StartThread
         private void StartThread()
         {
+            byte[] _buffering = new byte[0];
             string _buffered = "";
             while (this.running)
             {
@@ -83,7 +84,20 @@ namespace Lion.SDK.Bitcoin.Markets
                         continue;
                     }
 
-                    _buffer = GZip.Decompress(_buffer);
+                    try
+                    {
+                        int _bufferStart = _buffering.Length;
+                        Array.Resize(ref _buffering, _buffering.Length + _buffer.Length);
+                        Array.Copy(_buffer, 0, _buffering, _bufferStart, _buffer.Length);
+
+                        _buffer = GZip.Decompress(_buffering);
+                        _buffering = new byte[0];
+                    }
+                    catch
+                    {
+                        if (_buffering.Length > 1024 * 1024) { _buffering = new byte[0]; }
+                        continue;
+                    }
                     _buffered += Encoding.UTF8.GetString(_buffer);
 
                     int _start = 0;
