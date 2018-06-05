@@ -145,11 +145,18 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             if (this.socket == null || this.socket.State != WebSocketState.Open) { return; }
 
-            this.socket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None))),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None).Wait();
+            try
+            {
+                this.socket.SendAsync(
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None))),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None).Wait();
+            }
+            catch (Exception _ex)
+            {
+                this.OnError("WS.SEND", _ex.ToString());
+            }
         }
         #endregion
 
