@@ -21,6 +21,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private string secret;
         private bool running = false;
         private ClientWebSocket socket = null;
+        private DateTime socketTime;
         private Thread thread;
         private ConcurrentDictionary<string, string[]> SubscribedChannels;
 
@@ -46,32 +47,34 @@ namespace Lion.SDK.Bitcoin.Markets
         #region StartThread
         private void StartThread()
         {
-            byte[] _buffering = new byte[0];
-            string _buffered = "";
             while (this.running)
             {
                 Thread.Sleep(10);
                 if (this.socket == null || this.socket.State != WebSocketState.Open)
                 {
                     #region 建立连接
-                    _buffered = "";
                     this.socket = new ClientWebSocket();
-                    this.socket.Options.KeepAliveInterval = new TimeSpan(0, 0, 0, 1, 0);
 
                     Task _task = this.socket.ConnectAsync(new Uri(Huobi.ws), CancellationToken.None);
                     while (_task.Status != TaskStatus.Canceled
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
 
-                    if (_task.Status != TaskStatus.RanToCompletion) { this.socket = null; }
+                    if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
+                    {
+                        this.socket.Dispose();
+                        this.socket = null;
+                        continue;
+                    }
 
+                    this.socketTime = DateTime.UtcNow;
                     base.OnWebSocketConnected();
                     #endregion
                 }
                 else
                 {
                     #region 处理数据
-                    byte[] _buffer = new byte[8192];
+                    byte[] _buffer = new byte[16384];
                     Task<WebSocketReceiveResult> _task = this.socket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
                     while (_task.Status != TaskStatus.Canceled
                         && _task.Status != TaskStatus.Faulted
@@ -79,7 +82,9 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     try
                     {
-                        if (_task.Status != TaskStatus.RanToCompletion || _task.Result == null || _task.Result.MessageType == WebSocketMessageType.Close)
+                        if (_task.Status != TaskStatus.RanToCompletion
+                            || _task.Result == null
+                            || _task.Result.MessageType == WebSocketMessageType.Close)
                         {
                             throw new Exception();
                         }
@@ -87,47 +92,25 @@ namespace Lion.SDK.Bitcoin.Markets
                     catch
                     {
                         base.OnWebSocketDisconnected();
+                        this.socket.Dispose();
                         this.socket = null;
                         continue;
                     }
 
                     try
                     {
-                        int _bufferStart = _buffering.Length;
-                        Array.Resize(ref _buffering, _buffering.Length + _buffer.Length);
-                        Array.Copy(_buffer, 0, _buffering, _bufferStart, _buffer.Length);
-
-                        _buffer = GZip.Decompress(_buffering);
-                        _buffering = new byte[0];
+                        _buffer = GZip.Decompress(_buffer);
                     }
                     catch
                     {
-                        if (_buffering.Length > 1024 * 1024) { _buffering = new byte[0]; }
                         continue;
                     }
-                    _buffered += Encoding.UTF8.GetString(_buffer);
 
-                    int _start = 0;
-                    while (true)
-                    {
-                        if (_buffered.Length == 0) { break; }
+                    JObject _json = null;
+                    try { _json = JObject.Parse(Encoding.UTF8.GetString(_buffer)); } catch { _json = null; }
 
-                        int _index = _buffered.IndexOf("}", _start, StringComparison.Ordinal);
-                        if (_index == -1) { break; }
-
-                        string _testJson = _buffered.Substring(0, _index + 1);
-
-                        JObject _json = null;
-                        try { _json = JObject.Parse(_testJson); } catch { _json = null; }
-                        if (_json == null) { _start = _index + 1; continue; }
-                        _buffered = _buffered.Substring(_index + 1);
-
-                        while (_buffered.Length > 0 && _buffered[0] != '{')
-                        {
-                            _buffered = _buffered.Substring(1);
-                        }
-                        this.Receive(_json);
-                    }
+                    if (_json == null) { continue; }
+                    this.Receive(_json);
                     #endregion
                 }
             }
@@ -164,12 +147,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Receive
         public void Receive(JObject _json)
         {
+            Console.WriteLine("RECV : " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
+
             if (_json.Property("ping") != null)
             {
-                this.Send(new JObject()
-                {
-                    ["pong"] = Lion.DateTimePlus.DateTime2JSTime(DateTime.UtcNow)
-                });
+                this.Send(new JObject() { ["pong"] = _json["ping"].Value<long>() });
+                this.socketTime = DateTime.Now;
                 return;
             }
             if (_json.Property("subbed") != null && _json.Property("status") != null && _json["status"].Value<string>() == "ok")
@@ -201,7 +184,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 return;
             }
 
-            Console.WriteLine("RX : " + _json.ToString(Newtonsoft.Json.Formatting.None));
+            Console.WriteLine("RECV : " + _json.ToString(Newtonsoft.Json.Formatting.None));
         }
         #endregion
 

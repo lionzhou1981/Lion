@@ -61,7 +61,12 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
 
-                    if (_task.Status != TaskStatus.RanToCompletion) { this.socket = null; }
+                    if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
+                    {
+                        this.socket.Dispose();
+                        this.socket = null;
+                        continue;
+                    }
 
                     base.OnWebSocketConnected();
                     #endregion
@@ -87,6 +92,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     catch(Exception)
                     {
                         base.OnWebSocketDisconnected();
+                        this.socket.Dispose();
                         this.socket = null;
                         continue;
                     }
