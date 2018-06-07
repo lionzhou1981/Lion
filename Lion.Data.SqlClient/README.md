@@ -50,4 +50,10 @@ _tsql.Groups.Add("[Field]");
 ```
 
 # Select Example 2 Pager
-
+```c#
+_tsql.IsWith = true;
+_tsql.Fields.Add(FieldType.RowNumberAsc, "Id", "RowNumber");    // Paging field and order type
+_tsql.Fields.Add("*");                                          // Another fields
+_tsql.WithConditions.Add(new Condition(ConditionRelation.And, ExpressionMode.FieldVsValueVsValue, ExpressionRelation.Between, "RowNumber", _page * _pageSize + 1, (_page + 1) * _pageSize)); // page start with 0
+_tsql.WithOrderBys.Add(new OrderBy("RowNumber", OrderMode.Asc));
+```
