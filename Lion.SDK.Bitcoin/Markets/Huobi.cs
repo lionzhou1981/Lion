@@ -62,6 +62,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
                     {
+                        this.SubscribedChannels.Clear();
                         this.socket.Dispose();
                         this.socket = null;
                         continue;
@@ -92,6 +93,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     catch
                     {
                         base.OnWebSocketDisconnected();
+
+                        this.SubscribedChannels.Clear();
                         this.socket.Dispose();
                         this.socket = null;
                         continue;
@@ -147,16 +150,16 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Receive
         public void Receive(JObject _json)
         {
-            Console.WriteLine("RECV : " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
-
             if (_json.Property("ping") != null)
             {
+                Console.WriteLine("RECV : A " + _json["ping"].Value<long>());
                 this.Send(new JObject() { ["pong"] = _json["ping"].Value<long>() });
                 this.socketTime = DateTime.Now;
                 return;
             }
             if (_json.Property("subbed") != null && _json.Property("status") != null && _json["status"].Value<string>() == "ok")
             {
+                Console.WriteLine("RECV : B " + _json["subbed"].Value<string>());
                 this.SubscribedChannels.AddOrUpdate(
                     _json["subbed"].Value<string>(),
                     new string[] { "book", this.symbol },
@@ -166,6 +169,7 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             if (_json.Property("unsub") != null)
             {
+                Console.WriteLine("RECV : C " + _json["unsub"].Value<string>());
                 string[] _values;
                 if (!this.SubscribedChannels.TryRemove(_json["unsub"].Value<string>(), out _values))
                 {
@@ -180,6 +184,7 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             if (_json.Property("ch") != null)
             {
+                Console.WriteLine("RECV : D " + _json["ch"].Value<string>() + " " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
                 this.ReceiveSubscribeDepth(_json["ch"].Value<string>(), _json);
                 return;
             }
