@@ -10,6 +10,3 @@
 * Lion.Net.HttpClient - WebRequest
 * Lion.Net.WebClientPlus - WebClient + timeout and statuscode
 
-# Lion.SDK.Ethereum
-* Lion.SDK.Ethereum.Client - Http.JsonRPC
-* Lion.SDK.Ethereum.ContractABI - Ethereum Contract Data
