@@ -35,6 +35,16 @@ namespace  Lion.Encrypt
         }
         #endregion
 
+        #region EncodeHMACSHA1ToBase64
+        public static string EncodeHMACSHA1ToBase64(string _source, string _password, System.Text.Encoding _encoder = null)
+        {
+            HMACSHA1 _provider = new HMACSHA1((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+
+            return Base64.Encode(_hashed);
+        }
+        #endregion
+
         #region EncodeHMACSHA256
         public static string EncodeHMACSHA256(string _source, string _password, System.Text.Encoding _encoder = null)
         {

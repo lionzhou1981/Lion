@@ -117,6 +117,10 @@ namespace Lion.SDK.Bitcoin.Markets
                     #endregion
                 }
             }
+
+            this.SubscribedChannels.Clear();
+            this.socket.Dispose();
+            this.socket = null;
         }
         #endregion
 
@@ -196,6 +200,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #region ReceiveSubscribeDepth
         public void ReceiveSubscribeDepth(string _channelId, JObject _json)
         {
+            if (!this.SubscribedChannels.ContainsKey(_channelId))
+            {
+                Console.WriteLine("RECV : E " + _channelId + " " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
+                return;
+            }
+
             string[] _channel = this.SubscribedChannels[_channelId];
             if (_channel[0] == "book")
             {
