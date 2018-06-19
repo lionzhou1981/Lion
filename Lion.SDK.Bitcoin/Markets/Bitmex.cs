@@ -25,6 +25,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private bool running = false;
 
         private ClientWebSocket webSocket = null;
+        private Thread webSocketThread;
 
         #region Bitmex
         // instrument,margin,order,orderBookL2:XBTUSD
@@ -40,6 +41,15 @@ namespace Lion.SDK.Bitcoin.Markets
 
         #region Start
         public void Start()
+        {
+            this.running = true;
+            this.webSocketThread = new Thread(new ThreadStart(this.StartThread));
+            this.webSocketThread.Start();
+        }
+        #endregion
+
+        #region StartThread
+        private void StartThread()
         {
             string _buffered = "";
             int _bufferedStart = 0;
@@ -65,7 +75,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     if (_task.Status != TaskStatus.RanToCompletion || this.webSocket.State != WebSocketState.Open)
                     {
-                        this.Stop();
+                        this.Clear();
                         continue;
                     }
                     this.Log("Websocket connected");
@@ -96,7 +106,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                     catch
                     {
-                        this.Stop();
+                        this.Clear();
                         continue;
                     }
                     #endregion
@@ -112,15 +122,25 @@ namespace Lion.SDK.Bitcoin.Markets
                             if (_bufferedLevel != 0) { continue; }
 
                             string _test = "";
+                            JObject _json = null;
+
                             try
                             {
                                 _test = _buffered.Substring(0, i + 1);
-                                JObject _json = JObject.Parse(_test);
-                                this.Receive(_json);
+                                _json = JObject.Parse(_test);
                             }
                             catch (Exception _ex)
                             {
                                 this.Log($"Receive decode failed - {_ex.Message} - {_test}");
+                            }
+
+                            try
+                            {
+                                this.Receive(_json);
+                            }
+                            catch (Exception _ex)
+                            {
+                                this.Log($"Received failed - {_ex.Message} - {_test}");
                             }
 
                             _buffered = _buffered.Substring(i + 1);
@@ -133,17 +153,30 @@ namespace Lion.SDK.Bitcoin.Markets
                     #endregion
                 }
             }
+
+            this.Clear();
         }
         #endregion
 
         #region Stop
-        private void Stop()
+        public void Stop()
+        {
+            this.running = false;
+        }
+        #endregion
+
+        #region Clear
+        private void Clear()
         {
             this.Log("Websocket stopped");
 
-            this.Books.Clear();
+            this.webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
             this.webSocket?.Dispose();
             this.webSocket = null;
+
+            this.Balance.Clear();
+            this.Books.Clear();
+            this.Orders.Clear();
         }
         #endregion
 
@@ -283,9 +316,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 if (_item.Property("availableMargin") == null) { continue; }
 
                 decimal _available= _item["availableMargin"].Value<decimal>() * 0.00000001M;
-                bool _changed = _available != this.BalanceAvailable;
-                this.BalanceAvailable = _available;
-                this.OnBalanceChanged(this.BalanceAvailable);
+                bool _changed = _available != this.Balance["XBT"];
+                this.Balance["XBT"] = _available;
+                this.OnBalanceChanged(_available);
             }
         }
         #endregion

@@ -127,4 +127,23 @@ namespace Lion.SDK.Bitcoin.Markets
     #region OrderStatus
     public enum OrderStatus { New, Filling, Filled, Canceled, Finished }
     #endregion
+
+    #region Balance
+    public class Balance : ConcurrentDictionary<string, decimal>
+    {
+        public decimal this[string _symbol]
+        {
+            get
+            {
+                decimal _balance;
+                if (this.TryGetValue(_symbol, out _balance)) { return _balance; }
+                return 0M;
+            }
+            set
+            {
+                this.AddOrUpdate(_symbol.ToUpper(), value, (k, v) => value);
+            }
+        }
+    }
+    #endregion
 }

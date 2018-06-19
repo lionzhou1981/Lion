@@ -20,7 +20,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
     public class MarketBase
     {
-        public decimal BalanceAvailable = 0M;
+        public Balance Balance = new Balance();
 
         public event LogEventHandle OnLogEvent = null;
         public event BalanceChangedEventHandle OnBalanceChangedEvent = null;
