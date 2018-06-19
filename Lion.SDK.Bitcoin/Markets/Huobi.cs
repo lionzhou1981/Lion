@@ -62,9 +62,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
                     {
-                        this.SubscribedChannels.Clear();
-                        this.socket.Dispose();
-                        this.socket = null;
+                        this.Stop();
                         continue;
                     }
 
@@ -93,10 +91,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     catch
                     {
                         base.OnWebSocketDisconnected();
-
-                        this.SubscribedChannels.Clear();
-                        this.socket.Dispose();
-                        this.socket = null;
+                        this.Stop();
                         continue;
                     }
 
@@ -128,13 +123,17 @@ namespace Lion.SDK.Bitcoin.Markets
         public void Stop()
         {
             this.running = false;
+
+            this.SubscribedChannels?.Clear();
+            this.socket?.Dispose();
+            this.socket = null;
         }
         #endregion
 
         #region Dispose
         public void Dispose()
         {
-            this.running = false;
+            this.Stop();
         }
         #endregion
 

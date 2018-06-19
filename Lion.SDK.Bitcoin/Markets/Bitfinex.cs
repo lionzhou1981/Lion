@@ -19,6 +19,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private string key;
         private string secret;
         private bool running = false;
+
         private ClientWebSocket socket = null;
         private Thread thread;
         private ConcurrentDictionary<string, string[]> SubscribedChannels;

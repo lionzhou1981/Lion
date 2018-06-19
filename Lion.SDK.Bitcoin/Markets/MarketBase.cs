@@ -5,6 +5,12 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
+    public delegate void LogEventHandle(params string[] _text);
+    public delegate void BalanceChangedEventHandle(decimal _balanceAvailable);
+
+
+
+
     public delegate void WebSocketConnectedEventHandle();
     public delegate void WebSocketDisconnectedEventHandle();
     public delegate void WebSocketReceivedEventHandle(JToken _token);
@@ -14,6 +20,19 @@ namespace Lion.SDK.Bitcoin.Markets
 
     public class MarketBase
     {
+        public decimal BalanceAvailable = 0M;
+
+        public event LogEventHandle OnLogEvent = null;
+        public event BalanceChangedEventHandle OnBalanceChangedEvent = null;
+        internal virtual void OnLog(params string[] _text) { if (this.OnLogEvent != null) { this.OnLogEvent(_text); } }
+        internal virtual void OnBalanceChanged(decimal _balanceAvailable) { if (this.OnBalanceChangedEvent != null) { this.OnBalanceChanged(_balanceAvailable); } }
+
+
+
+
+
+
+
         public event WebSocketConnectedEventHandle OnWebSocketConnectedEvent = null;
         public event WebSocketDisconnectedEventHandle OnWebSocketDisconnectedEvent = null;
         public event WebSocketReceivedEventHandle OnWebSocketReceivedEvent = null;
