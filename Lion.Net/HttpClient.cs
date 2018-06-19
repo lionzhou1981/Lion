@@ -127,7 +127,7 @@ namespace Lion.Net
         }
         public HttpStatusCode EndResponse(byte[] _postData)
         {
-            if ((this.Request.Method == "POST" || this.Request.Method == "PUT") && _postData.Length > 0)
+            if (this.Request.Method != "GET" && _postData.Length > 0)
             {
                 byte[] _byteArray = _postData;
                 this.Request.ContentLength = _byteArray.Length;

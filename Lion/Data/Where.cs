@@ -10,18 +10,18 @@ namespace Lion.Data
     public class Where
     {
         #region public
-        #region ConditionRelation
+        #region WhereRelation
         /// <summary>
         /// 与前条件的关系
         /// </summary>
-        public ConditionRelation ConditionRelation { get; set; }
+        public WhereRelation WhereRelation { get; set; }
         #endregion
 
-        #region Conditions
+        #region Wheres
         /// <summary>
         /// 子条件的内容
         /// </summary>
-        public IList<Where> Conditions { get; set; }
+        public WhereCollection Wheres { get; set; }
         #endregion
 
         #region ExpressionMode
@@ -59,135 +59,129 @@ namespace Lion.Data
         public object Field3 { get; set; }
         #endregion
 
-        #region HasSubCondition
+        #region HasSubWhere
         /// <summary>
         /// 是否有子条件 默认为没有子条件
         /// </summary>
-        public bool HasSubCondition { get; private set; }
+        public bool HasSubWhere { get; private set; }
         #endregion
         #endregion
 
         #region Structure
-        #region Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object,object,object)
+        #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object,object)
         /// <summary>
-        /// Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object,object,object) 构造函数
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object,object) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
+        /// <param name="_whereRelation">与前条件关系</param>
         /// <param name="_expressionMode">表达式模式</param>
         /// <param name="_expressionRelation">表达式关系</param>
         /// <param name="_field1">字段1的内容</param>
         /// <param name="_field2">字段2的内容</param>
         /// <param name="_field3">字段3的内容</param>
-        public Where(ConditionRelation _conditionRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2, object _field3)
+        public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2, object _field3)
         {
-            this.ConditionRelation = _conditionRelation;
+            this.WhereRelation = _whereRelation;
             this.ExpressionMode = _expressionMode;
             this.ExpressionRelation = _expressionRelation;
             this.Field1 = _field1;
             this.Field2 = _field2;
             this.Field3 = _field3;
-            this.HasSubCondition = false;
-            this.Conditions = new List<Where>();
+            this.HasSubWhere = false;
+            this.Wheres = new WhereCollection();
         }
         #endregion
 
-        #region Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object,object)
+        #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object)
         /// <summary>
-        /// Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object,object) 构造函数
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
+        /// <param name="_whereRelation">与前条件关系</param>
         /// <param name="_expressionMode">表达式模式</param>
         /// <param name="_expressionRelation">表达式关系</param>
         /// <param name="_field1">字段1的内容</param>
         /// <param name="_field2">字段2的内容</param>
-        public Where(ConditionRelation _conditionRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2)
+        public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2)
         {
-            this.ConditionRelation = _conditionRelation;
+            this.WhereRelation = _whereRelation;
             this.ExpressionMode = _expressionMode;
             this.ExpressionRelation = _expressionRelation;
             this.Field1 = _field1;
             this.Field2 = _field2;
             this.Field3 = null;
-            this.HasSubCondition = false;
-            this.Conditions = new List<Where>();
+            this.HasSubWhere = false;
+            this.Wheres = new WhereCollection();
         }
         #endregion
 
-        #region Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object)
+        #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object)
         /// <summary>
-        /// Condition(ConditionRelation,ExpressionMode,ExpressionRelation,object) 构造函数
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
+        /// <param name="_whereRelation">与前条件关系</param>
         /// <param name="_expressionMode">表达式模式</param>
         /// <param name="_expressionRelation">表达式关系</param>
         /// <param name="_field1">字段1的内容</param>
-        public Where(ConditionRelation _conditionRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1)
+        public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1)
         {
-            this.ConditionRelation = _conditionRelation;
+            this.WhereRelation = _whereRelation;
             this.ExpressionMode = _expressionMode;
             this.ExpressionRelation = _expressionRelation;
             this.Field1 = _field1;
             this.Field2 = null;
             this.Field3 = null;
-            this.HasSubCondition = false;
-            this.Conditions = new List<Where>();
+            this.HasSubWhere = false;
+            this.Wheres = new WhereCollection();
         }
         #endregion
 
-        #region Condition(ConditionRelation,bool)
+        #region Where(WhereRelation,bool)
         /// <summary>
-        /// Condition(ConditionRelation,bool) 构造函数
+        /// Where(WhereRelation,bool) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
+        /// <param name="_whereRelation">与前条件关系</param>
         /// <param name="_hasSubCondition">是否有子条件</param>
-        public Where(ConditionRelation _conditionRelation, bool _hasSubCondition)
+        public Where(WhereRelation _whereRelation, bool _hasSubCondition)
         {
-            this.ConditionRelation = _conditionRelation;
-            this.HasSubCondition = true;
-            this.Conditions = new List<Where>();
+            this.WhereRelation = _whereRelation;
+            this.HasSubWhere = true;
+            this.Wheres = new WhereCollection();
         }
         #endregion
 
-        #region Condition(ConditionRelation,string)
+        #region Where(WhereRelation,string)
         /// <summary>
-        /// Condition(ConditionRelation) 构造函数
+        /// Where(WhereRelation) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
-        /// <param name="_conditionString">条件语句</param>
-        public Where(ConditionRelation _conditionRelation, string _conditionString)
+        /// <param name="_whereRelation">与前条件关系</param>
+        /// <param name="_whereString">条件语句</param>
+        public Where(WhereRelation _whereRelation, string _whereString)
         {
-            this.ConditionRelation = _conditionRelation;
-            this.HasSubCondition = false;
+            this.WhereRelation = _whereRelation;
+            this.HasSubWhere = false;
             this.ExpressionRelation = ExpressionRelation.Custom;
-            this.Field1 = _conditionString;
-            this.Conditions = new List<Where>();
+            this.Field1 = _whereString;
+            this.Wheres = new WhereCollection();
         }
         #endregion
 
-        #region Condition(ConditionRelation)
+        #region Where(WhereRelation)
         /// <summary>
-        /// Condition(ConditionRelation) 构造函数
+        /// Where(WhereRelation) 构造函数
         /// </summary>
-        /// <param name="_conditionRelation">与前条件关系</param>
-        public Where(ConditionRelation _conditionRelation)
+        /// <param name="_whereRelation">与前条件关系</param>
+        public Where(WhereRelation _whereRelation)
         {
-            this.ConditionRelation = _conditionRelation;
-            this.HasSubCondition = false;
-            this.Conditions = new List<Where>();
+            this.WhereRelation = _whereRelation;
+            this.HasSubWhere = false;
+            this.Wheres = new WhereCollection();
         }
         #endregion
         #endregion
 
         #region Method
-        /// <summary>
-        /// 添加子条件
-        /// </summary>
-        /// <param name="_condition">条件</param>
-        public void AddCondition(Where _condition)
-        {
-            this.HasSubCondition = true;
-            this.Conditions.Add(_condition);
-        }
+        public void Add(Where _where) => this.Wheres.Add(_where);
+        public void And(params object[] _values) => this.Wheres.And(_values);
+        public void Or(params object[] _values) => this.Wheres.Or(_values);
         #endregion
     }
 
@@ -205,11 +199,11 @@ namespace Lion.Data
         /// 3 两个字段条件 =,&lt;&gt;,&gt;,&gt;=,&lt;,&lt;=,LIKE,NOTLIKE
         /// O 三个以上字段条件 BETWEEN,IN,NOTIN
         /// </example>
-        public void And(params object[] _values) => this.Add(ConditionRelation.And, _values);
+        public void And(params object[] _values) => this.Add(WhereRelation.And, _values);
 
-        public void Or(params object[] _values) => this.Add(ConditionRelation.Or, _values);
+        public void Or(params object[] _values) => this.Add(WhereRelation.Or, _values);
 
-        private void Add(ConditionRelation _relation, object[] _values)
+        private void Add(WhereRelation _relation, object[] _values)
         {
             bool[] _fields = new bool[_values.Length];
             for (int i = 0; i < _fields.Length; i++)

@@ -371,19 +371,19 @@ namespace Lion.Data.SqlClient
                 Where _where = _wheres[_index];
                 if (_index > 0)
                 {
-                    switch (_where.ConditionRelation)
+                    switch (_where.WhereRelation)
                     {
-                        case ConditionRelation.And:
+                        case WhereRelation.And:
                             _return += " AND ";
                             break;
-                        case ConditionRelation.Or:
+                        case WhereRelation.Or:
                             _return += " OR ";
                             break;
                     }
                 }
-                if (_where.HasSubCondition)
+                if (_where.HasSubWhere)
                 {
-                    _return += "(" + GetSqlWhere(_where.Conditions, ref _sqlCommand) + ")";
+                    _return += "(" + GetSqlWhere(_where.Wheres, ref _sqlCommand) + ")";
                 }
                 else
                 {

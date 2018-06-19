@@ -114,11 +114,11 @@ namespace Lion.Data
     }
     #endregion
 
-    #region ConditionRelation
+    #region WhereRelation
     /// <summary>
     /// 条件之间的关系
     /// </summary>
-    public enum ConditionRelation
+    public enum WhereRelation
     {
         /// <summary>
         /// 与
