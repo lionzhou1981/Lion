@@ -17,9 +17,6 @@ namespace Lion.SDK.Bitcoin.Markets
         private static string httpUrl = "https://api.fcoin.com/v2";
         private static string wsUrl = "wss://api.fcoin.com/v2/ws";
 
-        public Books Books;
-        public Orders Orders;
-
         private string key;
         private string secret;
         private string[] listens;
@@ -258,7 +255,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 decimal _price = _asks[i].Value<decimal>();
                 decimal _amount = _asks[i + 1].Value<decimal>();
-                BookItem _item = new BookItem(_price, _amount);
+                BookItem _item = new BookItem(_symbol, "ASK", _price, _amount);
                 _askList.TryAdd(_item.Id, _item);
             }
 
@@ -267,7 +264,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 decimal _price = _asks[i].Value<decimal>();
                 decimal _amount = _asks[i + 1].Value<decimal>();
-                BookItem _item = new BookItem(_price, _amount);
+                BookItem _item = new BookItem(_symbol, "BID", _price, _amount);
                 _bidList.TryAdd(_item.Id, _item);
             }
 

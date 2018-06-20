@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -15,9 +16,8 @@ namespace Lion.SDK.Bitcoin.Markets
         private static string httpUrl = "https://www.bitmex.com/api/v1";
         private static string wsUrl = "wss://www.bitmex.com/realtime";
 
-        public Books Books;
-        public Orders Orders;
         public ConcurrentDictionary<string, decimal> FundingRate;
+        public IList<string> BookInitialized;
 
         private string key;
         private string secret;
@@ -35,6 +35,7 @@ namespace Lion.SDK.Bitcoin.Markets
             this.secret = _secret;
             this.listens = _listens;
             this.Books = new Books();
+            this.BookInitialized = new List<string>();
             this.FundingRate = new ConcurrentDictionary<string, decimal>();
         }
         #endregion
@@ -170,13 +171,14 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             this.Log("Websocket stopped");
 
-            this.webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
+            this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait();
             this.webSocket?.Dispose();
             this.webSocket = null;
 
-            this.Balance.Clear();
-            this.Books.Clear();
-            this.Orders.Clear();
+            this.Balance?.Clear();
+            this.Books?.Clear();
+            this.BookInitialized?.Clear();
+            this.Orders?.Clear();
         }
         #endregion
 
@@ -252,27 +254,33 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
                     decimal _price = _item["price"].Value<decimal>();
-                    decimal _amount = _item["size"].Value<decimal>();
+                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
 
-                    BookItem _bookItem = new BookItem(_price, _amount, _id);
-                    if (_side == "BUY") { _bids.TryAdd(_id, _bookItem); }
-                    if (_side == "SELL") { _asks.TryAdd(_id, _bookItem); }
+                    BookItem _bookItem = new BookItem(_symbol, _side, _price, _amount, _id);
+                    if (_side == "BID") { _bids.TryAdd(_id, _bookItem); }
+                    if (_side == "ASK") { _asks.TryAdd(_id, _bookItem); }
+
                 }
 
                 this.Books[_symbol, "ASK"] = _asks;
                 this.Books[_symbol, "BID"] = _bids;
+                this.BookInitialized.Add(_symbol);
+                this.OnBookStarted(_symbol);
             }
             else if (_action == "insert")
             {
                 foreach (JObject _item in _list)
                 {
                     string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    string _side = _item["side"].Value<string>().ToUpper();
+                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
+
+                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
-                    decimal _amount = _item["size"].Value<decimal>();
+                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
                     decimal _price = _item["price"].Value<decimal>();
 
-                    this.Books[_symbol, _side].Insert(_id, _price, _amount);
+                    BookItem _bookItem = this.Books[_symbol, _side].Insert(_id, _price, _amount);
+                    this.OnBookInsert(_bookItem);
                 }
             }
             else if (_action == "update")
@@ -280,13 +288,20 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JObject _item in _list)
                 {
                     string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    string _side = _item["side"].Value<string>().ToUpper();
-                    string _id = _item["id"].Value<string>();
-                    decimal _amount = _item["size"].Value<decimal>();
+                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
 
-                    if (!this.Books[_symbol, _side].Update(_id, _amount))
+                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
+                    string _id = _item["id"].Value<string>();
+                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
+
+                    BookItem _bookItem = this.Books[_symbol, _side].Update(_id, _amount);
+                    if (_bookItem == null)
                     {
                         this.Log("Book update failed - " + _item.ToString(Newtonsoft.Json.Formatting.None));
+                    }
+                    else
+                    {
+                        this.OnBookUpdate(_bookItem);
                     }
                 }
             }
@@ -295,12 +310,19 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JObject _item in _list)
                 {
                     string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    string _side = _item["side"].Value<string>().ToUpper();
+                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
+
+                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
 
-                    if (!this.Books[_symbol, _side].Delete(_id))
+                    BookItem _bookItem = this.Books[_symbol, _side].Delete(_id);
+                    if (_bookItem==null)
                     {
                         this.Log("Book delete failed - " + _item.ToString(Newtonsoft.Json.Formatting.None));
+                    }
+                    else
+                    {
+                        this.OnBookDelete(_bookItem);
                     }
                 }
             }
@@ -318,7 +340,6 @@ namespace Lion.SDK.Bitcoin.Markets
                 decimal _available= _item["availableMargin"].Value<decimal>() * 0.00000001M;
                 bool _changed = _available != this.Balance["XBT"];
                 this.Balance["XBT"] = _available;
-                this.OnBalanceChanged(_available);
             }
         }
         #endregion

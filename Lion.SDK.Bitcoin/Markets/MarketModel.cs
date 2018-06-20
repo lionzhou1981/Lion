@@ -23,8 +23,17 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             set
             {
-                this.AddOrUpdate(_symbol + ":" + _side, value, (k, v) => value);
+                BookItems _items = value;
+                _items.Symbol = _symbol;
+                this.AddOrUpdate(_symbol + ":" + _side, _items, (k, v) => _items);
             }
+        }
+        #endregion
+
+        #region Clear
+        public new void Clear()
+        {
+            base.Clear();
         }
         #endregion
     }
@@ -33,6 +42,7 @@ namespace Lion.SDK.Bitcoin.Markets
     #region BookItems
     public class BookItems : ConcurrentDictionary<string, BookItem>
     {
+        public string Symbol;
         public string Side;
         public BookItems(string _side) { this.Side = _side; }
 
@@ -43,26 +53,48 @@ namespace Lion.SDK.Bitcoin.Markets
             return null;
         }
 
-        public void Insert(string _id, decimal _price, decimal _amount)
+        #region Insert
+        public BookItem Insert(string _id, decimal _price, decimal _amount)
         {
-            BookItem _item = new BookItem(_price, _amount, _id);
+            BookItem _item = new BookItem(this.Symbol, this.Side, _price, _amount, _id);
             this.AddOrUpdate(_id, _item, (k, v) => _item);
+            return _item;
         }
+        #endregion
 
-        public bool Update(string _id, decimal _amount)
+        #region Update
+        public BookItem Update(string _id, decimal _amount)
         {
             BookItem _item;
-            if (!this.TryGetValue(_id, out _item)) { return false; }
+            if (!this.TryGetValue(_id, out _item)) { return null; }
 
             _item.Amount = _amount;
-            return true;
+            return _item;
         }
+        #endregion
 
-        public bool Delete(string _id)
+        #region Delete
+        public BookItem Delete(string _id)
         {
             BookItem _item;
-            return this.TryRemove(_id, out _item);
+            if(!this.TryRemove(_id, out _item)) { return null; }
+            return _item;
         }
+        #endregion
+
+        #region GetPrice
+        public decimal GetPrice(decimal _amount)
+        {
+            BookItem[] _list = this.ToArray();
+            decimal _count = 0M;
+            foreach(BookItem _item in _list)
+            {
+                _count += _item.Amount;
+                if (_count >= _amount) { return _item.Price; }
+            }
+            return 0M;
+        }
+        #endregion
     }
     #endregion
 
@@ -70,11 +102,15 @@ namespace Lion.SDK.Bitcoin.Markets
     public class BookItem
     {
         public string Id;
+        public string Symbol;
+        public string Side;
         public decimal Price;
         public decimal Amount;
 
-        public BookItem(decimal _price,decimal _amount,string _id = "")
+        public BookItem(string _symbol,string _side, decimal _price, decimal _amount, string _id = "")
         {
+            this.Symbol = _symbol;
+            this.Side = _side;
             this.Price = _price;
             this.Amount = _amount;
             this.Id = _id == "" ? _price.ToString() : _id;
@@ -131,7 +167,7 @@ namespace Lion.SDK.Bitcoin.Markets
     #region Balance
     public class Balance : ConcurrentDictionary<string, decimal>
     {
-        public decimal this[string _symbol]
+        public new decimal this[string _symbol]
         {
             get
             {

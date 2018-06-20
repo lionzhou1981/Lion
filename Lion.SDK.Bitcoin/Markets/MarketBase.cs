@@ -6,8 +6,10 @@ using Newtonsoft.Json.Linq;
 namespace Lion.SDK.Bitcoin.Markets
 {
     public delegate void LogEventHandle(params string[] _text);
-    public delegate void BalanceChangedEventHandle(decimal _balanceAvailable);
-
+    public delegate void BookStartedEventHandle(string _symbol);
+    public delegate void BookInsertEventHandle(BookItem _bookItem);
+    public delegate void BookUpdateEventHandle(BookItem _bookItem);
+    public delegate void BookDeleteEventHandle(BookItem _bookItem);
 
 
 
@@ -20,12 +22,21 @@ namespace Lion.SDK.Bitcoin.Markets
 
     public class MarketBase
     {
+        public Books Books;
+        public Orders Orders;
         public Balance Balance = new Balance();
 
         public event LogEventHandle OnLogEvent = null;
-        public event BalanceChangedEventHandle OnBalanceChangedEvent = null;
+        public event BookStartedEventHandle OnBookStartedEvent = null;
+        public event BookInsertEventHandle OnBookInsertEvent = null;
+        public event BookUpdateEventHandle OnBookUpdateEvent = null;
+        public event BookDeleteEventHandle OnBookDeleteEvent = null;
+
         internal virtual void OnLog(params string[] _text) { if (this.OnLogEvent != null) { this.OnLogEvent(_text); } }
-        internal virtual void OnBalanceChanged(decimal _balanceAvailable) { if (this.OnBalanceChangedEvent != null) { this.OnBalanceChanged(_balanceAvailable); } }
+        internal virtual void OnBookStarted(string _symbol) { if (this.OnBookStartedEvent != null) { this.OnBookStartedEvent(_symbol); } }
+        internal virtual void OnBookInsert(BookItem _bookItem) { if (this.OnBookInsertEvent != null) { this.OnBookInsertEvent(_bookItem); } }
+        internal virtual void OnBookUpdate(BookItem _bookItem) { if (this.OnBookUpdateEvent != null) { this.OnBookUpdateEvent(_bookItem); } }
+        internal virtual void OnBookDelete(BookItem _bookItem) { if (this.OnBookDeleteEvent != null) { this.OnBookDeleteEvent(_bookItem); } }
 
 
 
