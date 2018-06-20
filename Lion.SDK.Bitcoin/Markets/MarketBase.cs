@@ -10,7 +10,9 @@ namespace Lion.SDK.Bitcoin.Markets
     public delegate void BookInsertEventHandle(BookItem _bookItem);
     public delegate void BookUpdateEventHandle(BookItem _bookItem);
     public delegate void BookDeleteEventHandle(BookItem _bookItem);
-
+    public delegate void OrderStartedEventHandle();
+    public delegate void OrderInsertEventHandle(OrderItem _orderItem);
+    public delegate void OrderUpdateEventHandle(OrderItem _orderItem);
 
 
     public delegate void WebSocketConnectedEventHandle();
@@ -31,12 +33,18 @@ namespace Lion.SDK.Bitcoin.Markets
         public event BookInsertEventHandle OnBookInsertEvent = null;
         public event BookUpdateEventHandle OnBookUpdateEvent = null;
         public event BookDeleteEventHandle OnBookDeleteEvent = null;
+        public event OrderStartedEventHandle OnOrderStartedEvent = null;
+        public event OrderInsertEventHandle OnOrderInsertEvent = null;
+        public event OrderUpdateEventHandle OnOrderUpdateEvent = null;
 
         internal virtual void OnLog(params string[] _text) { if (this.OnLogEvent != null) { this.OnLogEvent(_text); } }
         internal virtual void OnBookStarted(string _symbol) { if (this.OnBookStartedEvent != null) { this.OnBookStartedEvent(_symbol); } }
         internal virtual void OnBookInsert(BookItem _bookItem) { if (this.OnBookInsertEvent != null) { this.OnBookInsertEvent(_bookItem); } }
         internal virtual void OnBookUpdate(BookItem _bookItem) { if (this.OnBookUpdateEvent != null) { this.OnBookUpdateEvent(_bookItem); } }
         internal virtual void OnBookDelete(BookItem _bookItem) { if (this.OnBookDeleteEvent != null) { this.OnBookDeleteEvent(_bookItem); } }
+        internal virtual void OnOrderStarted() { if (this.OnOrderStartedEvent != null) { this.OnOrderStartedEvent(); } }
+        internal virtual void OnOrderInsert(OrderItem _orderItem) { if (this.OnOrderInsertEvent != null) { this.OnOrderInsertEvent(_orderItem); } }
+        internal virtual void OnOrderUpdate(OrderItem _orderItem) { if (this.OnOrderUpdateEvent != null) { this.OnOrderUpdateEvent(_orderItem); } }
 
 
 

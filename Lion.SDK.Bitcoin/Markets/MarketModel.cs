@@ -132,6 +132,13 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
         #endregion
+
+        #region ToArray
+        public new OrderItem[] ToArray()
+        {
+            return this.Values.ToArray();
+        }
+        #endregion
     }
     #endregion
 
