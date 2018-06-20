@@ -254,7 +254,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
                     decimal _price = _item["price"].Value<decimal>();
-                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
+                    decimal _amount = _item["size"].Value<decimal>() / _price;
 
                     BookItem _bookItem = new BookItem(_symbol, _side, _price, _amount, _id);
                     if (_side == "BID") { _bids.TryAdd(_id, _bookItem); }
@@ -276,8 +276,8 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
-                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
                     decimal _price = _item["price"].Value<decimal>();
+                    decimal _amount = _item["size"].Value<decimal>() / _price;
 
                     BookItem _bookItem = this.Books[_symbol, _side].Insert(_id, _price, _amount);
                     this.OnBookInsert(_bookItem);
@@ -292,12 +292,20 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
-                    decimal _amount = _item["size"].Value<decimal>() * 0.00000001M;
+                    decimal _amount = _item["size"].Value<decimal>();
 
-                    BookItem _bookItem = this.Books[_symbol, _side].Update(_id, _amount);
+                    BookItem _bookItem = this.Books[_symbol, _side][_id];
                     if (_bookItem == null)
                     {
-                        this.Log("Book update failed - " + _item.ToString(Newtonsoft.Json.Formatting.None));
+                        this.Log("Book update failed 1 - " + _item.ToString(Newtonsoft.Json.Formatting.None));
+                        return;
+                    }
+
+                    _amount = _amount / _bookItem.Price;
+                    _bookItem = this.Books[_symbol, _side].Update(_id, _amount);
+                    if (_bookItem == null)
+                    {
+                        this.Log("Book update failed 2 - " + _item.ToString(Newtonsoft.Json.Formatting.None));
                     }
                     else
                     {
