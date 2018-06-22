@@ -541,7 +541,19 @@ namespace Lion.SDK.Bitcoin.Markets
 
     public class Fundings : ConcurrentDictionary<string, FundingItem>
     {
-
+        public new FundingItem this[string _symbol]
+        {
+            get
+            {
+                FundingItem _item;
+                if (this.TryGetValue(_symbol, out _item)) { return _item; }
+                return null;
+            }
+            set
+            {
+                this.AddOrUpdate(_symbol, value, (k, v) => value);
+            }
+        }
     }
 
     public class FundingItem
