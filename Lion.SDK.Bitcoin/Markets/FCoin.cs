@@ -152,11 +152,11 @@ namespace Lion.SDK.Bitcoin.Markets
         #region StartBalance
         private void StartBalance()
         {
-            int _loop = 300;
+            int _loop = 100;
             while (this.running)
             {
                 if (_loop > 0) { _loop--; Thread.Sleep(100); continue; }
-                _loop = 300;
+                _loop = 100;
 
                 JObject _json = this.Call("GET", "/accounts/balance");
                 if (_json == null) { continue; }
@@ -230,7 +230,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 return;
             }
 
-            string _type = _json.Property("type") != null ? "" : _json["type"].Value<string>();
+            string _type = _json.Property("type") == null ? "" : _json["type"].Value<string>();
             if (_type == "") { return; }
 
             string[] _command = _type.Split('.');

@@ -357,7 +357,10 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             foreach (JObject _item in _list)
             {
-                if (_item.Property("symbol") == null || _item.Property("fundingRate") == null) { continue; }
+                if (_item.Property("symbol") == null
+                    || _item["symbol"].Type == JTokenType.Null
+                    || _item.Property("fundingRate") == null
+                    || _item["fundingRate"].Type == JTokenType.Null) { continue; }
 
                 string _symbol = _item["symbol"].Value<string>();
                 decimal _rate = _item["fundingRate"].Value<decimal>();
