@@ -16,7 +16,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private static string httpUrl = "https://www.bitmex.com/api/v1";
         private static string wsUrl = "wss://www.bitmex.com/realtime";
 
-        public ConcurrentDictionary<string, decimal> FundingRate;
+        public Fundings Fundings;
         public IList<string> BookInitialized;
 
         private string key;
@@ -36,7 +36,7 @@ namespace Lion.SDK.Bitcoin.Markets
             this.listens = _listens;
             this.Books = new Books();
             this.BookInitialized = new List<string>();
-            this.FundingRate = new ConcurrentDictionary<string, decimal>();
+            this.Fundings = new Fundings();
         }
         #endregion
 
@@ -179,6 +179,7 @@ namespace Lion.SDK.Bitcoin.Markets
             this.Books?.Clear();
             this.BookInitialized?.Clear();
             this.Orders?.Clear();
+            this.Fundings?.Clear();
         }
         #endregion
 
@@ -364,8 +365,9 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 string _symbol = _item["symbol"].Value<string>();
                 decimal _rate = _item["fundingRate"].Value<decimal>();
+                DateTime _time = _item["fundingTimestamp"].Value<DateTime>();
 
-                this.FundingRate.AddOrUpdate(_symbol, _rate, (k, v) => _rate);
+                this.Fundings.AddOrUpdate(_symbol, new FundingItem() { Rate = _rate, Time = _time }, (k, v) => { v.Rate = _rate; v.Time = _time; return v; });
             }
         }
         #endregion
@@ -393,9 +395,14 @@ namespace Lion.SDK.Bitcoin.Markets
                     _order.CreateTime = _createTime;
 
                     _orders.AddOrUpdate(_id, _order, (k, v) => _order);
+                    if (_action == "insert") { this.OnOrderInsert(_order); }
                 }
 
-                if (_action == "partial") { this.Orders = _orders; }
+                if (_action == "partial")
+                {
+                    this.Orders = _orders;
+                    this.OnOrderStarted();
+                }
                 #endregion
             }
             else if (_action == "update")
@@ -431,6 +438,7 @@ namespace Lion.SDK.Bitcoin.Markets
                             default: _order.Status = OrderStatus.Filling; continue;
                         }
                     }
+                    this.OnOrderUpdate(_order);
                 }
                 #endregion
             }
@@ -498,15 +506,15 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _side, decimal _price, decimal _amount)
+        public string OrderCreate(string _symbol, string _side, decimal _price, decimal _amount, string _type = "Limit")
         {
             JObject _result = (JObject)this.Call(
                 "POST", "/order",
-                "symbol", "XBTUSD",
+                "symbol", _symbol,
                 "side", _side == "BID" ? "Buy" : "Sell",
                 "orderQty", Math.Round(_amount, 0, MidpointRounding.AwayFromZero).ToString(),
                 "price", _price.ToString("0.0"),
-                "ordType", "Limit");
+                "ordType", _type);
             if (_result == null) { return ""; }
             if (_result.Property("error") != null)
             {
@@ -532,5 +540,16 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         private void Log(string _text) => this.OnLog("Bitmex", _text);
+    }
+
+    public class Fundings : ConcurrentDictionary<string, FundingItem>
+    {
+
+    }
+
+    public class FundingItem
+    {
+        public decimal Rate;
+        public DateTime Time;
     }
 }
