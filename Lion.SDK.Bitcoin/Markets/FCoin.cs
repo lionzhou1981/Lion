@@ -188,7 +188,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             this.Log("Websocket stopped");
 
-            this.webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
+            try { this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait(); } catch { }
             this.webSocket?.Dispose();
             this.webSocket = null;
 
@@ -317,23 +317,23 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public bool OrderCreate(string _side, decimal _amount)
+        public string OrderCreate(string _symbol, string _side, decimal _amount)
         {
             JObject _result = this.Call (
                 "POST", "/orders",
-                "symbol", "btcusdt",
+                "symbol", _symbol,
                 "side", _side == "BID" ? "buy" : "sell",
                 "type", "market",
                 "amount", _amount.ToString());
 
-            if (_result == null) { return false; }
+            if (_result == null) { return ""; }
             if (_result.Property("status") == null || _result["status"].Value<int>() != 0)
             {
-                this.Log($"Order create failed - {_side} {_amount} - {_result?.ToString(Newtonsoft.Json.Formatting.None)}");
-                return false;
+                this.Log($"Order create failed - {_side} {_amount}");
+                this.Log($"Order create failed - {_result.ToString(Newtonsoft.Json.Formatting.None)}");
+                return "";
             }
-
-            return true;
+            return _result["data"].Value<string>();
         }
         #endregion
 

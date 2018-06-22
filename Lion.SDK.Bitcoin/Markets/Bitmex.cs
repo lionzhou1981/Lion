@@ -386,12 +386,13 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _symbol = _item["symbol"].Value<string>();
                     string _side = _item["side"].Value<string>();
                     decimal _price = (_item.Property("price") == null || _item["price"].Type == JTokenType.Null) ? 0M : _item["price"].Value<decimal>();
+                    decimal _priceFilled = (_item.Property("avgPx") == null || _item["avgPx"].Type == JTokenType.Null) ? 0M : _item["avgPx"].Value<decimal>();
                     decimal _amount = (_item.Property("simpleOrderQty") == null || _item["simpleOrderQty"].Type == JTokenType.Null) ? 0M : _item["simpleOrderQty"].Value<decimal>();
                     decimal _amountFilled = (_item.Property("simpleCumQty") == null || _item["simpleCumQty"].Type == JTokenType.Null) ? 0M : _item["simpleCumQty"].Value<decimal>();
                     DateTime _createTime = (_item.Property("transactTime") == null || _item["transactTime"].Type == JTokenType.Null) ? DateTime.UtcNow : _item["transactTime"].Value<DateTime>();
 
                     OrderItem _order = new OrderItem(_id, _symbol, _side, _price, _amount);
-                    _order.AmountFilled = _amountFilled;
+                    _order.FilledAmount = _amountFilled;
                     _order.CreateTime = _createTime;
 
                     _orders.AddOrUpdate(_id, _order, (k, v) => _order);
@@ -420,17 +421,21 @@ namespace Lion.SDK.Bitcoin.Markets
                         continue;
                     }
 
-                    if (_item.Property("simpleOrderQty") != null && _item["simpleOrderQty"].Type != JTokenType.Null)
+                    if (_item.Property("simpleOrderQty") != null && _item["simpleOrderQty"].Value<decimal?>() != null)
                     {
                         _order.Amount = _item["simpleOrderQty"].Value<decimal>();
                     }
-                    if (_item.Property("simpleCumQty") != null && _item["simpleCumQty"].Type != JTokenType.Null)
+                    if (_item.Property("simpleCumQty") != null && _item["simpleCumQty"].Value<decimal?>() != null)
                     {
-                        _order.AmountFilled = _item["simpleCumQty"].Value<decimal>();
+                        _order.FilledAmount = _item["simpleCumQty"].Value<decimal>();
+                    }
+                    if (_item.Property("avgPx") != null && _item["avgPx"].Value<decimal?>() != null)
+                    {
+                        _order.FilledPrice = _item["avgPx"].Value<decimal>();
                     }
                     if (_item.Property("ordStatus") != null && _item["ordStatus"].Type != JTokenType.Null)
                     {
-                        switch(_item["ordStatus"].Value<string>().ToLower())
+                        switch (_item["ordStatus"].Value<string>().ToLower())
                         {
                             case "new": _order.Status = OrderStatus.New; continue;
                             case "filled": _order.Status = OrderStatus.Filled; continue;
@@ -438,6 +443,7 @@ namespace Lion.SDK.Bitcoin.Markets
                             default: _order.Status = OrderStatus.Filling; continue;
                         }
                     }
+
                     this.OnOrderUpdate(_order);
                 }
                 #endregion
@@ -528,20 +534,27 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCancel
         public bool OrderCancel(string _orderId)
         {
-            JToken _json = this.Call("DELETE", "/order", "orderID", _orderId);
-            if (_json == null) { return false; }
-            if (_json.GetType() != typeof(JObject) || ((JObject)_json).Property("error") != null)
+            JToken _jtoken = this.Call("DELETE", "/order", "orderID", _orderId);
+            if (_jtoken is JObject)
             {
-                this.Log("Order cancel failed - " + _json.ToString(Newtonsoft.Json.Formatting.None));
-                return false;
+                JObject _json = (JObject)_jtoken;
+                string _status = _json.Property("ordStatus") == null ? "" : _json["ordStatus"].Value<string>();
+                if (_status == "Canceled") { return true; }
+                if (_json.Property("error") != null)
+                {
+                    this.Log("Order cancel failed - " + _json.ToString(Newtonsoft.Json.Formatting.None));
+                    return false;
+                }
             }
-            return true;
+            Console.WriteLine(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
+            return false;
         }
         #endregion
 
         private void Log(string _text) => this.OnLog("Bitmex", _text);
     }
 
+    #region Fundings
     public class Fundings : ConcurrentDictionary<string, FundingItem>
     {
         public new FundingItem this[string _symbol]
@@ -564,4 +577,5 @@ namespace Lion.SDK.Bitcoin.Markets
         public decimal Rate;
         public DateTime Time;
     }
+    #endregion
 }

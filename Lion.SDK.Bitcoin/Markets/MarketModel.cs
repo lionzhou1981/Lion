@@ -150,7 +150,8 @@ namespace Lion.SDK.Bitcoin.Markets
         public string Side;
         public decimal Price;
         public decimal Amount;
-        public decimal AmountFilled;
+        public decimal FilledPrice;
+        public decimal FilledAmount;
         public OrderStatus Status;
         public DateTime CreateTime;
 
@@ -161,7 +162,9 @@ namespace Lion.SDK.Bitcoin.Markets
             this.Side = _side;
             this.Price = _price;
             this.Amount = _amount;
-            this.AmountFilled = 0;
+            this.FilledPrice = 0M;
+            this.FilledAmount = 0M;
+            this.Status = _status;
             this.CreateTime = DateTime.UtcNow;
         }
     }
