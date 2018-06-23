@@ -379,9 +379,14 @@ namespace Lion.SDK.Bitcoin.Markets
                 else if(_action == "update" )
                 {
                     FundingItem _funding;
-                    if(this.Fundings.TryGetValue(_symbol,out _funding))
+                    if (this.Fundings.TryGetValue(_symbol, out _funding))
                     {
-                        _funding.Rate = _rate;
+                        JToken _result = this.Call("GET", "/instrument", "symbol", _item["symbol"].Value<string>());
+                        if (_result is JArray)
+                        {
+                            _funding.Rate = _result[0]["fundingRate"].Value<decimal>();
+                            _funding.Time = _result[0]["fundingTimestamp"].Value<DateTime>();
+                        }
                     }
                     else
                     {
