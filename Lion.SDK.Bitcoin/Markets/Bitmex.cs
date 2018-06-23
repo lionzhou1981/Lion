@@ -365,9 +365,29 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 string _symbol = _item["symbol"].Value<string>();
                 decimal _rate = _item["fundingRate"].Value<decimal>();
-                DateTime _time = _item["fundingTimestamp"].Value<DateTime>();
 
-                this.Fundings.AddOrUpdate(_symbol, new FundingItem() { Rate = _rate, Time = _time }, (k, v) => { v.Rate = _rate; v.Time = _time; return v; });
+                if (_action == "partial" || _action == "insert")
+                {
+                    FundingItem _funding = new FundingItem();
+                    _funding.Rate = _rate;
+                    _funding.Time = _item["fundingTimestamp"].Value<DateTime>();
+                    if (!this.Fundings.TryAdd(_symbol, _funding))
+                    {
+                        this.Log($"Receive_Instrument: {_item.ToString(Newtonsoft.Json.Formatting.None)}");
+                    }
+                }
+                else if(_action == "update" )
+                {
+                    FundingItem _funding;
+                    if(this.Fundings.TryGetValue(_symbol,out _funding))
+                    {
+                        _funding.Rate = _rate;
+                    }
+                    else
+                    {
+                        this.Log($"Receive_Instrument: {_item.ToString(Newtonsoft.Json.Formatting.None)}");
+                    }
+                }
             }
         }
         #endregion
