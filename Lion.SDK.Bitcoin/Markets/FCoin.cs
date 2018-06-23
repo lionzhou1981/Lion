@@ -192,9 +192,9 @@ namespace Lion.SDK.Bitcoin.Markets
             this.webSocket?.Dispose();
             this.webSocket = null;
 
-            this.Balance.Clear();
-            this.Books.Clear();
-            this.Orders.Clear();
+            this.Balance?.Clear();
+            this.Books?.Clear();
+            this.Orders?.Clear();
         }
         #endregion
 

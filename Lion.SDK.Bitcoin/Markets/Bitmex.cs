@@ -555,17 +555,19 @@ namespace Lion.SDK.Bitcoin.Markets
         public bool OrderCancel(string _orderId)
         {
             JToken _jtoken = this.Call("DELETE", "/order", "orderID", _orderId);
-            if (_jtoken is JObject)
+            Console.WriteLine(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
+            JObject _json = _jtoken is JObject ? (JObject)_jtoken : null;
+            if (_json == null && _jtoken is JArray)
             {
-                JObject _json = (JObject)_jtoken;
-                string _status = _json.Property("ordStatus") == null ? "" : _json["ordStatus"].Value<string>();
-                if (_status == "Canceled") { return true; }
-                if (_json.Property("error") != null)
-                {
-                    this.Log("Order cancel failed - " + _json.ToString(Newtonsoft.Json.Formatting.None));
-                    return false;
-                }
+                JArray _list = (JArray)_jtoken;
+                _json = _list.Count == 1 ? (JObject)_list[0] : null;
             }
+            if (_json == null) { return false; }
+
+            string _status = _json.Property("ordStatus") == null ? "" : _json["ordStatus"].Value<string>();
+            if (_status == "Canceled") { return true; }
+
+            this.Log(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
             return false;
         }
         #endregion
