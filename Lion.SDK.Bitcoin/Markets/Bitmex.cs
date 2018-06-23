@@ -171,7 +171,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             this.Log("Websocket stopped");
 
-            this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait();
+            try { this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait(); } catch { };
             this.webSocket?.Dispose();
             this.webSocket = null;
 
@@ -546,7 +546,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     return false;
                 }
             }
-            Console.WriteLine(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
             return false;
         }
         #endregion
