@@ -53,6 +53,16 @@ namespace Lion.SDK.Bitcoin.Markets
             return null;
         }
 
+        public new BookItem this[string _id]
+        {
+            get
+            {
+                BookItem _item;
+                if (!this.TryGetValue(_id, out _item)) { return null; }
+                return _item;
+            }
+        }
+
         #region Insert
         public BookItem Insert(string _id, decimal _price, decimal _amount)
         {
@@ -82,12 +92,24 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region Resize
+        public void Resize(int _size)
+        {
+            BookItem[] _list = this.ToArray();
+            for(int i = _size; i < _list.Length; i++)
+            {
+                BookItem _removed;
+                this.TryRemove(_list[i].Id, out _removed);
+            }
+        }
+        #endregion
+
         #region GetPrice
         public decimal GetPrice(decimal _amount)
         {
             BookItem[] _list = this.ToArray();
             decimal _count = 0M;
-            foreach(BookItem _item in _list)
+            foreach (BookItem _item in _list)
             {
                 _count += _item.Amount;
                 if (_count >= _amount) { return _item.Price; }

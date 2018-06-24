@@ -17,6 +17,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private static string wsUrl = "wss://www.bitmex.com/realtime";
 
         public Fundings Fundings;
+        public int BookSize = 0;
         public IList<string> BookInitialized;
 
         private string key;
@@ -265,6 +266,13 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 this.Books[_symbol, "ASK"] = _asks;
                 this.Books[_symbol, "BID"] = _bids;
+
+                if (this.BookSize > 0)
+                {
+                    this.Books[_symbol, "ASK"].Resize(this.BookSize);
+                    this.Books[_symbol, "BID"].Resize(this.BookSize);
+                }
+
                 this.BookInitialized.Add(_symbol);
                 this.OnBookStarted(_symbol);
             }
@@ -296,7 +304,11 @@ namespace Lion.SDK.Bitcoin.Markets
                     decimal _amount = _item["size"].Value<decimal>();
 
                     BookItem _bookItem = this.Books[_symbol, _side][_id];
-                    if (_bookItem == null)
+                    if (_bookItem == null && this.BookSize > 0)
+                    {
+                        return;
+                    }
+                    else if (_bookItem == null)
                     {
                         this.Log("Book update failed 1 - " + _item.ToString(Newtonsoft.Json.Formatting.None));
                         return;
@@ -304,13 +316,13 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     _amount = _amount / _bookItem.Price;
                     _bookItem = this.Books[_symbol, _side].Update(_id, _amount);
-                    if (_bookItem == null)
-                    {
-                        this.Log("Book update failed 2 - " + _item.ToString(Newtonsoft.Json.Formatting.None));
-                    }
-                    else
+                    if (_bookItem != null)
                     {
                         this.OnBookUpdate(_bookItem);
+                    }
+                    else if (this.BookSize == 0)
+                    {
+                        this.Log("Book update failed 2 - " + _item.ToString(Newtonsoft.Json.Formatting.None));
                     }
                 }
             }
@@ -325,13 +337,13 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _id = _item["id"].Value<string>();
 
                     BookItem _bookItem = this.Books[_symbol, _side].Delete(_id);
-                    if (_bookItem==null)
-                    {
-                        this.Log("Book delete failed - " + _item.ToString(Newtonsoft.Json.Formatting.None));
-                    }
-                    else
+                    if (_bookItem == null)
                     {
                         this.OnBookDelete(_bookItem);
+                    }
+                    else if (this.BookSize == 0)
+                    {
+                        this.Log("Book delete failed - " + _item.ToString(Newtonsoft.Json.Formatting.None));
                     }
                 }
             }
