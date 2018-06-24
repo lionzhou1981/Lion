@@ -290,6 +290,11 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     BookItem _bookItem = this.Books[_symbol, _side].Insert(_id, _price, _amount);
                     this.OnBookInsert(_bookItem);
+
+                    if (this.BookSize > 0 && this.Books[_symbol, _side].Count > this.BookSize * 2)
+                    {
+                        this.Books[_symbol, _side].Resize(this.BookSize);
+                    }
                 }
             }
             else if (_action == "update")
