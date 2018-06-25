@@ -316,10 +316,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region OrderCreate
-        public string OrderCreate(string _symbol, string _side, decimal _amount)
+        #region OrderCreateMarket
+        public string OrderCreateMarket(string _symbol, string _side, decimal _amount)
         {
-            JObject _result = this.Call (
+            JObject _result = this.Call(
                 "POST", "/orders",
                 "symbol", _symbol,
                 "side", _side == "BID" ? "buy" : "sell",
