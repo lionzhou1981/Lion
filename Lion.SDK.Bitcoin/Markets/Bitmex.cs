@@ -594,6 +594,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region MarketTicker
+
+        #endregion
+
         private void Log(string _text) => this.OnLog("Bitmex", _text);
     }
 

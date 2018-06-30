@@ -15,6 +15,7 @@ namespace Lion.SDK.Bitcoin.Markets
     public class FCoin : MarketBase
     {
         private static string httpUrl = "https://api.fcoin.com/v2";
+        private static string httpUrlMarket = "https://api.fcoin.com/v2/market";
         private static string wsUrl = "wss://api.fcoin.com/v2/ws";
 
         private string key;
@@ -334,6 +335,24 @@ namespace Lion.SDK.Bitcoin.Markets
                 return "";
             }
             return _result["data"].Value<string>();
+        }
+        #endregion
+
+        #region MarketTicker
+        public static JObject MarketTicker(string _symbol)
+        {
+            try
+            {
+                WebClientPlus _webClient = new WebClientPlus(5000);
+                string _result = _webClient.DownloadString($"{FCoin.httpUrlMarket}/ticker/{_symbol}");
+                _webClient.Dispose();
+
+                return JObject.Parse(_result);
+            }
+            catch
+            {
+                return null;
+            }
         }
         #endregion
 

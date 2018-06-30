@@ -323,5 +323,23 @@ namespace Lion.SDK.Bitcoin.Markets
             return _result;
         }
         #endregion
+
+        #region MarketTicker
+        public static JObject MarketTicker(string _symbol)
+        {
+            try
+            {
+                WebClientPlus _webClient = new WebClientPlus(5000);
+                string _result = _webClient.DownloadString($"{Huobi.url}/market/detail/merged?symbol={_symbol}");
+                _webClient.Dispose();
+
+                return JObject.Parse(_result);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        #endregion
     }
 }

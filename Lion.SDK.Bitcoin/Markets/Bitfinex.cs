@@ -503,6 +503,24 @@ namespace Lion.SDK.Bitcoin.Markets
         public JObject ClosePosition(int _position_id) => JObject.Parse(this.Post("/v1/positions/close", "position_id", _position_id));
         #endregion
 
+        #region MarketTicker
+        public static JArray MarketTicker(string _symbol)
+        {
+            try
+            {
+                WebClientPlus _webClient = new WebClientPlus(5000);
+                string _result = _webClient.DownloadString($"{Bitfinex.url}/v2/ticker/{_symbol}");
+                _webClient.Dispose();
+
+                return JArray.Parse(_result);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        #endregion
+
         #region Post
         private string Post(string _path,params object[] _keyValue)
         {
