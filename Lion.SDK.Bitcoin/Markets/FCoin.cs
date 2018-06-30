@@ -14,147 +14,145 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class FCoin : MarketBase
     {
-        private static string httpUrl = "https://api.fcoin.com/v2";
-        private static string httpUrlMarket = "https://api.fcoin.com/v2/market";
-        private static string wsUrl = "wss://api.fcoin.com/v2/ws";
-
         private string key;
         private string secret;
-        private string[] listens;
-        private bool running = false;
-
-        private ClientWebSocket webSocket = null;
-        private Thread webSocketThread;
-        private Thread balanceThread;
+        private Thread threadBalance;
 
         #region FCoin
-        // depth.L20.btcusdt
-        public FCoin(string _key, string _secret, params string[] _listens)
+        public FCoin(string _key, string _secret)
         {
             this.key = _key;
             this.secret = _secret;
-            this.listens = _listens;
-            this.Books = new Books();
+
+            base.Name = "FCN";
+            base.WebSocket = "wss://api.fcoin.com/v2/ws";
+            base.OnReceivedEvent += FCoin_OnReceivedEvent;
+        }
+        #endregion
+
+        #region FCoin_OnReceivedEvent
+        private void FCoin_OnReceivedEvent(JToken _token)
+        {
+            JObject _json = (JObject)_token;
+            string _type = _json.Property("type") == null ? "" : _json["type"].Value<string>();
+
+            string[] _command = _type.Split('.');
+            switch (_command[0])
+            {
+                case "depth": this.ReceivedDepth(_command[2], _command[1], _json); break;
+                default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
+            }
         }
         #endregion
 
         #region Start
-        public void Start()
+        public override void Start()
         {
-            this.running = true;
-            this.webSocketThread = new Thread(new ThreadStart(this.StartWebSocket));
-            this.webSocketThread.Start();
+            base.Start();
 
-            this.balanceThread = new Thread(new ThreadStart(this.StartBalance));
-            this.balanceThread.Start();
+            this.threadBalance = new Thread(new ThreadStart(this.StartBalance));
+            this.threadBalance.Start();
         }
         #endregion
 
-        #region StartWebSocket
-        private void StartWebSocket()
+        #region SubscribeDepth
+        public void SubscribeDepth(string _symbol,string _type)
         {
-            string _buffered = "";
-            int _bufferedStart = 0;
-            int _bufferedLevel = 0;
+            JObject _json = new JObject();
+            _json.Add("type", "hello");
+            _json.Add("ts", DateTimePlus.DateTime2JSTime(DateTime.UtcNow));
+            _json.Add("cmd", "sub");
+            _json.Add("args", new JArray("depth.L20.btcusdt"));
 
-            while (this.running)
+            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
+            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceivedDepth
+        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
+        {
+            JObject _json = (JObject)_token;
+
+            #region Bid
+            IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, "BID"].ToList();
+            BookItems _bidList = new BookItems("BID");
+            JArray _bids = _json["bids"].Value<JArray>();
+            for (int i = 0; i < _bids.Count; i += 2)
             {
-                Thread.Sleep(10);
-                if (this.webSocket == null || this.webSocket.State != WebSocketState.Open)
+                decimal _price = _bids[i].Value<decimal>();
+                decimal _amount = _bids[i + 1].Value<decimal>();
+
+                KeyValuePair<string, BookItem>[] _temps = _bidItems.Where(c => c.Key == _price.ToString()).ToArray();
+                if (_temps.Length == 0)
                 {
-                    #region 建立连接
-                    this.webSocket = new ClientWebSocket();
-                    _buffered = "";
-
-                    Task _task = this.webSocket.ConnectAsync(new Uri(wsUrl), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
-                    if (_task.Status != TaskStatus.RanToCompletion || this.webSocket.State != WebSocketState.Open)
-                    {
-                        this.Clear();
-                        continue;
-                    }
-
-                    this.Log("Websocket connected");
-                    #endregion
+                    this.OnBookInsert(_bidList.Insert(_price.ToString(), _price, _amount));
                 }
                 else
                 {
-                    #region 接收数据
-                    byte[] _buffer = new byte[16384];
-                    Task<WebSocketReceiveResult> _task = this.webSocket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
-
-                    try
+                    BookItem _item = _temps[0].Value;
+                    if (_item.Amount != _amount)
                     {
-                        if (_task.Status != TaskStatus.RanToCompletion
-                            || _task.Result == null
-                            || _task.Result.MessageType == WebSocketMessageType.Close)
-                        {
-                            throw new Exception();
-                        }
+                        _item.Amount = _amount;
+                        this.OnBookUpdate(_item);
                     }
-                    catch
-                    {
-                        this.Clear();
-                        continue;
-                    }
-                    #endregion
-
-                    #region 处理数据
-                    _buffered += Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count);
-
-                    while (_buffered.Length > 0)
-                    {
-                        for (int i = _bufferedStart; i < _buffered.Length; i++)
-                        {
-                            if (_buffered[i] == '{') { _bufferedLevel++; } else if (_buffered[i] == '}') { _bufferedLevel--; }
-                            if (_bufferedLevel != 0) { continue; }
-
-                            string _test = "";
-                            JObject _json = null;
-
-                            try
-                            {
-                                _test = _buffered.Substring(0, i + 1);
-                                _json = JObject.Parse(_test);
-                            }
-                            catch (Exception _ex)
-                            {
-                                this.Log($"Receive decode failed - {_ex.Message} - {_test}");
-                            }
-
-                            try
-                            {
-                                this.Receive(_json);
-                            }
-                            catch (Exception _ex)
-                            {
-                                this.Log($"Received failed - {_ex.Message} - {_test}");
-                            }
-
-                            _buffered = _buffered.Substring(i + 1);
-                            _bufferedStart = 0;
-                            _bufferedLevel = 0;
-                            break;
-                        }
-                        if (_bufferedLevel > 0) { _bufferedStart = _buffered.Length; break; }
-                    }
-                    #endregion
+                    _bidList.Insert(_item.Id, _item.Price, _amount);
+                    _bidItems.Remove(_temps[0]);
                 }
             }
+            foreach (KeyValuePair<string, BookItem> _item in _bidItems)
+            {
+                this.OnBookDelete(_item.Value);
+            }
+            #endregion
+
+            #region Ask
+            BookItems _askList = new BookItems("ASK");
+            IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, "ASK"].ToList();
+            JArray _asks = _json["asks"].Value<JArray>();
+            for (int i = 0; i < _asks.Count; i += 2)
+            {
+                decimal _price = _asks[i].Value<decimal>();
+                decimal _amount = _asks[i + 1].Value<decimal>();
+
+                KeyValuePair<string, BookItem>[] _temps = _askItems.Where(c => c.Key == _price.ToString()).ToArray();
+                if (_temps.Length == 0)
+                {
+                    this.OnBookInsert(_askList.Insert(_price.ToString(), _price, _amount));
+                }
+                else
+                {
+                    BookItem _item = _temps[0].Value;
+                    if (_item.Amount != _amount)
+                    {
+                        _item.Amount = _amount;
+                        this.OnBookUpdate(_item);
+                    }
+                    _askList.Insert(_item.Id, _item.Price, _amount);
+                    _askItems.Remove(_temps[0]);
+                }
+            }
+            foreach (KeyValuePair<string, BookItem> _item in _askItems)
+            {
+                this.OnBookDelete(_item.Value);
+            }
+            #endregion
+
+            this.Books[_symbol, "ASK"] = _askList;
+            this.Books[_symbol, "BID"] = _bidList;
         }
         #endregion
+
+        private static string httpUrl = "https://api.fcoin.com/v2";
+        private static string httpUrlMarket = "https://api.fcoin.com/v2/market";
 
         #region StartBalance
         private void StartBalance()
         {
             int _loop = 100;
-            while (this.running)
+            while (this.Running)
             {
                 if (_loop > 0) { _loop--; Thread.Sleep(100); continue; }
                 _loop = 100;
@@ -174,103 +172,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     this.Balance[_item["currency"].Value<string>().ToUpper()] = _item["available"].Value<decimal>();
                 }
             }
-        }
-        #endregion
-
-        #region Stop
-        public void Stop()
-        {
-            this.running = false;
-        }
-        #endregion
-
-        #region Clear
-        private void Clear()
-        {
-            this.Log("Websocket stopped");
-
-            try { this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait(); } catch { }
-            this.webSocket?.Dispose();
-            this.webSocket = null;
-
-            this.Balance?.Clear();
-            this.Books?.Clear();
-            this.Orders?.Clear();
-        }
-        #endregion
-
-        #region Send
-        private void Send(JObject _json)
-        {
-            this.Send(_json.ToString(Newtonsoft.Json.Formatting.None));
-        }
-
-        private void Send(string _text)
-        {
-            if (this.webSocket == null || this.webSocket.State != WebSocketState.Open) { return; }
-
-            this.webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_text)),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None).Wait();
-        }
-        #endregion
-
-        #region Receive
-        private void Receive(JObject _json)
-        {
-            if (_json.Property("type") != null && _json["type"].Value<string>() == "hello")
-            {
-                this.Books.Clear();
-
-                JObject _sub = new JObject();
-                _json.Add("cmd", "sub");
-                _json.Add("args", new JArray(this.listens));
-                this.Send(_json);
-                return;
-            }
-
-            string _type = _json.Property("type") == null ? "" : _json["type"].Value<string>();
-            if (_type == "") { return; }
-
-            string[] _command = _type.Split('.');
-            if (_command[0] == "depth")
-            {
-                this.Receive_Depth(_command[2], _json);
-                return;
-            }
-
-            this.Log("RX - " + _json.ToString(Newtonsoft.Json.Formatting.None));
-        }
-        #endregion
-
-        #region Receive_Depth
-        private void Receive_Depth(string _symbol, JObject _json)
-        {
-            BookItems _askList = new BookItems("ASK");
-            BookItems _bidList = new BookItems("BID");
-
-            JArray _asks = _json["asks"].Value<JArray>();
-            for (int i = 0; i < _asks.Count; i += 2)
-            {
-                decimal _price = _asks[i].Value<decimal>();
-                decimal _amount = _asks[i + 1].Value<decimal>();
-                BookItem _item = new BookItem(_symbol, "ASK", _price, _amount);
-                _askList.TryAdd(_item.Id, _item);
-            }
-
-            JArray _bids = _json["bids"].Value<JArray>();
-            for (int i = 0; i < _bids.Count; i += 2)
-            {
-                decimal _price = _asks[i].Value<decimal>();
-                decimal _amount = _asks[i + 1].Value<decimal>();
-                BookItem _item = new BookItem(_symbol, "BID", _price, _amount);
-                _bidList.TryAdd(_item.Id, _item);
-            }
-
-            this.Books[_symbol, "ASK"] = _askList;
-            this.Books[_symbol, "BID"] = _bidList;
         }
         #endregion
 
@@ -355,7 +256,5 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
         #endregion
-
-        private void Log(string _text) => this.OnLog("FCoin", _text);
     }
 }

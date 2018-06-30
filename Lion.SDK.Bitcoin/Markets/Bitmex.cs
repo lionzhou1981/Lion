@@ -13,198 +13,54 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Bitmex : MarketBase
     {
-        private static string httpUrl = "https://www.bitmex.com/api/v1";
-        private static string wsUrl = "wss://www.bitmex.com/realtime";
+        private string key;
+        private string secret;
+        private IList<string> depthList;
 
         public Fundings Fundings;
         public int BookSize = 0;
-        public IList<string> BookInitialized;
-
-        private string key;
-        private string secret;
-        private string[] listens;
-        private bool running = false;
-
-        private ClientWebSocket webSocket = null;
-        private Thread webSocketThread;
 
         #region Bitmex
-        // instrument,margin,order,orderBookL2:XBTUSD
-        public Bitmex(string _key, string _secret,params string[] _listens)
+        public Bitmex(string _key, string _secret)
         {
             this.key = _key;
             this.secret = _secret;
-            this.listens = _listens;
-            this.Books = new Books();
-            this.BookInitialized = new List<string>();
+            this.depthList = new List<string>();
+
+            base.Name = "BMX";
+            base.WebSocket = "";
+            base.OnReceivedEvent += Bitmex_OnReceivedEvent; ;
             this.Fundings = new Fundings();
         }
         #endregion
 
         #region Start
-        public void Start()
+        public override void Start()
         {
-            this.running = true;
-            this.webSocketThread = new Thread(new ThreadStart(this.StartThread));
-            this.webSocketThread.Start();
-        }
-        #endregion
+            string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
+            string _sign = "GET/realtime" + _nonce;
+            _sign = SHA.EncodeHMACSHA256(_sign, this.secret).ToLower();
+            base.WebSocket = $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={this.key}";
 
-        #region StartThread
-        private void StartThread()
-        {
-            string _buffered = "";
-            int _bufferedStart = 0;
-            int _bufferedLevel = 0;
-
-            while (this.running)
-            {
-                Thread.Sleep(10);
-                if (this.webSocket == null || this.webSocket.State != WebSocketState.Open)
-                {
-                    #region Connect
-                    this.webSocket = new ClientWebSocket();
-                    _buffered = "";
-
-                    string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
-                    string _sign = "GET/realtime" + _nonce;
-                    _sign = SHA.EncodeHMACSHA256(_sign, this.secret).ToLower();
-
-                    Task _task = this.webSocket.ConnectAsync(new Uri($"{Bitmex.wsUrl}?api-nonce={_nonce}&api-signature={_sign}&api-key={this.key}"), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
-                    if (_task.Status != TaskStatus.RanToCompletion || this.webSocket.State != WebSocketState.Open)
-                    {
-                        this.Clear();
-                        continue;
-                    }
-                    this.Log("Websocket connected");
-
-                    JObject _json = new JObject();
-                    _json.Add("op", "subscribe");
-                    _json.Add("args", new JArray(this.listens));
-                    this.Send(_json);
-                    #endregion
-                }
-                else
-                {
-                    #region Receiving
-                    byte[] _buffer = new byte[16384];
-                    Task<WebSocketReceiveResult> _task = this.webSocket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
-
-                    try
-                    {
-                        if (_task.Status != TaskStatus.RanToCompletion
-                            || _task.Result == null
-                            || _task.Result.MessageType == WebSocketMessageType.Close)
-                        {
-                            throw new Exception();
-                        }
-                    }
-                    catch
-                    {
-                        this.Clear();
-                        continue;
-                    }
-                    #endregion
-
-                    #region Received
-                    _buffered += Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count);
-
-                    while (_buffered.Length > 0)
-                    {
-                        for (int i = _bufferedStart; i < _buffered.Length; i++)
-                        {
-                            if (_buffered[i] == '{') { _bufferedLevel++; } else if (_buffered[i] == '}') { _bufferedLevel--; }
-                            if (_bufferedLevel != 0) { continue; }
-
-                            string _test = "";
-                            JObject _json = null;
-
-                            try
-                            {
-                                _test = _buffered.Substring(0, i + 1);
-                                _json = JObject.Parse(_test);
-                            }
-                            catch (Exception _ex)
-                            {
-                                this.Log($"Receive decode failed - {_ex.Message} - {_test}");
-                            }
-
-                            try
-                            {
-                                this.Receive(_json);
-                            }
-                            catch (Exception _ex)
-                            {
-                                this.Log($"Received failed - {_ex.Message} - {_test}");
-                            }
-
-                            _buffered = _buffered.Substring(i + 1);
-                            _bufferedStart = 0;
-                            _bufferedLevel = 0;
-                            break;
-                        }
-                        if (_bufferedLevel > 0) { _bufferedStart = _buffered.Length; break; }
-                    }
-                    #endregion
-                }
-            }
-
-            this.Clear();
-        }
-        #endregion
-
-        #region Stop
-        public void Stop()
-        {
-            this.running = false;
+            base.Start();
         }
         #endregion
 
         #region Clear
-        private void Clear()
+        protected override void Clear()
         {
-            this.Log("Websocket stopped");
+            base.Clear();
 
-            try { this.webSocket?.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).Wait(); } catch { };
-            this.webSocket?.Dispose();
-            this.webSocket = null;
-
-            this.Balance?.Clear();
-            this.Books?.Clear();
-            this.BookInitialized?.Clear();
-            this.Orders?.Clear();
+            this.depthList?.Clear();
             this.Fundings?.Clear();
         }
         #endregion
 
-        #region Send
-        private void Send(JObject _json)
+        #region Bitmex_OnReceivedEvent
+        private void Bitmex_OnReceivedEvent(JToken _token)
         {
-            this.Send(_json.ToString(Newtonsoft.Json.Formatting.None));
-        }
+            JObject _json = (JObject)_token;
 
-        private void Send(string _text)
-        {
-            if (this.webSocket == null || this.webSocket.State != WebSocketState.Open) { return; }
-
-            this.webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_text)),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None).Wait();
-        }
-        #endregion
-
-        #region Receive
-        private void Receive(JObject _json)
-        {
             if (_json.Property("success") != null)
             {
                 if (!_json["success"].Value<bool>())
@@ -218,36 +74,39 @@ namespace Lion.SDK.Bitcoin.Markets
             string _action = _json.Property("action") == null ? "" : _json["action"].Value<string>();
             JArray _list = _json.Property("data") == null ? null : _json["data"].Value<JArray>();
 
-            if (_table == "orderBookL2" && _list != null)
+            switch (_table)
             {
-                this.Receive_Book(_action, _list);
-                return;
+                case "orderBookL2": this.ReceivedDepth("", _action, _list); break;
+                case "margin": this.ReceivedMergin(_action, _list); break;
+                case "instrument": this.ReceiveInstrument(_action, _list); break;
+                case "order": this.ReceiveOrder(_action, _list); break;
+                default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
             }
-            if (_table == "margin" && _list != null)
-            {
-                this.Receive_Mergin(_action, _list);
-                return;
-            }
-            if (_table == "instrument" && _list != null)
-            {
-                this.Receive_Instrument(_action, _list);
-                return;
-            }
-            if (_table == "order" && _list != null)
-            {
-                this.Receive_Order(_action, _list);
-                return;
-            }
-            this.Log("RX - "+_json.ToString(Newtonsoft.Json.Formatting.None));
         }
         #endregion
 
-        #region Receive_Book
-        private void Receive_Book(string _action, JArray _list)
+        #region SubscribeDepth
+        public void SubscribeDepth(string _symbol, string _type = "")
         {
-            if (_action == "partial")
+            JObject _json = new JObject();
+            _json.Add("op", "subscribe");
+            _json.Add("args", new JArray($"orderBookL2:{_symbol}"));
+
+            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
+            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceivedDepth
+        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
+        {
+            JArray _list = (JArray)_token;
+
+            if (_type == "partial")
             {
-                string _symbol = _list[0]["symbol"].Value<string>();
+                _symbol = _list[0]["symbol"].Value<string>();
                 BookItems _asks = new BookItems("ASK");
                 BookItems _bids = new BookItems("BID");
 
@@ -261,7 +120,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     BookItem _bookItem = new BookItem(_symbol, _side, _price, _amount, _id);
                     if (_side == "BID") { _bids.TryAdd(_id, _bookItem); }
                     if (_side == "ASK") { _asks.TryAdd(_id, _bookItem); }
-
                 }
 
                 this.Books[_symbol, "ASK"] = _asks;
@@ -273,15 +131,15 @@ namespace Lion.SDK.Bitcoin.Markets
                     this.Books[_symbol, "BID"].Resize(this.BookSize);
                 }
 
-                this.BookInitialized.Add(_symbol);
+                this.depthList.Add(_symbol);
                 this.OnBookStarted(_symbol);
             }
-            else if (_action == "insert")
+            else if (_type == "insert")
             {
                 foreach (JObject _item in _list)
                 {
-                    string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
+                    _symbol = _item["symbol"].Value<string>().ToUpper();
+                    if (!this.depthList.Contains(_symbol)) { continue; }
 
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
@@ -297,12 +155,12 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                 }
             }
-            else if (_action == "update")
+            else if (_type == "update")
             {
                 foreach (JObject _item in _list)
                 {
-                    string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
+                    _symbol = _item["symbol"].Value<string>().ToUpper();
+                    if (!this.depthList.Contains(_symbol)) { continue; }
 
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
@@ -331,12 +189,12 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                 }
             }
-            else if (_action == "delete")
+            else if (_type == "delete")
             {
                 foreach (JObject _item in _list)
                 {
-                    string _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.BookInitialized.Contains(_symbol)) { continue; }
+                    _symbol = _item["symbol"].Value<string>().ToUpper();
+                    if (!this.depthList.Contains(_symbol)) { continue; }
 
                     string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
                     string _id = _item["id"].Value<string>();
@@ -355,23 +213,43 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region Receive_Mergin
-        private void Receive_Mergin(string _action, JArray _list)
+        #region SubscribeMargin
+        public void SubscribeMargin()
+        {
+            JObject _json = new JObject();
+            _json.Add("op", "subscribe");
+            _json.Add("args", new JArray($"margin"));
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceivedMergin
+        private void ReceivedMergin(string _action, JArray _list)
         {
             foreach (JObject _item in _list)
             {
                 if (_item.Property("currency") == null || _item["currency"].Value<string>() != "XBt") { continue; }
                 if (_item.Property("availableMargin") == null) { continue; }
 
-                decimal _available= _item["availableMargin"].Value<decimal>() * 0.00000001M;
+                decimal _available = _item["availableMargin"].Value<decimal>() * 0.00000001M;
                 bool _changed = _available != this.Balance["XBT"];
                 this.Balance["XBT"] = _available;
             }
         }
         #endregion
 
-        #region Receive_Instrument
-        private void Receive_Instrument(string _action, JArray _list)
+        #region SubscribeInstrument
+        public void SubscribeInstrument()
+        {
+            JObject _json = new JObject();
+            _json.Add("op", "subscribe");
+            _json.Add("args", new JArray($"instrument"));
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceiveInstrument
+        private void ReceiveInstrument(string _action, JArray _list)
         {
             foreach (JObject _item in _list)
             {
@@ -393,7 +271,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         this.Log($"Receive_Instrument: {_item.ToString(Newtonsoft.Json.Formatting.None)}");
                     }
                 }
-                else if(_action == "update" )
+                else if (_action == "update")
                 {
                     FundingItem _funding;
                     if (this.Fundings.TryGetValue(_symbol, out _funding))
@@ -414,8 +292,18 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region Receive_Order
-        private void Receive_Order(string _action, JArray _list)
+        #region SubscribeOrder
+        public void SubscribeOrder()
+        {
+            JObject _json = new JObject();
+            _json.Add("op", "subscribe");
+            _json.Add("args", new JArray($"order"));
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceiveOrder
+        private void ReceiveOrder(string _action, JArray _list)
         {
             if (_action == "partial" || _action == "insert")
             {
@@ -492,6 +380,10 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
         #endregion
+
+
+
+        private static string httpUrl = "https://www.bitmex.com/api/v1";
 
         #region Call
         public JToken Call(string _method, string _url, params string[] _values)
@@ -597,8 +489,6 @@ namespace Lion.SDK.Bitcoin.Markets
         #region MarketTicker
 
         #endregion
-
-        private void Log(string _text) => this.OnLog("Bitmex", _text);
     }
 
     #region Fundings

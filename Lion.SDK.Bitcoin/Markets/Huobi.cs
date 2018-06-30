@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -11,218 +12,76 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Huobi :  MarketBase, IDisposable 
+    public class Huobi :  MarketBase 
     {
         private static string url = "https://api.huobi.pro";
-        private static string ws = "wss://api.huobi.pro/ws";
 
-        public string symbol;
         private string key;
         private string secret;
-        private bool running = false;
-        private ClientWebSocket socket = null;
-        private DateTime socketTime;
-        private Thread thread;
-        private ConcurrentDictionary<string, string[]> SubscribedChannels;
 
-        public Huobi(string _symbol, string _key, string _secret)
+        #region Huobi
+        public Huobi(string _key, string _secret)
         {
-            this.symbol = _symbol;
             this.key = _key;
             this.secret = _secret;
-            this.SubscribedChannels = new ConcurrentDictionary<string, string[]>();
-        }
 
-        #region Start
-        public void Start()
-        {
-            if (this.running) { return; }
-
-            this.running = true;
-            this.thread = new Thread(new ThreadStart(this.StartThread));
-            this.thread.Start();
+            base.Name = "HUO";
+            base.WebSocket = "wss://api.huobi.pro/ws";
+            base.OnReceivingEvent += Huobi_OnReceivingEvent;
+            base.OnReceivedEvent += Huobi_OnReceivedEvent;
         }
         #endregion
 
-        #region StartThread
-        private void StartThread()
+        #region Huobi_OnReceivingEvent
+        private string Huobi_OnReceivingEvent(ref byte[] _binary)
         {
-            while (this.running)
+            try
             {
-                Thread.Sleep(10);
-                if (this.socket == null || this.socket.State != WebSocketState.Open)
-                {
-                    #region 建立连接
-                    this.socket = new ClientWebSocket();
-
-                    Task _task = this.socket.ConnectAsync(new Uri(Huobi.ws), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
-                    if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
-                    {
-                        this.Stop();
-                        continue;
-                    }
-
-                    this.socketTime = DateTime.UtcNow;
-                    base.OnWebSocketConnected();
-                    #endregion
-                }
-                else
-                {
-                    #region 处理数据
-                    byte[] _buffer = new byte[16384];
-                    Task<WebSocketReceiveResult> _task = this.socket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
-
-                    try
-                    {
-                        if (_task.Status != TaskStatus.RanToCompletion
-                            || _task.Result == null
-                            || _task.Result.MessageType == WebSocketMessageType.Close)
-                        {
-                            throw new Exception();
-                        }
-                    }
-                    catch
-                    {
-                        base.OnWebSocketDisconnected();
-                        this.Stop();
-                        continue;
-                    }
-
-                    try
-                    {
-                        _buffer = GZip.Decompress(_buffer);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-
-                    JObject _json = null;
-                    try { _json = JObject.Parse(Encoding.UTF8.GetString(_buffer)); } catch { _json = null; }
-
-                    if (_json == null) { continue; }
-                    this.Receive(_json);
-                    #endregion
-                }
+                byte[] _buffer = GZip.Decompress(_binary);
+                _binary = new byte[0];
+                return Encoding.UTF8.GetString(_buffer);
             }
-
-            this.SubscribedChannels.Clear();
-            this.socket.Dispose();
-            this.socket = null;
+            catch
+            {
+                return "";
+            }
         }
         #endregion
 
-        #region Stop
-        public void Stop()
+        #region Huobi_OnReceivedEvent
+        private void Huobi_OnReceivedEvent(JToken _token)
         {
-            this.running = false;
+            JObject _json = (JObject)_token;
 
-            this.SubscribedChannels?.Clear();
-            this.socket?.Dispose();
-            this.socket = null;
-        }
-        #endregion
-
-        #region Dispose
-        public void Dispose()
-        {
-            this.Stop();
-        }
-        #endregion
-
-        #region Send
-        public void Send(JObject _json)
-        {
-            if (this.socket == null || this.socket.State != WebSocketState.Open) { return; }
-
-            this.socket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None))),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None).Wait();
-        }
-        #endregion
-
-        #region Receive
-        public void Receive(JObject _json)
-        {
+            #region Ping -> Pong
             if (_json.Property("ping") != null)
             {
-                Console.WriteLine("RECV : A " + _json["ping"].Value<long>());
                 this.Send(new JObject() { ["pong"] = _json["ping"].Value<long>() });
-                this.socketTime = DateTime.Now;
                 return;
             }
-            if (_json.Property("subbed") != null && _json.Property("status") != null && _json["status"].Value<string>() == "ok")
-            {
-                Console.WriteLine("RECV : B " + _json["subbed"].Value<string>());
-                this.SubscribedChannels.AddOrUpdate(
-                    _json["subbed"].Value<string>(),
-                    new string[] { "book", this.symbol },
-                    (k, v) => new string[] { _json["subbed"].Value<string>(), this.symbol }
-                    );
-                return;
-            }
-            if (_json.Property("unsub") != null)
-            {
-                Console.WriteLine("RECV : C " + _json["unsub"].Value<string>());
-                string[] _values;
-                if (!this.SubscribedChannels.TryRemove(_json["unsub"].Value<string>(), out _values))
-                {
-                    this.OnError(_json["unsub"].Value<string>(), _json.ToString(Newtonsoft.Json.Formatting.None));
-                }
-                return;
-            }
+            #endregion
+
+            #region Error -> Log
             if (_json.Property("err-code") != null)
             {
-                Console.WriteLine("EX : " + _json.ToString(Newtonsoft.Json.Formatting.None));
+                base.OnLog("ERROR", _json.ToString(Newtonsoft.Json.Formatting.None));
                 return;
             }
+            #endregion
+
+            #region Depth
             if (_json.Property("ch") != null)
             {
-                Console.WriteLine("RECV : D " + _json["ch"].Value<string>() + " " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
-                this.ReceiveSubscribeDepth(_json["ch"].Value<string>(), _json);
+                string[] _command = _json["ch"].Value<string>().Split('.');
+                switch (_command[2])
+                {
+                    case "depth": this.ReceivedDepth(_command[1], _command[3], _json["tick"].Value<JObject>()); break;
+                }
                 return;
             }
+            #endregion
 
-            Console.WriteLine("RECV : " + _json.ToString(Newtonsoft.Json.Formatting.None));
-        }
-        #endregion
-
-        #region ReceiveSubscribeDepth
-        public void ReceiveSubscribeDepth(string _channelId, JObject _json)
-        {
-            if (!this.SubscribedChannels.ContainsKey(_channelId))
-            {
-                Console.WriteLine("RECV : E " + _channelId + " " + _json.ToString(Newtonsoft.Json.Formatting.None).Length);
-                return;
-            }
-
-            string[] _channel = this.SubscribedChannels[_channelId];
-            if (_channel[0] == "book")
-            {
-                JArray _bids = (JArray)_json["tick"]["bids"];
-                Dictionary<decimal, decimal> _bidList = new Dictionary<decimal, decimal>();
-                for(int i = 0; i < _bids.Count; i++)
-                {
-                    _bidList.Add(_bids[i][0].Value<decimal>(), _bids[i][1].Value<decimal>());
-                }
-
-                JArray _asks = (JArray)_json["tick"]["asks"];
-                Dictionary<decimal, decimal> _askList = new Dictionary<decimal, decimal>();
-                for (int i = 0; i < _asks.Count; i++)
-                {
-                    _askList.Add(_asks[i][0].Value<decimal>(), _asks[i][1].Value<decimal>());
-                }
-                this.OnBookUpdated(_askList, _bidList);
-            }
+            this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None));
         }
         #endregion
 
@@ -235,20 +94,94 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["sub"] = _id;
             _json["id"] = DateTime.UtcNow.Ticks;
 
+            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
+            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+
             this.Send(_json);
         }
         #endregion
 
-        #region Unsubscribe
-        public void Unsubscribe(string _channelId)
+        #region ReceivedDepth
+        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
-            JObject _json = new JObject();
-            _json["event"] = "unsub";
-            _json["id"] = _channelId;
+            JObject _json = (JObject)_token;
 
-            this.Send(_json);
+            #region Bid
+            IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, "BID"].ToList();
+            BookItems _bidList = new BookItems("BID");
+            JArray _bids = _json["bids"].Value<JArray>();
+            for (int i = 0; i < _bids.Count; i++)
+            {
+                decimal _price = _bids[i][0].Value<decimal>();
+                decimal _amount = _bids[i][1].Value<decimal>();
+
+                KeyValuePair<string, BookItem>[] _temps = _bidItems.Where(c => c.Key == _price.ToString()).ToArray();
+                if (_temps.Length == 0)
+                {
+                    this.OnBookInsert(_bidList.Insert(_price.ToString(), _price, _amount));
+                }
+                else
+                {
+                    BookItem _item = _temps[0].Value;
+                    if (_item.Amount != _amount)
+                    {
+                        _item.Amount = _amount;
+                        this.OnBookUpdate(_item);
+                    }
+                    _bidList.Insert(_item.Id, _item.Price, _amount);
+                    _bidItems.Remove(_temps[0]);
+                }
+            }
+            foreach(KeyValuePair<string, BookItem> _item in _bidItems)
+            {
+                this.OnBookDelete(_item.Value);
+            }
+            #endregion
+
+            #region Ask
+            BookItems _askList = new BookItems("ASK");
+            IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, "ASK"].ToList();
+            JArray _asks = _json["asks"].Value<JArray>();
+            for (int i = 0; i < _asks.Count; i++)
+            {
+                decimal _price = _asks[i][0].Value<decimal>();
+                decimal _amount = _asks[i][1].Value<decimal>();
+
+                KeyValuePair<string, BookItem>[] _temps = _askItems.Where(c => c.Key == _price.ToString()).ToArray();
+                if (_temps.Length == 0)
+                {
+                    this.OnBookInsert(_askList.Insert(_price.ToString(), _price, _amount));
+                }
+                else
+                {
+                    BookItem _item = _temps[0].Value;
+                    if (_item.Amount != _amount)
+                    {
+                        _item.Amount = _amount;
+                        this.OnBookUpdate(_item);
+                    }
+                    _askList.Insert(_item.Id, _item.Price, _amount);
+                    _askItems.Remove(_temps[0]);
+                }
+            }
+            foreach (KeyValuePair<string, BookItem> _item in _askItems)
+            {
+                this.OnBookDelete(_item.Value);
+            }
+            #endregion
+
+            this.Books[_symbol, "BID"] = _bidList;
+            this.Books[_symbol, "ASK"] = _askList;
         }
         #endregion
+
+
+
+
+
+
+
+
 
         public JObject Accounts() => JObject.Parse(this.Get("/v1/account/accounts"));
 

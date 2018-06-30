@@ -69,7 +69,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         continue;
                     }
 
-                    base.OnWebSocketConnected();
+                    base.OnConnected();
                     #endregion
                 }
                 else
@@ -92,7 +92,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                     catch(Exception)
                     {
-                        base.OnWebSocketDisconnected();
+                        base.OnDisconnected();
                         this.socket.Dispose();
                         this.socket = null;
                         continue;
@@ -191,7 +191,7 @@ namespace Lion.SDK.Bitcoin.Markets
                             this.OnError(_item["code"].Value<string>(), _item["msg"].Value<string>()); break;
                         }
                         break;
-                    default: base.OnWebSocketReceived(_json); break;
+                    default: base.OnReceived(_json); break;
                 }
             }
             else if (_json is JArray)
@@ -556,6 +556,11 @@ namespace Lion.SDK.Bitcoin.Markets
             string _result = _http.GetResponseString(Encoding.UTF8);
 
             return _result;
+        }
+
+        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }
