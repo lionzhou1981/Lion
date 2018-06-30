@@ -429,8 +429,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _side = _item["side"].Value<string>();
                     decimal _price = (_item.Property("price") == null || _item["price"].Type == JTokenType.Null) ? 0M : _item["price"].Value<decimal>();
                     decimal _priceFilled = (_item.Property("avgPx") == null || _item["avgPx"].Type == JTokenType.Null) ? 0M : _item["avgPx"].Value<decimal>();
-                    decimal _amount = (_item.Property("simpleOrderQty") == null || _item["simpleOrderQty"].Type == JTokenType.Null) ? 0M : _item["simpleOrderQty"].Value<decimal>();
-                    decimal _amountFilled = (_item.Property("simpleCumQty") == null || _item["simpleCumQty"].Type == JTokenType.Null) ? 0M : _item["simpleCumQty"].Value<decimal>();
+                    decimal _amount = (_item.Property("orderQty") == null || _item["orderQty"].Type == JTokenType.Null) ? 0M : _item["orderQty"].Value<decimal>();
+                    decimal _amountFilled = (_item.Property("cumQty") == null || _item["cumQty"].Type == JTokenType.Null) ? 0M : _item["cumQty"].Value<decimal>();
                     DateTime _createTime = (_item.Property("transactTime") == null || _item["transactTime"].Type == JTokenType.Null) ? DateTime.UtcNow : _item["transactTime"].Value<DateTime>();
 
                     OrderItem _order = new OrderItem(_id, _symbol, _side, _price, _amount);
@@ -463,13 +463,13 @@ namespace Lion.SDK.Bitcoin.Markets
                         continue;
                     }
 
-                    if (_item.Property("simpleOrderQty") != null && _item["simpleOrderQty"].Value<decimal?>() != null)
+                    if (_item.Property("orderQty") != null && _item["orderQty"].Value<decimal?>() != null)
                     {
-                        _order.Amount = _item["simpleOrderQty"].Value<decimal>();
+                        _order.Amount = _item["orderQty"].Value<decimal>();
                     }
-                    if (_item.Property("simpleCumQty") != null && _item["simpleCumQty"].Value<decimal?>() != null)
+                    if (_item.Property("cumQty") != null && _item["cumQty"].Value<decimal?>() != null)
                     {
-                        _order.FilledAmount = _item["simpleCumQty"].Value<decimal>();
+                        _order.FilledAmount = _item["cumQty"].Value<decimal>();
                     }
                     if (_item.Property("avgPx") != null && _item["avgPx"].Value<decimal?>() != null)
                     {
