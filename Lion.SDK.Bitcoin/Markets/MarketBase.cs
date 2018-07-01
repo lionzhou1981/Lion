@@ -146,18 +146,21 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     while (_bufferedText.Length > 0)
                     {
+                        char _startAt = _bufferedText[0] == '{' ? '{' : '[';
+                        char _endAt = _bufferedText[0] == '{' ? '}' : ']';
+
                         for (int i = _bufferedStart; i < _bufferedText.Length; i++)
                         {
-                            if (_bufferedText[i] == '{') { _bufferedLevel++; } else if (_bufferedText[i] == '}') { _bufferedLevel--; }
+                            if (_bufferedText[i] == _startAt) { _bufferedLevel++; } else if (_bufferedText[i] == _endAt) { _bufferedLevel--; }
                             if (_bufferedLevel != 0) { continue; }
 
                             string _test = "";
-                            JObject _json = null;
+                            JToken _json = null;
 
                             try
                             {
                                 _test = _bufferedText.Substring(0, i + 1);
-                                _json = JObject.Parse(_test);
+                                _json = JToken.Parse(_test);
                             }
                             catch (Exception _ex)
                             {

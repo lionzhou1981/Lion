@@ -10,206 +10,53 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Bitfinex :  MarketBase, IDisposable 
+    public class Bitfinex :  MarketBase 
     {
-        private static string url = "https://api.bitfinex.com";
-        private static string ws = "wss://api.bitfinex.com/ws";
-
-        public string symbol;
         private string key;
         private string secret;
-        private bool running = false;
+        private ConcurrentDictionary<string, string> Channels;
 
-        private ClientWebSocket socket = null;
-        private Thread thread;
-        private ConcurrentDictionary<string, string[]> SubscribedChannels;
-
-        public Bitfinex(string _symbol, string _key, string _secret)
+        #region Bitfinex
+        public Bitfinex(string _key, string _secret)
         {
-            this.symbol = _symbol;
             this.key = _key;
             this.secret = _secret;
-            this.SubscribedChannels = new ConcurrentDictionary<string, string[]>();
-        }
 
-        #region Start
-        public void Start()
-        {
-            if (this.running) { return; }
+            base.Name = "BFX";
+            base.WebSocket = "wss://api.bitfinex.com/ws/2";
+            base.OnReceivedEvent += Bitfinex_OnReceivedEvent;
 
-            this.running = true;
-            this.thread = new Thread(new ThreadStart(this.StartThread));
-            this.thread.Start();
+            this.Channels = new ConcurrentDictionary<string, string>();
         }
         #endregion
 
-        #region StartThread
-        private void StartThread()
+        #region Bitfinex_OnReceivedEvent
+        private void Bitfinex_OnReceivedEvent(JToken _token)
         {
-            string _buffered = "";
-            while (this.running)
+            if (_token is JObject)
             {
-                Thread.Sleep(10);
-                if (this.socket == null || this.socket.State != WebSocketState.Open)
-                {
-                    #region 建立连接
-                    _buffered = "";
-                    this.socket = new ClientWebSocket();
-                    this.socket.Options.KeepAliveInterval = new TimeSpan(0, 0, 0, 1, 0);
-
-                    Task _task = this.socket.ConnectAsync(new Uri(Bitfinex.ws), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
-                    if (_task.Status != TaskStatus.RanToCompletion || this.socket.State != WebSocketState.Open)
-                    {
-                        this.socket.Dispose();
-                        this.socket = null;
-                        continue;
-                    }
-
-                    base.OnConnected();
-                    #endregion
-                }
-                else
-                {
-                    #region 处理数据
-                    byte[] _buffer = new byte[8192];
-                    Task<WebSocketReceiveResult> _task = this.socket.ReceiveAsync(new ArraySegment<byte>(_buffer), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(10); }
-
-                    try
-                    {
-                        if (_task.Status != TaskStatus.RanToCompletion 
-                            || _task.Result.MessageType == WebSocketMessageType.Close
-                            || _task.Result == null)
-                        {
-                            throw new Exception("Task result failed.");
-                        }
-                    }
-                    catch(Exception)
-                    {
-                        base.OnDisconnected();
-                        this.socket.Dispose();
-                        this.socket = null;
-                        continue;
-                    }
-
-                    _buffered += Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count);
-
-                    int _start = 0;
-                    while (true)
-                    {
-                        if (_buffered.Length == 0) { break; }
-
-                        int _s1 = _buffered.IndexOf("}", _start, StringComparison.Ordinal);
-                        int _s2 = _buffered.IndexOf("]", _start, StringComparison.Ordinal);
-                        _s1 = _s1 == -1 ? int.MaxValue : _s1;
-                        _s2 = _s2 == -1 ? int.MaxValue : _s2;
-                        if (_s1 == _s2) { break; }
-
-                        int _index = _s1 > _s2 ? _s2 : _s1;
-                        string _testJson = _buffered.Substring(0, _index + 1);
-
-                        JToken _json = null;
-                        try { _json = JObject.Parse(_testJson); } catch { _json = null; }
-                        if (_json == null) { try { _json = JArray.Parse(_testJson); } catch { _json = null; } }
-                        if (_json == null) { _start = _index + 1; continue; }
-                        _buffered = _buffered.Substring(_index + 1);
-
-                        while (_buffered.Length > 0 && _buffered[0] != '[' && _buffered[0] != '{')
-                        {
-                            Console.WriteLine("Bitfinex" + _buffered);
-                            _buffered = _buffered.Substring(1);
-                        }
-                        this.Receive(_json);
-                    }
-                    #endregion
-                }
-            }
-        }
-        #endregion
-
-        #region Stop
-        public void Stop()
-        {
-            this.running = false;
-        }
-        #endregion
-
-        #region Dispose
-        public void Dispose()
-        {
-            this.running = false;
-        }
-        #endregion
-
-        #region Send
-        public void Send(JObject _json)
-        {
-            if (this.socket == null || this.socket.State != WebSocketState.Open) { return; }
-
-            try
-            {
-                this.socket.SendAsync(
-                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None))),
-                    WebSocketMessageType.Text,
-                    true,
-                    CancellationToken.None).Wait();
-            }
-            catch (Exception _ex)
-            {
-                this.OnError("WS.SEND", _ex.ToString());
-            }
-        }
-        #endregion
-
-        #region Receive
-        public void Receive(JToken _json)
-        {
-            if (_json is JObject)
-            {
-                JObject _item = (JObject)_json;
+                JObject _item = (JObject)_token;
                 switch (_item["event"].Value<string>())
                 {
-                    case "info": break;
-                    case "error": this.OnError(_item["code"].Value<string>(), _item["msg"].Value<string>()); break;
+                    case "ping": this.Send("{\"event\":\"pong\"}"); break;
                     case "subscribed":
-                        this.SubscribedChannels.AddOrUpdate(
-                            _item["chanId"].Value<string>(),
-                            new string[] { _item["channel"].Value<string>(), this.symbol },
-                            (k, v) => new string[] { _item["channel"].Value<string>(), this.symbol }
-                            );
+                        string _value = $"{_item["channel"].Value<string>()}.{_item["pair"].Value<string>()}.{_item["prec"].Value<string>()}.{_item["freq"].Value<string>()}.{_item["len"].Value<string>()}";
+                        this.Channels.AddOrUpdate(_item["chanId"].Value<string>(), _value, (k, v) => _value);
                         break;
-                    case "unsubscribed":
-                        string[] _values;
-                        if (!this.SubscribedChannels.TryRemove(_item["chanId"].Value<string>(), out _values))
-                        {
-                            this.OnError(_item["code"].Value<string>(), _item["msg"].Value<string>()); break;
-                        }
-                        break;
-                    default: base.OnReceived(_json); break;
+                    case "unsubscribed": this.Channels.TryRemove(_item["chanId"].Value<string>(), out string _out); break;
+                    default: this.OnLog("RECV", _item.ToString(Newtonsoft.Json.Formatting.None)); break;
                 }
             }
-            else if (_json is JArray)
+            else if (_token is JArray)
             {
-                JArray _array = (JArray)_json;
+                JArray _array = (JArray)_token;
                 string _channelId = _array[0].Value<string>();
 
-                if (_array.Count == 2)
+                if (_array.Count == 2 && _array[1].Type == JTokenType.Array)
                 {
-                    if (_array[1].GetType() == typeof(JArray))
-                    {
-                        foreach (JArray _item in _array[1])
-                        {
-                            this.ReceiveSubscribe(_channelId, _item);
-                        }
-                    }
+                    this.ReceiveSubscribe(_channelId, _array[1].Value<JArray>());
                 }
-                else
+                else if (_array.Count != 2)
                 {
                     this.ReceiveSubscribe(_channelId, _array);
                 }
@@ -220,52 +67,110 @@ namespace Lion.SDK.Bitcoin.Markets
         #region ReceiveSubscribe
         public void ReceiveSubscribe(string _channelId, JArray _item)
         {
-            string[] _channel = this.SubscribedChannels[_channelId];
+            if (!this.Channels.TryGetValue(_channelId, out string _value))
+            {
+                this.OnLog("RECV", $"Channel not found {_channelId}");
+                return;
+            }
+
+            string[] _channel = _value.Split('.');
             if (_channel[0] == "book")
             {
-                decimal _price = _item.Count == 3 ? _item[0].Value<decimal>() : _item[1].Value<decimal>();
-                int _count = _item.Count == 3 ? _item[1].Value<int>() : _item[2].Value<int>();
-                decimal _amount = _item.Count == 3 ? _item[2].Value<decimal>() : _item[3].Value<decimal>();
-
-                this.OnBookChanged(_amount > 0 ? "bid" : "ask", _price, _count == 0 ? 0 : Math.Abs(_amount));
+                this.ReceivedDepth(_channel[1], _item[0].Type == JTokenType.Array ? "START" : "UPDATE", _item);
             }
         }
         #endregion
 
-        #region Subscribe
-        public void Subscribe(string _channel, string _symbol, params object[] _keyValues)
+        #region Clear
+        protected override void Clear()
+        {
+            base.Clear();
+
+            this.Channels?.Clear();
+        }
+        #endregion
+
+        #region SubscribeDepth
+        public void SubscribeDepth(string _symbol, string _prec = "P0", string _freq = "F0", int _len = 100)
         {
             JObject _json = new JObject();
             _json["event"] = "subscribe";
-            _json["channel"] = _channel;
+            _json["channel"] = "book";
             _json["pair"] = _symbol;
-            if (_keyValues.Length == 0)
-            {
-                _json["prec"] = "P0";
-                _json["freq"] = "F0";
-                _json["len"] = 100;
-            }
+            _json["prec"] = _prec;
+            _json["freq"] = _freq;
+            _json["len"] = _len;
 
-            for (int i = 0; i < _keyValues.Length - 1; i += 2)
-            {
-                if (_keyValues[i + 1] is int) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
-                else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
-            }
+            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
+            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
 
             this.Send(_json);
         }
         #endregion
 
-        #region Unsubscribe
-        public void Unsubscribe(string _channelId)
+        #region ReceivedDepth
+        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
-            JObject _json = new JObject();
-            _json["event"] = "unsubscribe";
-            _json["chanId"] = _channelId;
+            JArray _list = (JArray)_token;
 
-            this.Send(_json);
+            if (_type == "START")
+            {
+                BookItems _asks = new BookItems("ASK");
+                BookItems _bids = new BookItems("BID");
+
+                foreach (JArray _item in _list)
+                {
+                    decimal _price = _item[0].Value<decimal>();
+                    int _count =  _item[1].Value<int>();
+                    decimal _amount =_item[2].Value<decimal>();
+                    string _side = _amount > 0 ? "BID" : "ASK";
+                    string _id = _price.ToString();
+
+                    BookItem _bookItem = new BookItem(_symbol, _side, _price, Math.Abs(_amount), _id);
+                    if (_side == "BID") { _bids.TryAdd(_id, _bookItem); }
+                    if (_side == "ASK") { _asks.TryAdd(_id, _bookItem); }
+                }
+
+                this.Books[_symbol, "ASK"] = _asks;
+                this.Books[_symbol, "BID"] = _bids;
+                this.OnBookStarted(_symbol);
+            }
+            else
+            {
+                decimal _price = _list[0].Value<decimal>();
+                int _count = _list[1].Value<int>();
+                decimal _amount = _list[2].Value<decimal>();
+                string _side = _amount > 0 ? "BID" : "ASK";
+
+                BookItems _items = this.Books[_symbol, _side];
+                if (_count == 0)
+                {
+                    BookItem _item = _items.Delete(_price.ToString());
+                    if (_item != null)
+                    {
+                        this.OnBookDelete(_item);
+                    }
+                }
+                else
+                {
+                    BookItem _item = _items.Update(_price.ToString(),Math.Abs(_amount));
+                    if (_item == null)
+                    {
+                        _item = _items.Insert(_price.ToString(), _price, _amount);
+                        this.OnBookInsert(_item);
+                    }
+                    else
+                    {
+                        this.OnBookUpdate(_item);
+                    }
+                }
+            }
         }
         #endregion
+
+
+
+        private static string url = "https://api.bitfinex.com";
 
         #region Account
         public JArray AccountInfo() => JArray.Parse(this.Post("/v1/account_infos"));
@@ -556,11 +461,6 @@ namespace Lion.SDK.Bitcoin.Markets
             string _result = _http.GetResponseString(Encoding.UTF8);
 
             return _result;
-        }
-
-        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
-        {
-            throw new NotImplementedException();
         }
         #endregion
     }
