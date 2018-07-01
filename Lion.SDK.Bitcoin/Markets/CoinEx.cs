@@ -308,7 +308,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 HttpClient _http = new HttpClient(10000);
                 if (_method == "GET" || _method == "DELETE")
                 {
-                    _http.BeginResponse("GET", $"{this.http}{_url}?{_query}", "");
+                    _http.BeginResponse(_method, $"{this.http}{_url}?{_query}", "");
                     _http.Request.Headers.Add("authorization", _sign);
                     _http.EndResponse();
                 }
@@ -394,16 +394,23 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCancel
-        public JObject OrderCancel(string _symbol, string _id)
+        public JObject OrderCancel(string _symbol, string _id, out bool _done)
         {
+            _done = false;
             string _url = "/v1/order/pending";
-            JObject _json = HttpCall("DELETE", _url,
+            JObject _json = this.HttpCall("DELETE", _url,
                 "market", _symbol,
                 "id", _id
                 );
             if (_json == null) { return null; }
             if (_json.Property("code") == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
+
+            if (_json["code"].Value<int>() == 600)
+            {
+                _done = true;
+                return null;
+            }
+            else if (_json["code"].Value<int>() != 0)
             {
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
@@ -429,10 +436,10 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region MarketKLine
-        public JObject MarketKLine(string _symbol, string _type = "1hour")
+        public JArray MarketKLine(string _symbol, string _type = "1hour",int _limit=10)
         {
             string _url = "/v1/market/kline";
-            JObject _json = this.HttpCall("GET", _url, "market", _symbol, "type", _type);
+            JObject _json = this.HttpCall("GET", _url, "market", _symbol, "type", _type, "limit", _limit.ToString());
 
             if (_json == null) { return null; }
             if (_json.Property("code") == null) { return null; }
@@ -441,7 +448,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
-            return _json["data"].Value<JObject>();
+            return _json["data"].Value<JArray>();
         }
         #endregion
     }
