@@ -289,7 +289,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
 
                 string _sign = "";
-                long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow) * 1000;
+                long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)) * 1000;
                 _list.Add("access_id", this.key);
                 _list.Add("tonce", _time.ToString());
 
