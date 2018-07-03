@@ -56,8 +56,11 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             base.Start();
 
-            this.threadBalance = new Thread(new ThreadStart(this.StartBalance));
-            this.threadBalance.Start();
+            if (this.key != "")
+            {
+                this.threadBalance = new Thread(new ThreadStart(this.StartBalance));
+                this.threadBalance.Start();
+            }
         }
         #endregion
 

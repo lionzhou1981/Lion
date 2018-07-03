@@ -117,6 +117,41 @@ namespace Lion.SDK.Bitcoin.Markets
             return 0M;
         }
         #endregion
+
+        #region GetAmount
+        public decimal GetAmount(decimal _price)
+        {
+            BookItem[] _list = this.ToArray();
+            decimal _count = 0M;
+
+            foreach (BookItem _item in _list)
+            {
+                if (this.Side == "ASK")
+                {
+                    if(_item.Price > _price)
+                    {
+                        return _count;
+                    }
+                    else
+                    {
+                        _count += _item.Amount;
+                    }
+                }
+                if (this.Side == "BID")
+                {
+                    if (_item.Price < _price)
+                    {
+                        return _count;
+                    }
+                    else
+                    {
+                        _count += _item.Amount;
+                    }
+                }
+            }
+            return 0M;
+        }
+        #endregion
     }
     #endregion
 
