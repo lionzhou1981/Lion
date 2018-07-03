@@ -255,7 +255,8 @@ namespace Lion.SDK.Bitcoin.Markets
             int _loop = 100;
             while (this.Running)
             {
-                if (_loop > 0) { _loop--; Thread.Sleep(100); continue; }
+                Thread.Sleep(100);
+                if (_loop > 0) { _loop--; continue; }
                 _loop = 100;
 
                 JObject _json = this.HttpCall("GET", "/v1/balance/");
@@ -291,7 +292,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
 
                 string _sign = "";
-                long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow) * 1000;
+                long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)) * 1000;
                 _list.Add("access_id", this.key);
                 _list.Add("tonce", _time.ToString());
 
@@ -325,8 +326,11 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
 
                 string _result = _http.GetResponseString(Encoding.UTF8);
+                JObject _resultJson = JObject.Parse(_result);
 
-                return JObject.Parse(_result);
+                this.OnLog(">>>", $"{_resultJson.ToString(Newtonsoft.Json.Formatting.None)}");
+
+                return _resultJson;
             }
             catch (Exception _ex)
             {

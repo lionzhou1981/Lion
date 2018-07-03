@@ -213,12 +213,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region Send
-        protected void Send(JObject _json)
+        public void Send(JObject _json)
         {
             this.Send(_json.ToString(Newtonsoft.Json.Formatting.None));
         }
 
-        protected void Send(string _text)
+        public void Send(string _text)
         {
             if (this.webSocket == null || this.webSocket.State != WebSocketState.Open) { return; }
 
