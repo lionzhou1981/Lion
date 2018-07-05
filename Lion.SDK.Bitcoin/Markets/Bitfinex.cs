@@ -15,6 +15,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private string key;
         private string secret;
         private ConcurrentDictionary<string, string> Channels;
+        private static string url = "https://api.bitfinex.com";
 
         #region Bitfinex
         public Bitfinex(string _key, string _secret)
@@ -167,10 +168,6 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
         #endregion
-
-
-
-        private static string url = "https://api.bitfinex.com";
 
         #region Account
         public JArray AccountInfo() => JArray.Parse(this.Post("/v1/account_infos"));

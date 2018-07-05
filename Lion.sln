@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion", "Lion\Lion.csproj", "{8531A0EF-E0EB-4BC7-A42F-0B6F6F464C13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion", "Lion\Lion.csproj", "{8531A0EF-E0EB-4BC7-A42F-0B6F6F464C13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{E50F3E2A-ABC5-409C-95AD-F6A372EBCDD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{E50F3E2A-ABC5-409C-95AD-F6A372EBCDD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.SDK.Bitcoin", "Lion.SDK.Bitcoin\Lion.SDK.Bitcoin.csproj", "{BC434E3C-1194-4FD7-87C4-6A2F1CBAD35C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK.Bitcoin", "Lion.SDK.Bitcoin\Lion.SDK.Bitcoin.csproj", "{BC434E3C-1194-4FD7-87C4-6A2F1CBAD35C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Data.SqlClient", "Lion.Data.SqlClient\Lion.Data.SqlClient.csproj", "{D396BDB6-7FFD-4E4D-9B72-DBE22D9DDC6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.SqlClient", "Lion.Data.SqlClient\Lion.Data.SqlClient.csproj", "{D396BDB6-7FFD-4E4D-9B72-DBE22D9DDC6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Data.MySqlClient", "Lion.Data.MySqlClient\Lion.Data.MySqlClient.csproj", "{E3D07B02-87C5-4499-A923-390601D29BF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.MySqlClient", "Lion.Data.MySqlClient\Lion.Data.MySqlClient.csproj", "{E3D07B02-87C5-4499-A923-390601D29BF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -20,7 +20,7 @@ namespace Lion.SDK.Bitcoin.Markets
         private string http = "https://api.hibtc.com";
         private Thread threadBalance;
 
-        #region CoinEx
+        #region BitDAO
         public BitDAO(string _key, string _secret)
         {
             this.key = _key;
@@ -220,24 +220,39 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             try
             {
-                string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString();
-                string _sign = Encrypt.MD5.Encode(_time.ToString() + this.secret).ToLower();
-
-                JObject _json = new JObject();
-                _json["api_key"] = this.key;
-                _json["auth_nonce"] = _time;
-                _json["auth_sign"] = _sign;
-
-                for (int i = 0; i < _keyValue.Length; i += 2)
-                {
-                    _json[_keyValue[i]] = _keyValue[i + 1];
-                }
-
                 HttpClient _http = new HttpClient(10000);
                 _http.UserAgent = " User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36";
                 _http.BeginResponse(_method, $"{this.http}{_url}", "");
                 _http.Request.ContentType = "application/json";
-                _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString()));
+
+                if (_method == "GET")
+                {
+                    _http.EndResponse();
+                }
+                else
+                {
+                    string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString();
+
+                    JObject _json = new JObject();
+                    _json["api_key"] = this.key;
+                    _json["auth_nonce"] = _time;
+
+                    Dictionary<string, string> _list = new Dictionary<string, string>();
+                    _list.Add("api_key", this.key);
+                    _list.Add("auth_nonce", _time);
+                    for (int i = 0; i < _keyValue.Length - 1; i += 2)
+                    {
+                        _json[_keyValue[i]] = _keyValue[i + 1];
+                        _list.Add(_keyValue[i], _keyValue[i + 1]);
+                    }
+                    KeyValuePair<string, string>[] _sorted = _list.ToArray().OrderBy(c => c.Key).ToArray();
+
+                    string _sign = "";
+                    foreach (KeyValuePair<string, string> _item in _sorted) { _sign += _item.Value; }
+                    _json["auth_sign"] = Encrypt.MD5.Encode(_sign + this.secret).ToLower();
+
+                    _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString()));
+                }
 
                 string _result = _http.GetResponseString(Encoding.UTF8);
                 JObject _resultJson = JObject.Parse(_result);
@@ -249,6 +264,133 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.OnLog("HTTP", $"{_ex.Message} - {_url} {string.Join(",", _keyValue)}");
                 return null;
             }
+        }
+        #endregion
+
+        #region MarketTicker
+        public JObject MarketTicker(string _symbol)
+        {
+            string _url = "/bb/api/ticker?pair=" + _symbol;
+            JObject _json = this.HttpCall("GET", this.http + _url);
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
+
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region MarketKLine
+        public JArray MarketKLine(string _symbol, string _type = "60", DateTime? _start = null, DateTime? _end = null)
+        {
+            _start = _start == null ? DateTime.UtcNow.AddDays(-1) : _start;
+            _end = _end == null ? DateTime.UtcNow : _end;
+
+            string _url = $"/bb/api/ticker?pair={_symbol}&type={_type}&time_start={DateTimePlus.DateTime2JSTime((DateTime)_start)}&time_end={DateTimePlus.DateTime2JSTime((DateTime)_end)}";
+            JObject _json = this.HttpCall("GET", this.http + _url);
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
+
+            return _json["data"].Value<JArray>();
+        }
+        #endregion
+
+        #region OrderLimit
+        public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
+        {
+            string _url = "/bb/api/make/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "type", _side == "BID" ? "buy" : "sell",
+                "order_type", "LIMIT",
+                "price", _price.ToString(),
+                "amount", _amount.ToString(),
+                "money", "0",
+                "stop_limit_price", "0"
+                );
+
+            if (_json == null) { return ""; }
+
+            string _orderId = _json["data"]["orderId"].Value<string>();
+            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
+
+            return _orderId;
+        }
+        #endregion
+
+        #region OrderMarket
+        public string OrderMarket(string _symbol, string _side, decimal _amount)
+        {
+            string _url = "/bb/api/make/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "type", _side == "BID" ? "buy" : "sell",
+                "order_type", "MARKET",
+                "price", "0",
+                "amount", "0",
+                "money", _amount.ToString(),
+                "stop_limit_price", "0"
+                );
+
+            if (_json == null) { return ""; }
+
+            string _orderId = _json["data"]["orderId"].Value<string>();
+            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
+
+            return _orderId;
+        }
+        #endregion
+
+        #region OrderStatus
+        public JObject OrderStatus(string _symbol, string _id)
+        {
+            string _url = "/bb/api/cancel/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "order_id", _id
+                );
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0)
+            {
+                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region OrderCancel
+        public JObject OrderCancel(string _symbol, string _id)
+        {
+            string _url = "/bb/api/cancel/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "order_id", _id
+                );
+
+            if (_json == null) { return null; }
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region MiningDifficulty
+        public JObject MiningDifficulty()
+        {
+            string _url = "/v1/order/mining/difficulty";
+            JObject _json = this.HttpCall("GET", _url);
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0)
+            {
+                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
+            return _json["data"].Value<JObject>();
         }
         #endregion
     }
