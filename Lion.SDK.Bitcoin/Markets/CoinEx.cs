@@ -14,20 +14,17 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class CoinEx : MarketBase
     {
-        private string key;
-        private string secret;
         private long commandId = 1;
-        private string http = "https://api.coinex.com";
-        private Thread threadBalance;
 
         #region CoinEx
         public CoinEx(string _key, string _secret)
         {
-            this.key = _key;
-            this.secret = _secret;
+            base.Key = _key;
+            base.Secret = _secret;
 
             base.Name = "CEX";
             base.WebSocket = "wss://socket.coinex.com/";
+            base.HttpUrl = "https://api.coinex.com";
             base.OnReceivedEvent += CoinEx_OnReceivedEvent;
         }
         #endregion
@@ -51,24 +48,23 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region Start
-        public override void Start()
+        #region Send
+        private void Send(string _method, JToken _params)
         {
-            base.Start();
+            JObject _json = new JObject();
+            _json["method"] = _method;
+            _json["params"] = _params;
+            _json["id"] = this.commandId++;
 
-            if (this.key != "")
-            {
-                this.threadBalance = new Thread(new ThreadStart(this.StartBalance));
-                this.threadBalance.Start();
-            }
+            this.Send(_json);
         }
         #endregion
 
         #region SubscribeDepth
         public void SubscribeDepth(string _symbol, int _limit = 10, string _interval = "0")
         {
-            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
-            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
             this.Send("depth.subscribe", new JArray(_symbol, _limit, _interval));
         }
@@ -82,8 +78,8 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_type == "FULL")
             {
                 #region Bid
-                IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, "BID"].ToList();
-                BookItems _bidList = new BookItems("BID");
+                IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, MarketSide.Bid].ToList();
+                BookItems _bidList = new BookItems(MarketSide.Bid);
                 JArray _bids = _json["bids"].Value<JArray>();
                 for (int i = 0; i < _bids.Count; i++)
                 {
@@ -114,8 +110,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 #endregion
 
                 #region Ask
-                BookItems _askList = new BookItems("ASK");
-                IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, "ASK"].ToList();
+                BookItems _askList = new BookItems(MarketSide.Ask);
+                IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, MarketSide.Ask].ToList();
                 JArray _asks = _json["asks"].Value<JArray>();
                 for (int i = 0; i < _asks.Count; i++)
                 {
@@ -145,8 +141,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
                 #endregion
 
-                this.Books[_symbol, "ASK"] = _askList;
-                this.Books[_symbol, "BID"] = _bidList;
+                this.Books[_symbol, MarketSide.Ask] = _askList;
+                this.Books[_symbol, MarketSide.Bid] = _bidList;
             }
             else if (_type == "UPDATE")
             {
@@ -154,7 +150,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 if (_json.Property("bids") != null)
                 {
                     JArray _bids = _json["bids"].Value<JArray>();
-                    BookItems _bidList = this.Books[_symbol, "BID"];
+                    BookItems _bidList = this.Books[_symbol, MarketSide.Bid];
                     for (int i = 0; i < _bids.Count; i++)
                     {
                         decimal _price = _bids[i][0].Value<decimal>();
@@ -187,7 +183,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 #region Ask
                 if (_json.Property("asks") != null)
                 {
-                    BookItems _askList = this.Books[_symbol, "ASK"];
+                    BookItems _askList = this.Books[_symbol, MarketSide.Ask];
                     JArray _asks = _json["asks"].Value<JArray>();
                     for (int i = 0; i < _asks.Count; i++)
                     {
@@ -221,242 +217,256 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region SignIn
-        public void SignIn()
+        #region SubscribeBalance
+        public void SubscribeBalance()
         {
-            long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow) * 1000;
-            string _sign = $"access_id={this.key}&tonce={_time}&secret_key={this.secret}";
+            base.HttpBalanceMonitor();
+        }
+        #endregion
+
+        #region HttpCallAuth
+        protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
+        {
+            IList<object> _result = new List<object>();
+
+            SortedDictionary<string, string> _list = new SortedDictionary<string, string>();
+            for (int i = 0; i < _keyValues.Length; i += 2)
+            {
+                _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
+
+                _result.Add(_keyValues[i]);
+                _result.Add(_keyValues[i + 1]);
+            }
+
+            string _sign = "";
+            long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)) * 1000;
+            _list.Add("access_id", base.Key);
+            _list.Add("tonce", _time.ToString());
+
+            _result.Add("access_id");
+            _result.Add(base.Key);
+            _result.Add("tonce");
+            _result.Add(_time.ToString());
+
+            foreach (KeyValuePair<string, string> _item in _list)
+            {
+                _sign += _sign == "" ? "" : "&";
+                _sign += $"{_item.Key}={_item.Value}";
+            }
+            _sign += $"&secret_key={base.Secret}";
             _sign = MD5.Encode(_sign).ToUpper();
 
-            JObject _json = new JObject();
-            _json["access_id"] = this.key;
-            _json["authorization"] = _sign;
-            _json["tonce"] = _time;
+            _http.Headers.Add("authorization", _sign);
 
-            this.Send("server.sign", _json);
+            return _result.ToArray();
         }
         #endregion
 
-        #region Send
-        private void Send(string _method, JToken _params)
+        #region HttpCallResult
+        protected override JToken HttpCallResult(JToken _token)
         {
-            JObject _json = new JObject();
-            _json["method"] = _method;
-            _json["params"] = _params;
-            _json["id"] = this.commandId++;
+            if (_token == null) { return null; }
 
-            this.Send(_json);
-        }
-        #endregion
+            JObject _json = (JObject)_token;
 
-        #region StartBalance
-        private void StartBalance()
-        {
-            int _loop = 100;
-            while (this.Running)
+            if (_json.Property("code") == null || _json["code"].Value<int>() != 0)
             {
-                Thread.Sleep(100);
-                if (_loop > 0) { _loop--; continue; }
-                _loop = 100;
-
-                JObject _json = this.HttpCall("GET", "/v1/balance/");
-                if (_json == null) { continue; }
-
-                string _code = _json.Property("code") == null ? "" : _json["code"].Value<string>();
-                if (_code != "0")
-                {
-                    this.Log("Balance failed - " + _json.ToString(Newtonsoft.Json.Formatting.None));
-                    continue;
-                }
-
-                foreach (JProperty _item in _json["data"].Children())
-                {
-                    this.Balance[_item.Name] = _json["data"][_item.Name]["available"].Value<decimal>();
-                }
-            }
-        }
-        #endregion
-
-        #region HttpCall
-        public JObject HttpCall(string _method, string _url, params string[] _keyValue)
-        {
-            try
-            {
-                string _query = "";
-                SortedDictionary<string, string> _list = new SortedDictionary<string, string>();
-                for (int i = 0; i < _keyValue.Length; i += 2)
-                {
-                    _query += _query == "" ? "" : "&";
-                    _query += _keyValue[i] + "=" + System.Web.HttpUtility.UrlEncode(_keyValue[i + 1]);
-                    _list.Add(_keyValue[i], _keyValue[i + 1]);
-                }
-
-                string _sign = "";
-                long _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)) * 1000;
-                _list.Add("access_id", this.key);
-                _list.Add("tonce", _time.ToString());
-
-                _query += _query == "" ? "" : "&";
-                _query += $"access_id={this.key}&tonce={_time}";
-
-                JObject _json = new JObject();
-                foreach (KeyValuePair<string, string> _item in _list)
-                {
-                    _sign += _sign == "" ? "" : "&";
-                    _sign += $"{_item.Key}={_item.Value}";
-                    _json[_item.Key] = _item.Value;
-                }
-                _sign += $"&secret_key={this.secret}";
-                _sign = MD5.Encode(_sign).ToUpper();
-
-                HttpClient _http = new HttpClient(10000);
-                if (_method == "GET" || _method == "DELETE")
-                {
-                    _http.BeginResponse(_method, $"{this.http}{_url}?{_query}", "");
-                    _http.Request.Headers.Add("authorization", _sign);
-                    _http.EndResponse();
-                }
-                else
-                {
-                    _http.UserAgent = " User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36";
-                    _http.BeginResponse(_method, $"{this.http}{_url}", "");
-                    _http.Request.ContentType = "application/json";
-                    _http.Request.Headers.Add("authorization", _sign);
-                    _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString()));
-                }
-
-                string _result = _http.GetResponseString(Encoding.UTF8);
-                JObject _resultJson = JObject.Parse(_result);
-
-                this.OnLog(">>>", $"{_resultJson.ToString(Newtonsoft.Json.Formatting.None)}");
-
-                return _resultJson;
-            }
-            catch (Exception _ex)
-            {
-                this.OnLog("HTTP", $"{_ex.Message} - {_url} {string.Join(",", _keyValue)}");
+                this.Log(_json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
+            return _json["data"];
         }
         #endregion
 
-        #region OrderLimit
-        public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
+        #region GetTicker
+        public override Ticker GetTicker(string _pair)
         {
-            string _url = "/v1/order/limit";
-            JObject _json = this.HttpCall("POST", _url,
-                "market", _symbol,
-                "type", _side == "BID" ? "buy" : "sell",
-                "amount", _amount.ToString(),
-                "price", _price.ToString()
-                );
-            if (_json == null) { return ""; }
-            if (_json.Property("code")== null) { return ""; }
-            if (_json["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return "";
-            }
-            return _json["data"]["id"].Value<string>();
+            string _url = $"/v1/market/ticker?market={_pair}";
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
+            if (_token == null) { return null; }
+
+            Ticker _ticker = new Ticker();
+            _ticker.Pair = _pair;
+            _ticker.Last = _token["ticker"]["last"].Value<decimal>();
+            _ticker.BidPrice = _token["ticker"]["buy"].Value<decimal>();
+            _ticker.BidAmount = _token["ticker"]["buy_amount"].Value<decimal>();
+            _ticker.AskPrice = _token["ticker"]["sell"].Value<decimal>();
+            _ticker.AskAmount = _token["ticker"]["sell_amount"].Value<decimal>();
+            _ticker.Open24H = _token["ticker"]["open"].Value<decimal>();
+            _ticker.High24H = _token["ticker"]["high"].Value<decimal>();
+            _ticker.Low24H = _token["ticker"]["low"].Value<decimal>();
+            _ticker.Volume24H = _token["ticker"]["vol"].Value<decimal>();
+
+            return _ticker;
         }
         #endregion
 
-        #region OrderMarket
-        public string OrderMarket(string _symbol, string _side, decimal _amount)
+        #region GetDepths
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:merge 1:limit</param>
+        /// <returns></returns>
+        public override Books GetDepths(string _pair, params string[] _values)
         {
-            string _url = "/v1/order/market";
-            JObject _json = this.HttpCall("POST", _url,
-                "market", _symbol,
-                "type", _side == "BID" ? "buy" : "sell",
-                "amount", _amount.ToString()
-                );
-            if (_json == null) { return ""; }
-            if (_json.Property("code") == null) { return ""; }
-            if (_json["code"].Value<int>() != 0)
+            string _url = $"/v1/market/depth?market={_pair}&merge={_values[0]}";
+            if (_values.Length > 1) { _url += $"&limit={_values[1]}"; }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
+
+            BookItems _bidList = new BookItems(MarketSide.Bid);
+            JArray _bids = _token["bids"].Value<JArray>();
+            for (int i = 0; i < _bids.Count; i += 2)
             {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return "";
+                decimal _price = _bids[i].Value<decimal>();
+                decimal _amount = _bids[i + 1].Value<decimal>();
+                _bidList.Insert(_price.ToString(), _price, _amount);
             }
-            return _json["data"]["id"].Value<string>();
+            BookItems _askList = new BookItems(MarketSide.Ask);
+            JArray _asks = _token["asks"].Value<JArray>();
+            for (int i = 0; i < _asks.Count; i += 2)
+            {
+                decimal _price = _asks[i].Value<decimal>();
+                decimal _amount = _asks[i + 1].Value<decimal>();
+                _askList.Insert(_price.ToString(), _price, _amount);
+            }
+
+            Books _books = new Books();
+            _books[_pair, MarketSide.Bid] = _bidList;
+            _books[_pair, MarketSide.Ask] = _askList;
+
+            return _books;
         }
         #endregion
 
-        #region OrderStatus
-        public JObject OrderStatus(string _symbol, string _id)
+        #region GetTrades
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:last_id</param>
+        /// <returns></returns>
+        public override Trade[] GetTrades(string _pair, params string[] _values)
         {
-            string _url = "/v1/order";
-            JObject _json = this.HttpCall("GET", _url,
-                "market", _symbol,
-                "id", _id
-                );
-            if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
+            string _url = $"/v1/market/deals?market={_pair}";
+            if (_values.Length > 0) { _url += $"&last_id={_values[0]}"; }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
+
+            IList<Trade> _result = new List<Trade>();
+            JArray _trades = _token.Value<JArray>();
+            foreach (JToken _item in _trades)
             {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
+                Trade _trade = new Trade();
+                _trade.Id = _item["id"].Value<string>();
+                _trade.Pair = _pair;
+                _trade.Side = _item["type"].Value<string>() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+                _trade.Price = _item["price"].Value<decimal>();
+                _trade.Amount = _item["amount"].Value<decimal>();
+                _trade.DateTime = DateTimePlus.JSTime2DateTime(_item["date"].Value<long>());
+
+                _result.Add(_trade);
             }
-            return _json["data"].Value<JObject>();
+
+            return _result.ToArray();
         }
         #endregion
 
-        #region OrderCancel
-        public JObject OrderCancel(string _symbol, string _id, out bool _done)
+        #region GetKLines
+        public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
         {
-            _done = false;
-            string _url = "/v1/order/pending";
-            JObject _json = this.HttpCall("DELETE", _url,
-                "market", _symbol,
-                "id", _id
-                );
-            if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
+            string _typeText = "";
+            switch (_type)
+            {
+                case KLineType.M1: _typeText = "1min"; break;
+                case KLineType.M5: _typeText = "5min"; break;
+                case KLineType.M15: _typeText = "15min"; break;
+                case KLineType.M30: _typeText = "30min"; break;
+                case KLineType.H1: _typeText = "1hour"; break;
+                case KLineType.H4: _typeText = "4hour"; break;
+                case KLineType.H6: _typeText = "6hour"; break;
+                case KLineType.D1: _typeText = "1day"; break;
+                case KLineType.D7: _typeText = "1week"; break;
+                default: throw new Exception($"KLine type:{_type.ToString()} not supported.");
+            }
 
-            if (_json["code"].Value<int>() == 600)
+            string _url = $"/v1/market/kline?market={_pair}&type={_typeText}";
+            if (_values.Length > 0) { _url += $"?limit={_values[0]}"; }
+            if (_values.Length > 1) { _url += $"&before={_values[1]}"; }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
+
+            IList<KLine> _result = new List<KLine>();
+            JArray _trades = _token.Value<JArray>();
+            foreach (JToken _item in _trades)
             {
-                _done = true;
-                return null;
+                KLine _line = new KLine();
+                _line.DateTime = DateTimePlus.JSTime2DateTime(_item[0].Value<long>());
+                _line.Pair = _pair;
+                _line.Open = _item[1].Value<decimal>();
+                _line.Close = _item[2].Value<decimal>();
+                _line.High = _item[3].Value<decimal>();
+                _line.Low = _item[4].Value<decimal>();
+                _line.Volume = _item[5].Value<decimal>();
+                _line.Volume2 = _item[6].Value<decimal>();
+
+                _result.Add(_line);
             }
-            else if (_json["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
-            }
-            return _json["data"].Value<JObject>();
+
+            return _result.ToArray();
         }
         #endregion
 
-        #region MiningDifficulty
-        public JObject MiningDifficulty()
+        #region GetBalances
+        public override Balances GetBalances()
+        {
+            string _url = "/v1/balance/";
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            if (_token == null) { return null; }
+
+            Balances _balances = new Balances();
+            foreach (JToken _item in _token.Value<JArray>())
+            {
+                JProperty _property = (JProperty)_item;
+                _balances[_property.Name] = new BalanceItem()
+                {
+                    Symbol = _property.Name,
+                    Free = _item[_property.Name]["available"].Value<decimal>(),
+                    Lock = _item[_property.Name]["frozen"].Value<decimal>()
+                };
+            }
+            return _balances;
+        }
+        #endregion
+
+        #region GetMiningStatus
+        public MiningStatus GetMiningStatus()
         {
             string _url = "/v1/order/mining/difficulty";
-            JObject _json = this.HttpCall("GET", _url);
-            if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
-            }
-            return _json["data"].Value<JObject>();
-        }
-        #endregion
 
-        #region MarketKLine
-        public JArray MarketKLine(string _symbol, string _type = "1hour",int _limit=10)
-        {
-            string _url = "/v1/market/kline";
-            JObject _json = this.HttpCall("GET", _url, "market", _symbol, "type", _type, "limit", _limit.ToString());
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            if (_token == null) { return null; }
 
-            if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
-            }
-            return _json["data"].Value<JArray>();
+            MiningStatus _status = new MiningStatus();
+            _status.Maximum = _token["difficulty"].Value<decimal>();
+            _status.Current = _token["prediction"].Value<decimal>();
+            _status.DateTime = DateTimePlus.JSTime2DateTime(_token["update_time"].Value<long>());
+            return _status;
         }
         #endregion
     }
+
+    #region MiningStatus
+    public class MiningStatus
+    {
+        public decimal Maximum;
+        public decimal Current;
+        public DateTime DateTime;
+    }
+    #endregion
 }

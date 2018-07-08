@@ -6,16 +6,23 @@ using System.Text;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
+    #region Enum
+    public enum HttpCallMethod { Get, PostForm, PostJson }
+    public enum MarketSide { Bid, Ask }
+    public enum KLineType { M1, M5, M15, M30, H1, H4, H6, H8, H12, D1, D7, D14, MM, YY }
+    public enum OrderType { Market, Limit }
+    public enum OrderStatus { New, Filling, Filled, Canceled, Finished }
+    #endregion
+
     #region Books
     public class Books: ConcurrentDictionary<string, BookItems>
     {
-        #region this[symbol,side]
-        public BookItems this[string _symbol, string _side]
+        #region this[pair,side]
+        public BookItems this[string _pair, MarketSide _side]
         {
             get
             {
-                BookItems _collection;
-                if (this.TryGetValue(_symbol + ":" + _side, out _collection))
+                if (this.TryGetValue(_pair + ":" + _side.ToString(), out BookItems _collection))
                 {
                     return _collection;
                 }
@@ -24,8 +31,8 @@ namespace Lion.SDK.Bitcoin.Markets
             set
             {
                 BookItems _items = value;
-                _items.Symbol = _symbol;
-                this.AddOrUpdate(_symbol + ":" + _side, _items, (k, v) => _items);
+                _items.Pair = _pair;
+                this.AddOrUpdate(_pair + ":" + _side.ToString(), _items, (k, v) => _items);
             }
         }
         #endregion
@@ -42,14 +49,14 @@ namespace Lion.SDK.Bitcoin.Markets
     #region BookItems
     public class BookItems : ConcurrentDictionary<string, BookItem>
     {
-        public string Symbol;
-        public string Side;
-        public BookItems(string _side) { this.Side = _side; }
+        public string Pair;
+        public MarketSide Side;
+        public BookItems(MarketSide _side) { this.Side = _side; }
 
         public new BookItem[] ToArray()
         {
-            if (this.Side == "ASK") { return this.Values.OrderBy(i => i.Price).ToArray(); }
-            if (this.Side == "BID") { return this.Values.OrderByDescending(i => i.Price).ToArray(); }
+            if (this.Side == MarketSide.Ask) { return this.Values.OrderBy(i => i.Price).ToArray(); }
+            if (this.Side == MarketSide.Bid) { return this.Values.OrderByDescending(i => i.Price).ToArray(); }
             return null;
         }
 
@@ -57,8 +64,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             get
             {
-                BookItem _item;
-                if (!this.TryGetValue(_id, out _item)) { return null; }
+                if (!this.TryGetValue(_id, out BookItem _item)) { return null; }
                 return _item;
             }
         }
@@ -66,7 +72,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Insert
         public BookItem Insert(string _id, decimal _price, decimal _amount)
         {
-            BookItem _item = new BookItem(this.Symbol, this.Side, _price, _amount, _id);
+            BookItem _item = new BookItem(this.Pair, this.Side, _price, _amount, _id);
             this.AddOrUpdate(_id, _item, (k, v) => _item);
             return _item;
         }
@@ -126,7 +132,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             foreach (BookItem _item in _list)
             {
-                if (this.Side == "ASK")
+                if (this.Side == MarketSide.Ask)
                 {
                     if(_item.Price > _price)
                     {
@@ -137,7 +143,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         _count += _item.Amount;
                     }
                 }
-                if (this.Side == "BID")
+                if (this.Side == MarketSide.Bid)
                 {
                     if (_item.Price < _price)
                     {
@@ -159,14 +165,14 @@ namespace Lion.SDK.Bitcoin.Markets
     public class BookItem
     {
         public string Id;
-        public string Symbol;
-        public string Side;
+        public string Pair;
+        public MarketSide Side;
         public decimal Price;
         public decimal Amount;
 
-        public BookItem(string _symbol,string _side, decimal _price, decimal _amount, string _id = "")
+        public BookItem(string _pair, MarketSide _side, decimal _price, decimal _amount, string _id = "")
         {
-            this.Symbol = _symbol;
+            this.Pair = _pair;
             this.Side = _side;
             this.Price = _price;
             this.Amount = _amount;
@@ -183,8 +189,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             get
             {
-                OrderItem _item;
-                if (this.TryGetValue(_id, out _item)) { return _item; }
+                if (this.TryGetValue(_id, out OrderItem _item)) { return _item; }
                 return null;
             }
         }
@@ -203,7 +208,7 @@ namespace Lion.SDK.Bitcoin.Markets
     public class OrderItem
     {
         public string Id;
-        public string Symbol;
+        public string Pair;
         public string Side;
         public decimal Price;
         public decimal Amount;
@@ -212,10 +217,10 @@ namespace Lion.SDK.Bitcoin.Markets
         public OrderStatus Status;
         public DateTime CreateTime;
 
-        public OrderItem(string _id, string _symbol, string _side, decimal _price, decimal _amount, OrderStatus _status = OrderStatus.New)
+        public OrderItem(string _id, string _pair, string _side, decimal _price, decimal _amount, OrderStatus _status = OrderStatus.New)
         {
             this.Id = _id;
-            this.Symbol = _symbol;
+            this.Pair = _pair;
             this.Side = _side;
             this.Price = _price;
             this.Amount = _amount;
@@ -227,26 +232,102 @@ namespace Lion.SDK.Bitcoin.Markets
     }
     #endregion
 
-    #region OrderStatus
-    public enum OrderStatus { New, Filling, Filled, Canceled, Finished }
-    #endregion
-
-    #region Balance
-    public class Balance : ConcurrentDictionary<string, decimal>
+    #region Balances
+    public class Balances : ConcurrentDictionary<string, BalanceItem>
     {
-        public new decimal this[string _symbol]
+        public new BalanceItem this[string _symbol]
         {
             get
             {
-                decimal _balance;
-                if (this.TryGetValue(_symbol, out _balance)) { return _balance; }
-                return 0M;
+                if (this.TryGetValue(_symbol, out BalanceItem _balance)) { return _balance; }
+                return null;
             }
             set
             {
                 this.AddOrUpdate(_symbol.ToUpper(), value, (k, v) => value);
             }
         }
+    }
+    public class BalanceItem
+    {
+        public string Symbol;
+        public decimal Free;
+        public decimal Lock;
+        public decimal Total { get => this.Free + this.Lock; }
+    }
+    #endregion
+
+    #region Ticker
+    public class Ticker
+    {
+        public string Pair;
+        public decimal Last;
+        public decimal LastAmount = 0M;
+        public decimal BidPrice = 0M;
+        public decimal BidAmount = 0M;
+        public decimal AskPrice = 0M;
+        public decimal AskAmount = 0M;
+        public decimal Open24H;
+        public decimal High24H;
+        public decimal Low24H;
+        public decimal Volume24H;
+        public decimal Volume24H2 = 0M;
+        public decimal Change24H = 0M;
+        public decimal ChangeRate24H = 0M;
+    }
+    #endregion
+
+    #region Pairs
+    public class Pairs : ConcurrentDictionary<string, PairItem>
+    {
+        public new PairItem this[string _pair]
+        {
+            get
+            {
+                if (this.TryGetValue(_pair, out PairItem _item)) { return _item; }
+                return null;
+            }
+            set
+            {
+                this.AddOrUpdate(_pair.ToUpper(), value, (k, v) => value);
+            }
+        }
+    }
+    public class PairItem
+    {
+        public string Code;
+        public string SymbolFrom;
+        public string SymbolTo;
+        public int PriceDecimal;
+        public int AmountDecimal;
+    }
+    #endregion
+
+    #region Trade
+    public class Trade
+    {
+        public string Id;
+        public string Pair;
+        public MarketSide Side;
+        public decimal Price;
+        public decimal Amount;
+        public DateTime DateTime;
+    }
+    #endregion
+
+    #region KLine
+    public class KLine
+    {
+        public DateTime DateTime;
+        public string Pair;
+        public KLineType Type;
+        public decimal Open;
+        public decimal Close;
+        public decimal High;
+        public decimal Low;
+        public decimal Count;
+        public decimal Volume;
+        public decimal Volume2;
     }
     #endregion
 }

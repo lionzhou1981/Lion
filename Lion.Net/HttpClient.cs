@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 
@@ -27,6 +28,8 @@ namespace Lion.Net
         public HttpWebResponse Response;
 
         public string UserAgent = "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1;)";
+
+        public Dictionary<string, string> Headers = new Dictionary<string, string>();
 
         public HttpClient(int _timeout) { this.Timeout = _timeout; }
 
@@ -117,6 +120,10 @@ namespace Lion.Net
             {
                 this.Request.CookieContainer = this.CookieContainer;
             }
+            foreach(KeyValuePair<string,string> _item in this.Headers)
+            {
+                this.Request.Headers.Add(_item.Key, _item.Value);
+            }
         }
         #endregion
 
@@ -124,6 +131,10 @@ namespace Lion.Net
         public HttpStatusCode EndResponse()
         {
             return this.EndResponse(new byte[0]);
+        }
+        public HttpStatusCode EndResponse(string _data)
+        {
+            return this.EndResponse(System.Text.Encoding.UTF8.GetBytes(_data));
         }
         public HttpStatusCode EndResponse(byte[] _postData)
         {

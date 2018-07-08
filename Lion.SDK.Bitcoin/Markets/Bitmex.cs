@@ -13,9 +13,7 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Bitmex : MarketBase
     {
-        private string key;
-        private string secret;
-        private IList<string> depthList;
+        private IList<string> depths;
 
         public Fundings Fundings;
         public int BookSize = 0;
@@ -23,14 +21,16 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Bitmex
         public Bitmex(string _key, string _secret)
         {
-            this.key = _key;
-            this.secret = _secret;
-            this.depthList = new List<string>();
+            base.Key = _key;
+            base.Secret = _secret;
+
+            this.depths = new List<string>();
+            this.Fundings = new Fundings();
 
             base.Name = "BMX";
             base.WebSocket = "";
+            base.HttpUrl = "https://www.bitmex.com";
             base.OnReceivedEvent += Bitmex_OnReceivedEvent; ;
-            this.Fundings = new Fundings();
         }
         #endregion
 
@@ -39,8 +39,8 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
             string _sign = "GET/realtime" + _nonce;
-            _sign = SHA.EncodeHMACSHA256(_sign, this.secret).ToLower();
-            base.WebSocket = $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={this.key}";
+            _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
+            base.WebSocket = $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={base.Key}";
 
             base.Start();
         }
@@ -51,7 +51,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             base.Clear();
 
-            this.depthList?.Clear();
+            this.depths?.Clear();
             this.Fundings?.Clear();
         }
         #endregion
@@ -92,8 +92,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _json.Add("op", "subscribe");
             _json.Add("args", new JArray($"orderBookL2:{_symbol}"));
 
-            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
-            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
             this.Send(_json);
         }
@@ -107,31 +107,31 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_type == "partial")
             {
                 _symbol = _list[0]["symbol"].Value<string>();
-                BookItems _asks = new BookItems("ASK");
-                BookItems _bids = new BookItems("BID");
+                BookItems _asks = new BookItems(MarketSide.Ask);
+                BookItems _bids = new BookItems(MarketSide.Bid);
 
                 foreach (JObject _item in _list)
                 {
-                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
+                    MarketSide _side = _item["side"].Value<string>().ToUpper() == "BUY" ? MarketSide.Bid : MarketSide.Ask;
                     string _id = _item["id"].Value<string>();
                     decimal _price = _item["price"].Value<decimal>();
                     decimal _amount = _item["size"].Value<decimal>() / _price;
 
                     BookItem _bookItem = new BookItem(_symbol, _side, _price, _amount, _id);
-                    if (_side == "BID") { _bids.TryAdd(_id, _bookItem); }
-                    if (_side == "ASK") { _asks.TryAdd(_id, _bookItem); }
+                    if (_side == MarketSide.Bid) { _bids.TryAdd(_id, _bookItem); }
+                    if (_side == MarketSide.Ask) { _asks.TryAdd(_id, _bookItem); }
                 }
 
-                this.Books[_symbol, "ASK"] = _asks;
-                this.Books[_symbol, "BID"] = _bids;
+                this.Books[_symbol, MarketSide.Ask] = _asks;
+                this.Books[_symbol, MarketSide.Bid] = _bids;
 
                 if (this.BookSize > 0)
                 {
-                    this.Books[_symbol, "ASK"].Resize(this.BookSize);
-                    this.Books[_symbol, "BID"].Resize(this.BookSize);
+                    this.Books[_symbol, MarketSide.Ask].Resize(this.BookSize);
+                    this.Books[_symbol, MarketSide.Bid].Resize(this.BookSize);
                 }
 
-                this.depthList.Add(_symbol);
+                this.depths.Add(_symbol);
                 this.OnBookStarted(_symbol);
             }
             else if (_type == "insert")
@@ -139,9 +139,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JObject _item in _list)
                 {
                     _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.depthList.Contains(_symbol)) { continue; }
+                    if (!this.depths.Contains(_symbol)) { continue; }
 
-                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
+                    MarketSide _side = _item["side"].Value<string>().ToUpper() == "BUY" ? MarketSide.Bid : MarketSide.Ask;
                     string _id = _item["id"].Value<string>();
                     decimal _price = _item["price"].Value<decimal>();
                     decimal _amount = _item["size"].Value<decimal>() / _price;
@@ -160,9 +160,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JObject _item in _list)
                 {
                     _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.depthList.Contains(_symbol)) { continue; }
+                    if (!this.depths.Contains(_symbol)) { continue; }
 
-                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
+                    MarketSide _side = _item["side"].Value<string>().ToUpper() == "BUY" ? MarketSide.Bid : MarketSide.Ask;
                     string _id = _item["id"].Value<string>();
                     decimal _amount = _item["size"].Value<decimal>();
 
@@ -194,9 +194,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JObject _item in _list)
                 {
                     _symbol = _item["symbol"].Value<string>().ToUpper();
-                    if (!this.depthList.Contains(_symbol)) { continue; }
+                    if (!this.depths.Contains(_symbol)) { continue; }
 
-                    string _side = _item["side"].Value<string>().ToUpper() == "BUY" ? "BID" : "ASK";
+                    MarketSide _side = _item["side"].Value<string>().ToUpper() == "BUY" ? MarketSide.Bid : MarketSide.Ask;
                     string _id = _item["id"].Value<string>();
 
                     BookItem _bookItem = this.Books[_symbol, _side].Delete(_id);
@@ -232,8 +232,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 if (_item.Property("availableMargin") == null) { continue; }
 
                 decimal _available = _item["availableMargin"].Value<decimal>() * 0.00000001M;
-                bool _changed = _available != this.Balance["XBT"];
-                this.Balance["XBT"] = _available;
+                bool _changed = _available != this.Balances["XBT"].Free;
+                this.Balances["XBT"].Free = _available;
             }
         }
         #endregion
@@ -381,6 +381,73 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region HttpCallAuth
+        protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
+        {
+            string _data = "";
+            for (int i = 0; i < _keyValues.Length - 1; i += 2)
+            {
+                _data += _data == "" ? "" : "&";
+                _data += _keyValues[i] + "=" + System.Web.HttpUtility.UrlEncode(_keyValues[i + 1].ToString());
+            }
+
+            string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
+            string _sign = _method;
+            if (_method == "GET")
+            {
+                _url += _data == "" ? "" : "?";
+                _url += _data;
+                _sign += _url + _nonce;
+            }
+            else
+            {
+                _sign += _url + _nonce + _data;
+            }
+            _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
+
+            _http.Headers.Add("accept", "application/json");
+            _http.Headers.Add("api-key", base.Key);
+            _http.Headers.Add("api-signature", _sign);
+            _http.Headers.Add("api-nonce", _nonce);
+            if (_method == "POST")
+            {
+                _http.Headers.Add("x-requested-with", "XMLHttpRequest");
+                _http.Headers.Add("content-type", "application/x-www-form-urlencoded");
+            }
+
+            return _keyValues;
+        }
+        #endregion
+
+        #region HttpCallResult
+        protected override JToken HttpCallResult(JToken _token)
+        {
+            return _token;
+        }
+        #endregion
+
+        #region GetTicker
+        public override Ticker GetTicker(string _symbol)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+
+        public override Books GetDepths(string _pair, params string[] _values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Trade[] GetTrades(string _pair, params string[] _values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
+        {
+            throw new NotImplementedException();
+        }
+
 
 
         private static string httpUrl = "https://www.bitmex.com/api/v1";
@@ -409,12 +476,12 @@ namespace Lion.SDK.Bitcoin.Markets
                 {
                     _sign += _url + _nonce + _data;
                 }
-                _sign = SHA.EncodeHMACSHA256(_sign, this.secret).ToLower();
+                _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
 
                 HttpClient _http = new HttpClient(10000);
                 _http.BeginResponse(_method, Bitmex.httpUrl + _url, "");
                 _http.Request.Accept = "application/json";
-                _http.Request.Headers.Add("api-key", this.key);
+                _http.Request.Headers.Add("api-key", base.Key);
                 _http.Request.Headers.Add("api-signature", _sign);
                 _http.Request.Headers.Add("api-nonce", _nonce);
                 if (_method == "GET")
@@ -446,12 +513,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _symbol, string _side, decimal _price, decimal _amount, string _type = "Limit")
+        public string OrderCreate(string _symbol, MarketSide _side, decimal _price, decimal _amount, string _type = "Limit")
         {
             JObject _result = (JObject)this.Call(
                 "POST", "/order",
                 "symbol", _symbol,
-                "side", _side == "BID" ? "Buy" : "Sell",
+                "side", _side == MarketSide.Bid ? "Buy" : "Sell",
                 "orderQty", Math.Round(_amount, 0, MidpointRounding.AwayFromZero).ToString(),
                 "price", _price.ToString("0.0"),
                 "ordType", _type);
@@ -484,10 +551,11 @@ namespace Lion.SDK.Bitcoin.Markets
             this.Log(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
             return false;
         }
-        #endregion
 
-        #region MarketTicker
-
+        public override Balances GetBalances()
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 
