@@ -244,7 +244,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             BookItems _bidList = new BookItems(MarketSide.Bid);
             JArray _bids = _token["bids"].Value<JArray>();
-            for (int i = 0; i < _bids.Count; i += 2)
+            for (int i = 0; i < _bids.Count; i++)
             {
                 decimal _price = _bids[i][0].Value<decimal>();
                 decimal _amount = _bids[i][1].Value<decimal>();
@@ -253,7 +253,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             BookItems _askList = new BookItems(MarketSide.Ask);
             JArray _asks = _token["asks"].Value<JArray>();
-            for (int i = 0; i < _asks.Count; i += 2)
+            for (int i = 0; i < _asks.Count; i++)
             {
                 decimal _price = _asks[i][0].Value<decimal>();
                 decimal _amount = _asks[i][1].Value<decimal>();
@@ -280,14 +280,12 @@ namespace Lion.SDK.Bitcoin.Markets
             JArray _trades = _token.Value<JArray>();
             foreach (JToken _item in _trades)
             {
-                decimal _amount = _item[2].Value<decimal>();
-
                 Trade _trade = new Trade();
                 _trade.Id = _item[0].Value<string>();
                 _trade.Pair = _pair;
-                _trade.Side = _amount > 0 ? MarketSide.Bid : MarketSide.Ask;
+                _trade.Side = _item[4].Value<bool>() ? MarketSide.Bid : MarketSide.Ask;
                 _trade.Price = _item[1].Value<decimal>();
-                _trade.Amount = _amount;
+                _trade.Amount = _item[2].Value<decimal>();
                 _trade.DateTime = DateTimePlus.JSTime2DateTime(_item[3].Value<long>() / 1000);
 
                 _result.Add(_trade);

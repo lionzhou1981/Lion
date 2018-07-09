@@ -252,7 +252,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             BookItems _bidList = new BookItems(MarketSide.Bid);
             JArray _bids = _token["bids"].Value<JArray>();
-            for (int i = 0; i < _bids.Count; i += 2)
+            for (int i = 0; i < _bids.Count; i++)
             {
                 decimal _price = _bids[i]["price"].Value<decimal>();
                 decimal _amount = _bids[i]["amount"].Value<decimal>();
@@ -260,7 +260,7 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             BookItems _askList = new BookItems(MarketSide.Ask);
             JArray _asks = _token["asks"].Value<JArray>();
-            for (int i = 0; i < _asks.Count; i += 2)
+            for (int i = 0; i < _asks.Count; i++)
             {
                 decimal _price = _asks[i]["price"].Value<decimal>();
                 decimal _amount = _asks[i]["amount"].Value<decimal>();
