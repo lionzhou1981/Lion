@@ -523,11 +523,11 @@ namespace Lion.SDK.Bitcoin.Markets
 
         #region GetKLines
         /// <summary>
-        /// GetKLines
+        /// 
         /// </summary>
         /// <param name="_pair"></param>
         /// <param name="_type"></param>
-        /// <param name="_values">0:limit 1:sort 2:start 3:end</param>
+        /// <param name="_values">0:limit 1:start</param>
         /// <returns></returns>
         public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
         {
@@ -536,23 +536,13 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 case KLineType.M1: _typeText = "1m"; break;
                 case KLineType.M5: _typeText = "5m"; break;
-                case KLineType.M15: _typeText = "15m"; break;
-                case KLineType.M30: _typeText = "30m"; break;
-                case KLineType.H1: _typeText = "1h"; break;
-                case KLineType.H6: _typeText = "6h"; break;
-                case KLineType.H12: _typeText = "12h"; break;
-                case KLineType.D1: _typeText = "1D"; break;
-                case KLineType.D7: _typeText = "7D"; break;
-                case KLineType.D14: _typeText = "14D"; break;
-                case KLineType.MM: _typeText = "1M"; break;
+                case KLineType.H1: _typeText = "h"; break;
+                case KLineType.D1: _typeText = "1d"; break;
                 default: throw new Exception($"KLine type:{_type.ToString()} not supported.");
             }
 
-            string _url = $"/v2/candles/trade:{_typeText}:t{_pair.ToUpper()}/hist";
-            if (_values.Length > 0) { _url += $"?limit={_values[0]}"; }
-            if (_values.Length > 1) { _url += $"&sort={_values[1]}"; }
-            if (_values.Length > 2) { _url += $"&start={_values[2]}"; }
-            if (_values.Length > 4) { _url += $"&end={_values[3]}"; }
+            string _url = $"/api/v1/trade/bucketed?binSize={_typeText}&partial=true&symbol={_pair}&count={_values[0]}&reverse=true";
+            if (_values.Length > 1) { _url += $"&start={_values[1]}"; }
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
             if (_token == null) { return null; }
@@ -562,13 +552,15 @@ namespace Lion.SDK.Bitcoin.Markets
             foreach (JToken _item in _trades)
             {
                 KLine _line = new KLine();
-                _line.DateTime = DateTimePlus.JSTime2DateTime(_item[0].Value<long>() / 1000);
+                _line.DateTime = _item["timestamp"].Value<DateTime>();
                 _line.Pair = _pair;
-                _line.Open = _item[1].Value<decimal>();
-                _line.Close = _item[2].Value<decimal>();
-                _line.High = _item[3].Value<decimal>();
-                _line.Low = _item[4].Value<decimal>();
-                _line.Volume = _item[5].Value<decimal>();
+                _line.Open = _item["open"].Value<decimal>();
+                _line.Close = _item["close"].Value<decimal>();
+                _line.High = _item["high"].Value<decimal>();
+                _line.Low = _item["low"].Value<decimal>();
+                _line.Volume = _item["volume"].Value<decimal>();
+                _line.Volume2 = _item["homeNotional"].Value<decimal>();
+                _line.Count = _item["trades"].Value<decimal>();
 
                 _result.Add(_line);
             }
@@ -580,24 +572,22 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetBalances
         public override Balances GetBalances()
         {
-            string _url = "/v1/balances";
+            string _url = "/api/v1/user/margin";
             JToken _token = base.HttpCall(HttpCallMethod.PostJson, "POST", _url, true);
             if (_token == null) { return null; }
 
-            Balances _balances = new Balances();
-            foreach (JToken _item in _token.Value<JArray>())
-            {
-                if (_item["type"].Value<string>() != "exchange") { continue; }
+            string _symbol = _token["currency"].Value<string>();
+            decimal _total = _token["walletBalance"].Value<decimal>() * 0.00000001M;
+            decimal _free = _token["availableMargin"].Value<decimal>() * 0.00000001M;
 
-                decimal _free = _item["amount"].Value<decimal>();
-                decimal _total = _item["amount"].Value<decimal>();
-                _balances[_item["currency"].Value<string>()] = new BalanceItem()
-                {
-                    Symbol = _item["currency"].Value<string>(),
-                    Free = _free,
-                    Lock = _total - _free
-                };
-            }
+            Balances _balances = new Balances();
+            _balances[_symbol] = new BalanceItem()
+            {
+                Symbol = _symbol,
+                Free = _free,
+                Lock = _total - _free
+            };
+
             return _balances;
         }
         #endregion

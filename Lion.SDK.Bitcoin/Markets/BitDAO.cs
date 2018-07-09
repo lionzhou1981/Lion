@@ -21,8 +21,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.Secret = _secret;
 
             base.Name = "BTD";
-            base.WebSocket = "wss://39.104.160.179:8088/req/wsjoint";
-            base.HttpUrl = "https://39.104.160.179:8088";
+            base.WebSocket = "wss://api.bitdao.com/req/wsjoint";
+            base.HttpUrl = "https://api.bitdao.com";
             base.OnReceivedEvent += BitDAO_OnReceivedEvent;
         }
         #endregion
