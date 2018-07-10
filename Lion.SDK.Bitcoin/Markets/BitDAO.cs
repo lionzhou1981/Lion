@@ -21,8 +21,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.Secret = _secret;
 
             base.Name = "BTD";
-            base.WebSocket = "wss://api.bitdao.com/req/wsjoint";
-            base.HttpUrl = "https://api.bitdao.com";
+            base.WebSocket = "wss://api.bitdao.com/wsv1";
+            base.HttpUrl = "https://api.bitdao.com/v1";
             base.OnReceivedEvent += BitDAO_OnReceivedEvent;
         }
         #endregion
@@ -388,6 +388,7 @@ namespace Lion.SDK.Bitcoin.Markets
             return _json["data"].Value<JArray>();
         }
         #endregion
+
 
         #region OrderLimit
         public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
