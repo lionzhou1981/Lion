@@ -389,6 +389,50 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region OrderCreate
+        public string OrderCreate(string _symbol, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
+        {
+            string _url = "/api/v1/order";
+
+            IList<string> _values = new List<string>();
+            _values.Add("symbol");
+            _values.Add(_symbol);
+            _values.Add("side");
+            _values.Add(_side == MarketSide.Bid ? "Buy" : "Sell");
+            _values.Add("orderQty");
+            _values.Add(_amount.ToString().Split('.')[0]);
+            _values.Add("ordType");
+            switch (_type)
+            {
+                case OrderType.Limit:
+                    _values.Add("Limit");
+                    _values.Add("price");
+                    _values.Add(_price.ToString());
+                    break;
+                case OrderType.Market:
+                    _values.Add("Market");
+                    break;
+            }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return null; }
+
+            return _token["orderID"].Value<string>();
+        }
+        #endregion
+
+        #region OrderCancel
+        public bool OrderCancel(string _orderId)
+        {
+            string _url = "/api/v1/order";
+
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
+            if (_token == null) { return false; }
+
+            return _token["ordStatus"].Value<string>() == "Canceled";
+        }
+        #endregion
+
 
         #region OrderLimit
         public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)

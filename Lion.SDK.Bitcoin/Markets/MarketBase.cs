@@ -285,6 +285,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     #endregion
                     case HttpCallMethod.Form:
+                        #region Form
                         string _form = "";
                         for (int i = 0; i < _keyValues.Length; i += 2)
                         {
@@ -295,6 +296,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         _http.EndResponse(Encoding.UTF8.GetBytes(_form));
                         _result = _http.GetResponseString(Encoding.UTF8);
                         break;
+                        #endregion
                 }
             }
             catch (Exception _ex)
@@ -314,12 +316,12 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region HttpBalanceMonitor
-        protected void HttpBalanceMonitor(object _delay = null)
+        #region HttpMonitorBalance
+        public void HttpMonitorBalance(object _delay = null)
         {
             if (this.threadBalance == null)
             {
-                this.threadBalance = new Thread(this.HttpBalanceMonitor);
+                this.threadBalance = new Thread(this.HttpMonitorBalance);
                 this.threadBalance.Start();
                 return;
             }

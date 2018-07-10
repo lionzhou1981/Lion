@@ -135,7 +135,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region SubscribeBalance
         public void SubscribeBalance()
         {
-            base.HttpBalanceMonitor();
+            base.HttpMonitorBalance();
         }
         #endregion
 

@@ -247,7 +247,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetTicker
         public override Ticker GetTicker(string _pair)
         {
-            string _url = $"/market/detail/merged?{_pair}";
+            string _url = $"/market/detail/merged?symbol={_pair}";
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
             if (_token == null) { return null; }
