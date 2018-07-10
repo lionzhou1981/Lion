@@ -359,5 +359,132 @@ namespace Lion.SDK.Bitcoin.Markets
             return _balances;
         }
         #endregion
+
+        #region MarketTicker
+        public JObject MarketTicker(string _symbol)
+        {
+            string _url = "/bb/api/ticker?pair=" + _symbol;
+            JObject _json = this.HttpCall("GET", this.http + _url);
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
+
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region MarketKLine
+        public JArray MarketKLine(string _symbol, string _type = "60", DateTime? _start = null, DateTime? _end = null)
+        {
+            _start = _start == null ? DateTime.UtcNow.AddDays(-1) : _start;
+            _end = _end == null ? DateTime.UtcNow : _end;
+
+            string _url = $"/bb/api/ticker?pair={_symbol}&type={_type}&time_start={DateTimePlus.DateTime2JSTime((DateTime)_start)}&time_end={DateTimePlus.DateTime2JSTime((DateTime)_end)}";
+            JObject _json = this.HttpCall("GET", this.http + _url);
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
+
+            return _json["data"].Value<JArray>();
+        }
+        #endregion
+
+        #region OrderLimit
+        public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
+        {
+            string _url = "/bb/api/make/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "type", _side == "BID" ? "buy" : "sell",
+                "order_type", "LIMIT",
+                "price", _price.ToString(),
+                "amount", _amount.ToString(),
+                "money", "0",
+                "stop_limit_price", "0"
+                );
+
+            if (_json == null) { return ""; }
+
+            string _orderId = _json["data"]["orderId"].Value<string>();
+            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
+
+            return _orderId;
+        }
+        #endregion
+
+        #region OrderMarket
+        public string OrderMarket(string _symbol, string _side, decimal _amount)
+        {
+            string _url = "/bb/api/make/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "type", _side == "BID" ? "buy" : "sell",
+                "order_type", "MARKET",
+                "price", "0",
+                "amount", "0",
+                "money", _amount.ToString(),
+                "stop_limit_price", "0"
+                );
+
+            if (_json == null) { return ""; }
+
+            string _orderId = _json["data"]["orderId"].Value<string>();
+            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
+
+            return _orderId;
+        }
+        #endregion
+
+        #region OrderStatus
+        public JObject OrderStatus(string _symbol, string _id)
+        {
+            string _url = "/bb/api/cancel/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "order_id", _id
+                );
+
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0)
+            {
+                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region OrderCancel
+        public JObject OrderCancel(string _symbol, string _id)
+        {
+            string _url = "/bb/api/cancel/order";
+            JObject _json = this.HttpCall("POST", _url,
+                "pair", _symbol,
+                "order_id", _id
+                );
+
+            if (_json == null) { return null; }
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
+
+        #region MiningDifficulty
+        public JObject MiningDifficulty()
+        {
+            string _url = "/v1/order/mining/difficulty";
+            JObject _json = this.HttpCall("GET", _url);
+            if (_json == null) { return null; }
+            if (_json.Property("code") == null) { return null; }
+            if (_json["code"].Value<int>() != 0)
+            {
+                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
+            return _json["data"].Value<JObject>();
+        }
+        #endregion
     }
 }

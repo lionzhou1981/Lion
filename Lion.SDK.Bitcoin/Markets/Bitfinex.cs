@@ -12,6 +12,7 @@ namespace Lion.SDK.Bitcoin.Markets
     public class Bitfinex :  MarketBase 
     {
         private ConcurrentDictionary<string, string> Channels;
+        private static string url = "https://api.bitfinex.com";
 
         #region Bitfinex
         public Bitfinex(string _key, string _secret)
