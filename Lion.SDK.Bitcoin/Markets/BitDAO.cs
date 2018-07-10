@@ -424,7 +424,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCancel
         public bool OrderCancel(string _orderId)
         {
-            string _url = "/api/v1/order";
+            string _url = "/api/v1/cancel/order";
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
             if (_token == null) { return false; }
@@ -433,57 +433,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-
-        #region OrderLimit
-        public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
-        {
-            string _url = "/bb/api/make/order";
-            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
-                "pair", _symbol,
-                "type", _side == "BID" ? "buy" : "sell",
-                "order_type", "LIMIT",
-                "price", _price.ToString(),
-                "amount", _amount.ToString(),
-                "money", "0",
-                "stop_limit_price", "0"
-                );
-
-            if (_json == null) { return ""; }
-
-            string _orderId = _json["data"]["orderId"].Value<string>();
-            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
-
-            return _orderId;
-        }
-        #endregion
-
-        #region OrderMarket
-        public string OrderMarket(string _symbol, string _side, decimal _amount)
-        {
-            string _url = "/bb/api/make/order";
-            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
-                "pair", _symbol,
-                "type", _side == "BID" ? "buy" : "sell",
-                "order_type", "MARKET",
-                "price", "0",
-                "amount", "0",
-                "money", _amount.ToString(),
-                "stop_limit_price", "0"
-                );
-
-            if (_json == null) { return ""; }
-
-            string _orderId = _json["data"]["orderId"].Value<string>();
-            if (_orderId == "-1") { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return ""; }
-
-            return _orderId;
-        }
-        #endregion
-
         #region OrderStatus
         public JObject OrderStatus(string _symbol, string _id)
         {
-            string _url = "/bb/api/cancel/order";
+            string _url = "/api/v1/cancel/order";
             JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "order_id", _id
@@ -495,20 +448,6 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
-            return _json["data"].Value<JObject>();
-        }
-        #endregion
-
-        #region OrderCancel
-        public JObject OrderCancel(string _symbol, string _id)
-        {
-            string _url = "/bb/api/cancel/order";
-            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
-                "pair", _symbol,
-                "order_id", _id
-                );
-
-            if (_json == null) { return null; }
             return _json["data"].Value<JObject>();
         }
         #endregion
