@@ -7,7 +7,7 @@ using System.Text;
 namespace Lion.SDK.Bitcoin.Markets
 {
     #region Enum
-    public enum HttpCallMethod { Get, PostForm, PostJson }
+    public enum HttpCallMethod { Get, Json, Form }
     public enum MarketSide { Bid, Ask }
     public enum KLineType { M1, M5, M15, M30, H1, H4, H6, H8, H12, D1, D7, D14, MM, YY }
     public enum OrderType { Market, Limit }

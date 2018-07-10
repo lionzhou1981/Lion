@@ -257,13 +257,14 @@ namespace Lion.SDK.Bitcoin.Markets
                                 _query += _query == "" ? "?" : "&";
                                 _query += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
                             }
+
                             _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
                             _http.EndResponse(_query);
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
                         }
                     #endregion
-                    case HttpCallMethod.PostJson:
+                    case HttpCallMethod.Json:
                         #region PostJson
                         {
                             JObject _json = new JObject();
@@ -276,12 +277,24 @@ namespace Lion.SDK.Bitcoin.Markets
                                 else if (_valueType == typeof(JArray)) { _json[_keyValues[i]] = (JArray)_keyValues[i + 1]; }
                                 else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
                             }
+
                             _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
                             _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None)));
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
                         }
-                        #endregion
+                    #endregion
+                    case HttpCallMethod.Form:
+                        string _form = "";
+                        for (int i = 0; i < _keyValues.Length; i += 2)
+                        {
+                            _form += _form == "" ? "" : "&";
+                            _form += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
+                        }
+                        _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
+                        _http.EndResponse(Encoding.UTF8.GetBytes(_form));
+                        _result = _http.GetResponseString(Encoding.UTF8);
+                        break;
                 }
             }
             catch (Exception _ex)
@@ -330,7 +343,6 @@ namespace Lion.SDK.Bitcoin.Markets
         protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
         protected abstract object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues);
         protected abstract JToken HttpCallResult(JToken _token);
-
         public abstract Ticker GetTicker(string _symbol);
         public abstract Books GetDepths(string _pair, params string[] _values);
         public abstract Trade[] GetTrades(string _pair, params string[] _values);

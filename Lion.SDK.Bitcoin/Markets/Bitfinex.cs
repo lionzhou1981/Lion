@@ -370,7 +370,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public override Balances GetBalances()
         {
             string _url = "/v1/balances";
-            JToken _token = base.HttpCall(HttpCallMethod.PostJson, "POST", _url, true);
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true);
             if (_token == null) { return null; }
 
             Balances _balances = new Balances();

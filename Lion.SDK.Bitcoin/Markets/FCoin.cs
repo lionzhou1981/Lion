@@ -406,7 +406,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 _values.Add(_price.ToString());
             }
 
-            JToken _token = base.HttpCall(HttpCallMethod.PostJson, "POST", "/v2/orders", true, _values.ToArray());
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", "/v2/orders", true, _values.ToArray());
             if (_token == null) { return ""; }
 
             return _token["id"].Value<string>();

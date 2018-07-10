@@ -277,7 +277,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     FundingItem _funding;
                     if (this.Fundings.TryGetValue(_symbol, out _funding))
                     {
-                        JToken _result = this.Call("GET", "/instrument", "symbol", _item["symbol"].Value<string>());
+                        JToken _result = this.HttpCall(HttpCallMethod.Get, "GET", "/instrument", false, "symbol", _item["symbol"].Value<string>());
                         if (_result is JArray)
                         {
                             _funding.Rate = _result[0]["fundingRate"].Value<decimal>();
@@ -573,7 +573,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public override Balances GetBalances()
         {
             string _url = "/api/v1/user/margin";
-            JToken _token = base.HttpCall(HttpCallMethod.PostJson, "POST", _url, true);
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true);
             if (_token == null) { return null; }
 
             string _symbol = _token["currency"].Value<string>();
@@ -592,108 +592,47 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-
-
-        private static string httpUrl = "https://www.bitmex.com/api/v1";
-
-        #region Call
-        public JToken Call(string _method, string _url, params string[] _values)
-        {
-            try
-            {
-                string _data = "";
-                for (int i = 0; i < _values.Length - 1; i += 2)
-                {
-                    _data += _data == "" ? "" : "&";
-                    _data += _values[i] + "=" + System.Web.HttpUtility.UrlEncode(_values[i + 1]);
-                }
-
-                string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
-                string _sign = _method + "/api/v1";
-                if (_method == "GET")
-                {
-                    _url += _data == "" ? "" : "?";
-                    _url += _data;
-                    _sign += _url + _nonce;
-                }
-                else
-                {
-                    _sign += _url + _nonce + _data;
-                }
-                _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
-
-                HttpClient _http = new HttpClient(10000);
-                _http.BeginResponse(_method, Bitmex.httpUrl + _url, "");
-                _http.Request.Accept = "application/json";
-                _http.Request.Headers.Add("api-key", base.Key);
-                _http.Request.Headers.Add("api-signature", _sign);
-                _http.Request.Headers.Add("api-nonce", _nonce);
-                if (_method == "GET")
-                {
-                    _http.EndResponse();
-                }
-                else
-                {
-                    _http.Request.Headers.Add("x-requested-with", "XMLHttpRequest");
-                    _http.Request.ContentType = "application/x-www-form-urlencoded";
-                    _http.EndResponse(Encoding.UTF8.GetBytes(_data));
-                }
-                string _result = _http.GetResponseString(Encoding.UTF8);
-                if (_result[0] == '[')
-                {
-                    return JArray.Parse(_result);
-                }
-                else
-                {
-                    return JObject.Parse(_result);
-                }
-            }
-            catch (Exception _ex)
-            {
-                this.Log($"CALL - {_ex.Message} - {_method} {_url} {string.Join(",", _values)}");
-                return null;
-            }
-        }
-        #endregion
-
         #region OrderCreate
-        public string OrderCreate(string _symbol, MarketSide _side, decimal _price, decimal _amount, string _type = "Limit")
+        public string OrderCreate(string _symbol, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
         {
-            JObject _result = (JObject)this.Call(
-                "POST", "/order",
-                "symbol", _symbol,
-                "side", _side == MarketSide.Bid ? "Buy" : "Sell",
-                "orderQty", Math.Round(_amount, 0, MidpointRounding.AwayFromZero).ToString(),
-                "price", _price.ToString("0.0"),
-                "ordType", _type);
-            if (_result == null) { return ""; }
-            if (_result.Property("error") != null)
+            string _url = "/api/v1/order";
+
+            IList<string> _values = new List<string>();
+            _values.Add("symbol");
+            _values.Add(_symbol);
+            _values.Add("side");
+            _values.Add(_side == MarketSide.Bid ? "Buy" : "Sell");
+            _values.Add("orderQty");
+            _values.Add(_amount.ToString().Split('.')[0]);
+            _values.Add("ordType");
+            switch (_type)
             {
-                this.Log("Order create failed - " + _result?.ToString(Newtonsoft.Json.Formatting.None));
-                return "";
+                case OrderType.Limit:
+                    _values.Add("Limit");
+                    _values.Add("price");
+                    _values.Add(_price.ToString());
+                    break;
+                case OrderType.Market:
+                    _values.Add("Market");
+                    break;
             }
-            return _result["orderID"].Value<string>();
+
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return null; }
+
+            return _token["orderID"].Value<string>();
         }
         #endregion
 
         #region OrderCancel
         public bool OrderCancel(string _orderId)
         {
-            JToken _jtoken = this.Call("DELETE", "/order", "orderID", _orderId);
-            Console.WriteLine(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
-            JObject _json = _jtoken is JObject ? (JObject)_jtoken : null;
-            if (_json == null && _jtoken is JArray)
-            {
-                JArray _list = (JArray)_jtoken;
-                _json = _list.Count == 1 ? (JObject)_list[0] : null;
-            }
-            if (_json == null) { return false; }
+            string _url = "/api/v1/order";
 
-            string _status = _json.Property("ordStatus") == null ? "" : _json["ordStatus"].Value<string>();
-            if (_status == "Canceled") { return true; }
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
+            if (_token == null) { return false; }
 
-            this.Log(_jtoken.ToString(Newtonsoft.Json.Formatting.None));
-            return false;
+            return _token["ordStatus"].Value<string>() == "Canceled";
         }
         #endregion
     }
