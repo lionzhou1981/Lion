@@ -243,7 +243,7 @@ namespace Lion.SDK.Bitcoin.Markets
             try
             {
                 HttpClient _http = new HttpClient(5000);
-                _http.UserAgent = " User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36";
+                _http.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
                 if (_auth) { _keyValues = HttpCallAuth(_http, _httpMethod,ref _url, _keyValues); }
 
                 switch (_callMethod)
