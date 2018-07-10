@@ -364,10 +364,9 @@ namespace Lion.SDK.Bitcoin.Markets
         public JObject MarketTicker(string _symbol)
         {
             string _url = "/bb/api/ticker?pair=" + _symbol;
-            JObject _json = this.HttpCall("GET", this.http + _url);
+            JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url);
 
             if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
             if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
 
             return _json["data"].Value<JObject>();
@@ -381,10 +380,9 @@ namespace Lion.SDK.Bitcoin.Markets
             _end = _end == null ? DateTime.UtcNow : _end;
 
             string _url = $"/bb/api/ticker?pair={_symbol}&type={_type}&time_start={DateTimePlus.DateTime2JSTime((DateTime)_start)}&time_end={DateTimePlus.DateTime2JSTime((DateTime)_end)}";
-            JObject _json = this.HttpCall("GET", this.http + _url);
+            JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url);
 
             if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
             if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
 
             return _json["data"].Value<JArray>();
@@ -395,7 +393,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public string OrderLimit(string _symbol, string _side, decimal _amount, decimal _price)
         {
             string _url = "/bb/api/make/order";
-            JObject _json = this.HttpCall("POST", _url,
+            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "type", _side == "BID" ? "buy" : "sell",
                 "order_type", "LIMIT",
@@ -418,7 +416,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public string OrderMarket(string _symbol, string _side, decimal _amount)
         {
             string _url = "/bb/api/make/order";
-            JObject _json = this.HttpCall("POST", _url,
+            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "type", _side == "BID" ? "buy" : "sell",
                 "order_type", "MARKET",
@@ -441,13 +439,12 @@ namespace Lion.SDK.Bitcoin.Markets
         public JObject OrderStatus(string _symbol, string _id)
         {
             string _url = "/bb/api/cancel/order";
-            JObject _json = this.HttpCall("POST", _url,
+            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "order_id", _id
                 );
 
             if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
             if (_json["code"].Value<int>() != 0)
             {
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
@@ -461,7 +458,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public JObject OrderCancel(string _symbol, string _id)
         {
             string _url = "/bb/api/cancel/order";
-            JObject _json = this.HttpCall("POST", _url,
+            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "order_id", _id
                 );
@@ -475,9 +472,8 @@ namespace Lion.SDK.Bitcoin.Markets
         public JObject MiningDifficulty()
         {
             string _url = "/v1/order/mining/difficulty";
-            JObject _json = this.HttpCall("GET", _url);
+            JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_json == null) { return null; }
-            if (_json.Property("code") == null) { return null; }
             if (_json["code"].Value<int>() != 0)
             {
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
