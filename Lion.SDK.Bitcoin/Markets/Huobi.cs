@@ -255,12 +255,12 @@ namespace Lion.SDK.Bitcoin.Markets
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;
             _ticker.Last = _token["tick"]["close"].Value<decimal>();
-            _ticker.BidPrice = _token["tick"]["bid"].Value<decimal>();
-            _ticker.AskPrice = _token["tick"]["ask"].Value<decimal>();
+            _ticker.BidPrice = _token["tick"]["bid"][0].Value<decimal>();
+            _ticker.AskPrice = _token["tick"]["ask"][0].Value<decimal>();
             _ticker.Open24H = _token["tick"]["open"].Value<decimal>();
             _ticker.High24H = _token["tick"]["high"].Value<decimal>();
             _ticker.Low24H = _token["tick"]["low"].Value<decimal>();
-            _ticker.Volume24H = _token["ticker"]["vol"].Value<decimal>();
+            _ticker.Volume24H = _token["tick"]["vol"].Value<decimal>();
 
             return _ticker;
         }
