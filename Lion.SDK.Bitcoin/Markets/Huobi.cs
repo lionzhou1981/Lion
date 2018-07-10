@@ -14,19 +14,15 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Huobi :  MarketBase 
     {
-        private static string url = "https://api.huobi.pro";
-
-        private string key;
-        private string secret;
-
         #region Huobi
         public Huobi(string _key, string _secret)
         {
-            this.key = _key;
-            this.secret = _secret;
+            base.Key = _key;
+            base.Secret = _secret;
 
             base.Name = "HUO";
             base.WebSocket = "wss://api.huobi.pro/ws";
+            base.HttpUrl= "https://api.huobi.pro";
             base.OnReceivingEvent += Huobi_OnReceivingEvent;
             base.OnReceivedEvent += Huobi_OnReceivedEvent;
         }
@@ -94,8 +90,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["sub"] = _id;
             _json["id"] = DateTime.UtcNow.Ticks;
 
-            if (this.Books[_symbol, "BID"] == null) { this.Books[_symbol, "BID"] = new BookItems("BID"); }
-            if (this.Books[_symbol, "ASK"] == null) { this.Books[_symbol, "ASK"] = new BookItems("ASK"); }
+            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
             this.Send(_json);
         }
@@ -107,8 +103,8 @@ namespace Lion.SDK.Bitcoin.Markets
             JObject _json = (JObject)_token;
 
             #region Bid
-            IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, "BID"].ToList();
-            BookItems _bidList = new BookItems("BID");
+            IList<KeyValuePair<string, BookItem>> _bidItems = this.Books[_symbol, MarketSide.Bid].ToList();
+            BookItems _bidList = new BookItems(MarketSide.Bid);
             JArray _bids = _json["bids"].Value<JArray>();
             for (int i = 0; i < _bids.Count; i++)
             {
@@ -139,8 +135,8 @@ namespace Lion.SDK.Bitcoin.Markets
             #endregion
 
             #region Ask
-            BookItems _askList = new BookItems("ASK");
-            IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, "ASK"].ToList();
+            BookItems _askList = new BookItems(MarketSide.Ask);
+            IList<KeyValuePair<string, BookItem>> _askItems = this.Books[_symbol, MarketSide.Ask].ToList();
             JArray _asks = _json["asks"].Value<JArray>();
             for (int i = 0; i < _asks.Count; i++)
             {
@@ -170,102 +166,250 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             #endregion
 
-            this.Books[_symbol, "BID"] = _bidList;
-            this.Books[_symbol, "ASK"] = _askList;
+            this.Books[_symbol, MarketSide.Bid] = _bidList;
+            this.Books[_symbol, MarketSide.Ask] = _askList;
         }
         #endregion
 
-        #region MarketTicker
-        public static JObject MarketTicker(string _symbol)
+        #region HttpCallAuth
+        protected override object[] HttpCallAuth(HttpClient _http, string _method,ref string _url, object[] _keyValues)
         {
-            try
-            {
-                WebClientPlus _webClient = new WebClientPlus(5000);
-                string _result = _webClient.DownloadString($"{Huobi.url}/market/detail/merged?symbol={_symbol}");
-                _webClient.Dispose();
+            string _time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
 
-                return JObject.Parse(_result);
-            }
-            catch
+            if (_method == "GET")
             {
+                #region GET
+                IList<object> _result = new List<object>();
+                string _query = "AccessKeyId=" + base.Key;
+                _query += "&SignatureMethod=HmacSHA256";
+                _query += "&SignatureVersion=2";
+                _query += "&Timestamp=" + _time;
+
+                _result.Add("AccessKeyId");
+                _result.Add(base.Key);
+                _result.Add("SignatureMethod");
+                _result.Add("HmacSHA256");
+                _result.Add("SignatureVersion");
+                _result.Add("2");
+                _result.Add("Timestamp");
+                _result.Add(_time);
+
+                for (int i = 0; i < (_keyValues.Length - 1); i += 2)
+                {
+                    if (_keyValues[i + 1] == null) { continue; }
+                    _query += "&" + _keyValues[i] + "=" + _keyValues[i + 1];
+
+                    _result.Add(_keyValues[i]);
+                    _result.Add(_keyValues[i + 1]);
+                }
+                string _sign = "GET\napi.huobi.pro\n" + _url + "\n" + _query;
+                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret).Replace("+", "%2B").Replace("=", "%3D");
+
+                _result.Add("Signature");
+                _result.Add(_signed);
+                return _result.ToArray();
+                #endregion
+            }
+            else
+            {
+                #region POST
+                string _query = "AccessKeyId=" + base.Key;
+                _query += "&SignatureMethod=HmacSHA256";
+                _query += "&SignatureVersion=2";
+                _query += "&Timestamp=" + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
+                string _sign = "GET\napi.huobi.pro\n" + _url + "\n" + _query;
+                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret).Replace("+", "%2B").Replace("=", "%3D");
+                _url = _query + "&Signature=" + _signed;
+
+                _http.Headers.Add("Content-Type", "application/json");
+                return _keyValues;
+                #endregion
+            }
+        }
+        #endregion
+
+        #region HttpCallResult
+        protected override JToken HttpCallResult(JToken _token)
+        {
+            if (_token == null) { return null; }
+
+            JObject _json = (JObject)_token;
+
+            if (_json.Property("status") == null || _json["status"].Value<string>() != "ok")
+            {
+                this.Log(_json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
+            return _json;
         }
         #endregion
 
-
-
-        public JObject Accounts() => JObject.Parse(this.Get("/v1/account/accounts"));
-
-        public JObject NewOrder(
-            string _account,
-            string _symbol,
-            decimal _amount,
-            string _type
-            ) => JObject.Parse(this.Post("/v1/order/orders/place",
-                "account-id", _account,
-                "symbol", _symbol,
-                "amount", _amount.ToString(),
-                "type", _type
-                ));
-
-        public JObject OrderStatus(long _order_id) => JObject.Parse(this.Get("/v1/order/orders", "order-id", _order_id.ToString()));
-
-        #region Get
-        private string Get(string _path, params string[] _keyValue)
+        #region GetTicker
+        public override Ticker GetTicker(string _pair)
         {
-            string _url = Huobi.url + _path;
-            string _query = "AccessKeyId=" + this.key;
-            _query += "&SignatureMethod=HmacSHA256";
-            _query += "&SignatureVersion=2";
-            _query += "&Timestamp=" + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
-            for (int i = 0; i < (_keyValue.Length - 1); i += 2)
-            {
-                if (_keyValue[i + 1] == null) { continue; }
-                _query += "&" + _keyValue[i] + "=" + _keyValue[i + 1];
-            }
-            string _sign = "GET\napi.huobi.pro\n" + _path + "\n" + _query;
-            string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, this.secret).Replace("+", "%2B").Replace("=", "%3D");
-            _query += "&Signature=" + _signed;
+            string _url = $"/market/detail/merged?{_pair}";
 
-            HttpClient _http = new HttpClient(5000);
-            _http.BeginResponse("GET", _url + "?" + _query, "");
-            _http.Request.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
-            _http.EndResponse();
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
+            if (_token == null) { return null; }
 
-            return _http.GetResponseString(Encoding.UTF8);
+            Ticker _ticker = new Ticker();
+            _ticker.Pair = _pair;
+            _ticker.Last = _token["tick"]["close"].Value<decimal>();
+            _ticker.BidPrice = _token["tick"]["bid"].Value<decimal>();
+            _ticker.AskPrice = _token["tick"]["ask"].Value<decimal>();
+            _ticker.Open24H = _token["tick"]["open"].Value<decimal>();
+            _ticker.High24H = _token["tick"]["high"].Value<decimal>();
+            _ticker.Low24H = _token["tick"]["low"].Value<decimal>();
+            _ticker.Volume24H = _token["ticker"]["vol"].Value<decimal>();
+
+            return _ticker;
         }
         #endregion
 
-        #region Post
-        private string Post(string _path, params string[] _keyValue)
+        #region GetDepths
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:step0-5</param>
+        /// <returns></returns>
+        public override Books GetDepths(string _pair, params string[] _values)
         {
-            string _url = Huobi.url + _path;
+            string _url = $"/market/depth?symbol={_values[0]}&type={_pair}";
 
-            string _query = "AccessKeyId=" + this.key;
-            _query += "&SignatureMethod=HmacSHA256";
-            _query += "&SignatureVersion=2";
-            _query += "&Timestamp=" + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
 
-            string _sign = "GET\napi.huobi.pro\n" + _path + "\n" + _query;
-            string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, this.secret).Replace("+", "%2B").Replace("=", "%3D");
-            _query += "&Signature=" + _signed;
-
-            JObject _json = new JObject();
-            for(int i = 0; i < (_keyValue.Length - 1); i+=2)
+            BookItems _bidList = new BookItems(MarketSide.Bid);
+            JArray _bids = _token["tick"]["bids"].Value<JArray>();
+            for (int i = 0; i < _bids.Count; i++)
             {
-                if(_keyValue[i + 1] == null) { continue; }
-                _json[_keyValue[i]] = _keyValue[i + 1].ToString();
+                decimal _price = _bids[i][0].Value<decimal>();
+                decimal _amount = _bids[i][1].Value<decimal>();
+                _bidList.Insert(_price.ToString(), _price, _amount);
+            }
+            BookItems _askList = new BookItems(MarketSide.Ask);
+            JArray _asks = _token["tick"]["asks"].Value<JArray>();
+            for (int i = 0; i < _asks.Count; i++)
+            {
+                decimal _price = _asks[i][0].Value<decimal>();
+                decimal _amount = _asks[i][1].Value<decimal>();
+                _askList.Insert(_price.ToString(), _price, _amount);
             }
 
-            HttpClient _http = new HttpClient(5000);
-            _http.BeginResponse("POST", _url, "");
-            _http.Request.Headers.Add("Content-Type", "application/json");
-            _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString()));
+            Books _books = new Books();
+            _books[_pair, MarketSide.Ask] = _askList;
+            _books[_pair, MarketSide.Bid] = _bidList;
 
-            string _result = _http.GetResponseString(Encoding.UTF8);
+            return _books;
+        }
+        #endregion
 
-            return _result;
+        #region GetTrades
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:size</param>
+        /// <returns></returns>
+        public override Trade[] GetTrades(string _pair, params string[] _values)
+        {
+            string _url = $"/market/history/trade?symbol{_pair}";
+            if (_values.Length > 0) { _url += $"&size={_values[0]}"; }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
+
+            IList<Trade> _result = new List<Trade>();
+            JArray _trades = _token["data"].Value<JArray>();
+            foreach (JToken _item in _trades)
+            {
+                Trade _trade = new Trade();
+                _trade.Id = _item["id"].Value<string>();
+                _trade.Pair = _pair;
+                _trade.Side = _item["direction"].Value<string>() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+                _trade.Price = _item["price"].Value<decimal>();
+                _trade.Amount = _item["amount"].Value<decimal>();
+                _trade.DateTime = DateTimePlus.JSTime2DateTime(_item["ts"].Value<long>() / 1000);
+
+                _result.Add(_trade);
+            }
+
+            return _result.ToArray();
+        }
+        #endregion
+
+        #region GetKLines
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_type"></param>
+        /// <param name="_values">0:size</param>
+        /// <returns></returns>
+        public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
+        {
+            string _typeText = "";
+            switch (_type)
+            {
+                case KLineType.M1: _typeText = "1min"; break;
+                case KLineType.M5: _typeText = "5min"; break;
+                case KLineType.M15: _typeText = "15min"; break;
+                case KLineType.M30: _typeText = "30min"; break;
+                case KLineType.H1: _typeText = "60min"; break;
+                case KLineType.D1: _typeText = "1day"; break;
+                case KLineType.D7: _typeText = "1week"; break;
+                case KLineType.MM: _typeText = "1mon"; break;
+                case KLineType.YY: _typeText = "1year"; break;
+                default: throw new Exception($"KLine type:{_type.ToString()} not supported.");
+            }
+
+            string _url = $" /market/history/kline?symbol={_pair}&period={_typeText}";
+            if (_values.Length > 0) { _url += $"&size={_values[0]}"; }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
+            if (_token == null) { return null; }
+
+            IList<KLine> _result = new List<KLine>();
+            JArray _trades = _token["data"].Value<JArray>();
+            foreach (JToken _item in _trades)
+            {
+                KLine _line = new KLine();
+                _line.DateTime = DateTimePlus.JSTime2DateTime(_token["id"].Value<long>() / 1000);
+                _line.Pair = _pair;
+                _line.Open = _item["open"].Value<decimal>();
+                _line.Close = _item["close"].Value<decimal>();
+                _line.High = _item["high"].Value<decimal>();
+                _line.Low = _item["low"].Value<decimal>();
+                _line.Count = _item["count"].Value<decimal>();
+                _line.Volume = _item["vol"].Value<decimal>();
+                _line.Volume2 = _item["amount"].Value<decimal>();
+
+                _result.Add(_line);
+            }
+
+            return _result.ToArray();
+        }
+        #endregion
+
+        #region GetBalances
+        public override Balances GetBalances()
+        {
+            string _url = "/v2/accounts/balance";
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            if (_token == null) { return null; }
+
+            Balances _balances = new Balances();
+            foreach (JToken _item in _token.Value<JArray>())
+            {
+                _balances[_item["currency"].Value<string>()] = new BalanceItem()
+                {
+                    Symbol = _item["currency"].Value<string>(),
+                    Free = _item["available"].Value<decimal>(),
+                    Lock = _item["frozen"].Value<decimal>()
+                };
+            }
+            return _balances;
         }
         #endregion
     }

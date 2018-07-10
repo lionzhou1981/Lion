@@ -6,6 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
@@ -37,15 +38,19 @@ namespace Lion.SDK.Bitcoin.Markets
     {
         public string Name = "";
         public string WebSocket = "";
+        public string HttpUrl = "";
 
         public Books Books = new Books();
         public Orders Orders = new Orders();
-        public Balance Balance = new Balance();
+        public Balances Balances = new Balances();
 
         protected bool Running = false;
+        protected string Key;
+        protected string Secret;
 
         private ClientWebSocket webSocket = null;
-        private Thread webSocketThread;
+        private Thread threadWebSocket;
+        private Thread threadBalance;
 
         #region Event
         public event ConnectedEventHandle OnConnectedEvent = null;
@@ -81,8 +86,9 @@ namespace Lion.SDK.Bitcoin.Markets
         public virtual void Start()
         {
             this.Running = true;
-            this.webSocketThread = new Thread(new ThreadStart(this.StartWebSocket));
-            this.webSocketThread.Start();
+
+            this.threadWebSocket = new Thread(new ThreadStart(this.StartWebSocket));
+            this.threadWebSocket.Start();
         }
         #endregion
 
@@ -206,7 +212,7 @@ namespace Lion.SDK.Bitcoin.Markets
             this.webSocket?.Dispose();
             this.webSocket = null;
 
-            this.Balance?.Clear();
+            this.Balances?.Clear();
             this.Books?.Clear();
             this.Orders?.Clear();
         }
@@ -230,7 +236,118 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region HttpCall
+        protected JToken HttpCall(HttpCallMethod _callMethod, string _httpMethod, string _url, bool _auth = false, params object[] _keyValues)
+        {
+            string _result = "";
+            try
+            {
+                HttpClient _http = new HttpClient(5000);
+                _http.UserAgent = " User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36";
+                if (_auth) { _keyValues = HttpCallAuth(_http, _httpMethod,ref _url, _keyValues); }
+
+                switch (_callMethod)
+                {
+                    case HttpCallMethod.Get:
+                        #region Get
+                        {
+                            string _query = "";
+                            for (int i = 0; i < _keyValues.Length; i += 2)
+                            {
+                                _query += _query == "" ? "?" : "&";
+                                _query += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
+                            }
+
+                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
+                            _http.EndResponse(_query);
+                            _result = _http.GetResponseString(Encoding.UTF8);
+                            break;
+                        }
+                    #endregion
+                    case HttpCallMethod.Json:
+                        #region PostJson
+                        {
+                            JObject _json = new JObject();
+                            for (int i = 0; i < _keyValues.Length; i += 2)
+                            {
+                                Type _valueType = _keyValues[i + 1].GetType();
+                                if (_valueType == typeof(int)) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
+                                else if (_valueType == typeof(bool)) { _json[_keyValues[i]] = (bool)_keyValues[i + 1]; }
+                                else if (_valueType == typeof(long)) { _json[_keyValues[i]] = (long)_keyValues[i + 1]; }
+                                else if (_valueType == typeof(JArray)) { _json[_keyValues[i]] = (JArray)_keyValues[i + 1]; }
+                                else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
+                            }
+
+                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
+                            _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None)));
+                            _result = _http.GetResponseString(Encoding.UTF8);
+                            break;
+                        }
+                    #endregion
+                    case HttpCallMethod.Form:
+                        string _form = "";
+                        for (int i = 0; i < _keyValues.Length; i += 2)
+                        {
+                            _form += _form == "" ? "" : "&";
+                            _form += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
+                        }
+                        _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
+                        _http.EndResponse(Encoding.UTF8.GetBytes(_form));
+                        _result = _http.GetResponseString(Encoding.UTF8);
+                        break;
+                }
+            }
+            catch (Exception _ex)
+            {
+                this.OnLog("HTTP", $"{_url} HttpFailed\r\n{string.Join(",", _keyValues)}\r\n{_ex.Message}\r\n{_result}");
+                return null;
+            }
+            try
+            {
+                return this.HttpCallResult(JToken.Parse(_result));
+            }
+            catch (Exception _ex)
+            {
+                this.OnLog("HTTP", $"{_url} JsonFailed\r\n{string.Join(",", _keyValues)}\r\n{_ex.Message}\r\n{_result}");
+                return null;
+            }
+        }
+        #endregion
+
+        #region HttpBalanceMonitor
+        protected void HttpBalanceMonitor(object _delay = null)
+        {
+            if (this.threadBalance == null)
+            {
+                this.threadBalance = new Thread(this.HttpBalanceMonitor);
+                this.threadBalance.Start();
+                return;
+            }
+
+            int _loopDelay = (_delay == null ? 10000 : (int)_delay) / 100;
+            int _loop = _loopDelay;
+            while (this.Running)
+            {
+                if (_loop > 0) { _loop--; Thread.Sleep(100); continue; }
+                _loop = _loopDelay;
+
+                Balances _balances = this.GetBalances();
+                if (_balances != null)
+                {
+                    this.Balances = _balances;
+                }
+            }
+        }
+        #endregion
+
         protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
+        protected abstract object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues);
+        protected abstract JToken HttpCallResult(JToken _token);
+        public abstract Ticker GetTicker(string _symbol);
+        public abstract Books GetDepths(string _pair, params string[] _values);
+        public abstract Trade[] GetTrades(string _pair, params string[] _values);
+        public abstract KLine[] GetKLines(string _pair, KLineType _type, params string[] _values);
+        public abstract Balances GetBalances();
 
         protected void Log(string _text) => this.OnLog(this.Name, _text);
 
