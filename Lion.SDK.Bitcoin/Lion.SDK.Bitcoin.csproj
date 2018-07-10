@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
-    <ProjectReference Include="..\Lion\Lion.csproj" />
   </ItemGroup>
 
 </Project>
