@@ -122,7 +122,7 @@ namespace Lion.SDK.Bitcoin.Markets
                             BookItem _bookItem = this.Books[_pair, MarketSide.Bid].Update(_id, _size);
                             if (_bookItem == null)
                             {
-                                _bookItem = this.Books[_pair, MarketSide.Bid].Insert(_id, _price, _size);
+                                _bookItem = this.Books[_pair, MarketSide.Bid].Insert(_id, Math.Abs(_price), _size);
                                 this.OnBookInsert(_bookItem);
                             }
                             else
@@ -146,7 +146,7 @@ namespace Lion.SDK.Bitcoin.Markets
                             BookItem _bookItem = this.Books[_pair, MarketSide.Ask].Update(_id, _size);
                             if (_bookItem == null)
                             {
-                                _bookItem = this.Books[_pair, MarketSide.Ask].Insert(_id, _price, _size);
+                                _bookItem = this.Books[_pair, MarketSide.Ask].Insert(_id, Math.Abs(_price), _size);
                                 this.OnBookInsert(_bookItem);
                             }
                             else
