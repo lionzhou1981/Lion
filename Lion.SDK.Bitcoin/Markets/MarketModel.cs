@@ -209,26 +209,13 @@ namespace Lion.SDK.Bitcoin.Markets
     {
         public string Id;
         public string Pair;
-        public string Side;
+        public MarketSide Side;
         public decimal Price;
         public decimal Amount;
         public decimal FilledPrice;
         public decimal FilledAmount;
         public OrderStatus Status;
         public DateTime CreateTime;
-
-        public OrderItem(string _id, string _pair, string _side, decimal _price, decimal _amount, OrderStatus _status = OrderStatus.New)
-        {
-            this.Id = _id;
-            this.Pair = _pair;
-            this.Side = _side;
-            this.Price = _price;
-            this.Amount = _amount;
-            this.FilledPrice = 0M;
-            this.FilledAmount = 0M;
-            this.Status = _status;
-            this.CreateTime = DateTime.UtcNow;
-        }
     }
     #endregion
 
@@ -328,6 +315,15 @@ namespace Lion.SDK.Bitcoin.Markets
         public decimal Count;
         public decimal Volume;
         public decimal Volume2;
+    }
+    #endregion
+
+    #region MiningStatus
+    public class MiningStatus
+    {
+        public decimal Maximum;
+        public decimal Current;
+        public DateTime DateTime;
     }
     #endregion
 }

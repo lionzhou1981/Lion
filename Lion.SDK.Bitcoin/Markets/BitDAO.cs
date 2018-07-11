@@ -10,6 +10,7 @@ using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
 
+
 namespace Lion.SDK.Bitcoin.Markets
 {
     public class BitDAO : MarketBase
@@ -390,13 +391,13 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _symbol, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
+        public OrderItem OrderCreate(string _pair, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
         {
             string _url = "/api/v1/order";
 
             IList<string> _values = new List<string>();
             _values.Add("symbol");
-            _values.Add(_symbol);
+            _values.Add(_pair);
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "Buy" : "Sell");
             _values.Add("orderQty");
@@ -417,45 +418,90 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
 
-            return _token["orderID"].Value<string>();
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["orderID"].Value<string>();
+            _order.Pair = _pair;
+            _order.Side = _side;
+            _order.Amount = _amount;
+            _order.Price = _price;
+            _order.Status = OrderStatus.New;
+
+            return _order;
         }
         #endregion
 
         #region OrderCancel
-        public bool OrderCancel(string _orderId)
+        public OrderItem OrderCancel(string _pair, string _orderId)
         {
             string _url = "/api/v1/cancel/order";
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
-            if (_token == null) { return false; }
+            if (_token == null) { return null; }
 
-            return _token["ordStatus"].Value<string>() == "Canceled";
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["orderId"].Value<string>();
+            _order.Pair = _token["detail"]["pairName"].Value<string>();
+            _order.Side = _token["detail"]["isBid"].Value<bool>() ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["detail"]["totalNumber"].Value<decimal>();
+            _order.Price = _token["detail"]["limitPrice"].Value<decimal>();
+            string _status = _token["detail"]["orderStatus"].Value<string>();
+            switch (_status)
+            {
+                case "1": _order.Status = OrderStatus.New; break;
+                case "2": _order.Status = OrderStatus.Filling; break;
+                case "3": _order.Status = OrderStatus.Filled; break;
+                case "4": _order.Status = OrderStatus.Canceled; break;
+            }
+
+            _order.FilledAmount = _token["detail"]["numberGet"].Value<decimal>();
+            _order.FilledPrice = _token["detail"]["avgPrice"].Value<decimal>();
+
+            return _order;
         }
         #endregion
 
-        #region OrderStatus
-        public JObject OrderStatus(string _symbol, string _id)
+        #region OrderDetail
+        public OrderItem OrderDetail(string _symbol, string _id)
         {
             string _url = "/api/v1/cancel/order";
-            JToken _json = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
+            JToken _token = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
                 "pair", _symbol,
                 "order_id", _id
                 );
 
-            if (_json == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
+            if (_token == null) { return null; }
+            if (_token["code"].Value<int>() != 0)
             {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
+                this.OnLog(_url, _token.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
-            return _json["data"].Value<JObject>();
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["orderId"].Value<string>();
+            _order.Pair = _token["detail"]["pairName"].Value<string>();
+            _order.Side = _token["detail"]["isBid"].Value<bool>() ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["detail"]["totalNumber"].Value<decimal>();
+            _order.Price = _token["detail"]["limitPrice"].Value<decimal>();
+            string _status = _token["detail"]["orderStatus"].Value<string>();
+            switch (_status)
+            {
+                case "1": _order.Status = OrderStatus.New; break;
+                case "2": _order.Status = OrderStatus.Filling; break;
+                case "3": _order.Status = OrderStatus.Filled; break;
+                case "4": _order.Status = OrderStatus.Canceled; break;
+            }
+
+            _order.FilledAmount = _token["detail"]["numberGet"].Value<decimal>();
+            _order.FilledPrice = _token["detail"]["avgPrice"].Value<decimal>();
+
+            return _order;
         }
         #endregion
 
-        #region MiningDifficulty
-        public JObject MiningDifficulty()
+        #region GetMiningStatus
+        public MiningStatus GetMiningStatus()
         {
-            string _url = "/v1/order/mining/difficulty";
+            string _url = "/v1/mine/limit";
             JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_json == null) { return null; }
             if (_json["code"].Value<int>() != 0)
@@ -463,7 +509,12 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
                 return null;
             }
-            return _json["data"].Value<JObject>();
+            MiningStatus _status = new MiningStatus();
+            _status.DateTime = DateTime.UtcNow;
+            _status.Maximum = _json["limit"].Value<decimal>();
+            _status.Current = _json["mined"].Value<decimal>();
+
+            return _status;
         }
         #endregion
     }

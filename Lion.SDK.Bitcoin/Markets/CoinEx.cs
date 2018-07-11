@@ -460,13 +460,4 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
     }
-
-    #region MiningStatus
-    public class MiningStatus
-    {
-        public decimal Maximum;
-        public decimal Current;
-        public DateTime DateTime;
-    }
-    #endregion
 }

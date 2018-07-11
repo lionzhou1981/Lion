@@ -322,7 +322,12 @@ namespace Lion.SDK.Bitcoin.Markets
                     decimal _amountFilled = (_item.Property("cumQty") == null || _item["cumQty"].Type == JTokenType.Null) ? 0M : _item["cumQty"].Value<decimal>();
                     DateTime _createTime = (_item.Property("transactTime") == null || _item["transactTime"].Type == JTokenType.Null) ? DateTime.UtcNow : _item["transactTime"].Value<DateTime>();
 
-                    OrderItem _order = new OrderItem(_id, _symbol, _side, _price, _amount);
+                    OrderItem _order = new OrderItem();
+                    _order.Id = _id;
+                    _order.Pair = _symbol;
+                    _order.Side = _side.ToLower() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+                    _order.Price = _price;
+                    _order.Amount = _amount;
                     _order.FilledAmount = _amountFilled;
                     _order.CreateTime = _createTime;
 
