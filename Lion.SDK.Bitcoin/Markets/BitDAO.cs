@@ -23,7 +23,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             base.Name = "BTD";
             base.WebSocket = "wss://api.bitdao.com/wsv1";
-            base.HttpUrl = "https://api.bitdao.com/v1";
+            base.HttpUrl = "https://api.bitdao.com/";
             base.OnReceivedEvent += BitDAO_OnReceivedEvent;
         }
         #endregion
@@ -174,7 +174,7 @@ namespace Lion.SDK.Bitcoin.Markets
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
             Dictionary<string, string> _list = new Dictionary<string, string>();
-            for(int i = 0; i < _keyValues.Length; i += 2)
+            for (int i = 0; i < _keyValues.Length; i += 2)
             {
                 _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
             }
@@ -238,7 +238,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetDepths
         public override Books GetDepths(string _pair, params string[] _values)
         {
-            string _url = $"/v1/api/depth?pair={_pair}&depth={_values[0]}&prec={_values[1]}";
+            string _url = $"/v1/depth?pair={_pair}&depth={_values[0]}&prec={_values[1]}";
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
             if (_token == null) { return null; }
@@ -272,7 +272,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetTrades
         public override Trade[] GetTrades(string _pair, params string[] _values)
         {
-            string _url = $"/v1/api/trades?pair={_pair}&last={_values[0]}";
+            string _url = $"/v1/trades?pair={_pair}&last={_values[0]}";
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
             if (_token == null) { return null; }
@@ -308,7 +308,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 default: throw new Exception($"KLine type:{_type.ToString()} not supported.");
             }
 
-            string _url = $"/v1/api/kline?pair={_pair}&type={_typeText}";
+            string _url = $"/v1/kline?pair={_pair}&type={_typeText}";
             if (_values.Length > 0) { _url += $"&last={_values[0]}"; }
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url);
@@ -345,81 +345,57 @@ namespace Lion.SDK.Bitcoin.Markets
             foreach (JToken _item in _token["free"])
             {
                 JProperty _property = (JProperty)_item;
-                BalanceItem _balance = new BalanceItem()
-                {
-                    Symbol = _property.Name,
-                    Free = _item[_property.Name].Value<decimal>()
-                };
+                BalanceItem _balance = new BalanceItem();
+                _balance.Symbol = _property.Name;
+                _balance.Free = decimal.Parse(_property.Value.ToString());
+                _balances.TryAdd(_balance.Symbol, _balance);
             }
             foreach (JToken _item in _token["freezed"])
             {
                 JProperty _property = (JProperty)_item;
-                _balances[_property.Name].Lock = _item[_property.Name].Value<decimal>();
+                _balances[_property.Name].Lock = decimal.Parse(_property.Value.ToString());
             }
             this.Balances = _balances;
             return _balances;
         }
         #endregion
 
-        #region MarketTicker
-        public JObject MarketTicker(string _symbol)
-        {
-            string _url = "/bb/api/ticker?pair=" + _symbol;
-            JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url);
-
-            if (_json == null) { return null; }
-            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
-
-            return _json["data"].Value<JObject>();
-        }
-        #endregion
-
-        #region MarketKLine
-        public JArray MarketKLine(string _symbol, string _type = "60", DateTime? _start = null, DateTime? _end = null)
-        {
-            _start = _start == null ? DateTime.UtcNow.AddDays(-1) : _start;
-            _end = _end == null ? DateTime.UtcNow : _end;
-
-            string _url = $"/bb/api/ticker?pair={_symbol}&type={_type}&time_start={DateTimePlus.DateTime2JSTime((DateTime)_start)}&time_end={DateTimePlus.DateTime2JSTime((DateTime)_end)}";
-            JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url);
-
-            if (_json == null) { return null; }
-            if (_json["code"].Value<int>() != 0) { this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None)); return null; }
-
-            return _json["data"].Value<JArray>();
-        }
-        #endregion
-
         #region OrderCreate
         public OrderItem OrderCreate(string _pair, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
         {
-            string _url = "/api/v1/order";
+            string _url = "/v1/make/order";
 
             IList<string> _values = new List<string>();
-            _values.Add("symbol");
+            _values.Add("pair");
             _values.Add(_pair);
-            _values.Add("side");
-            _values.Add(_side == MarketSide.Bid ? "Buy" : "Sell");
-            _values.Add("orderQty");
-            _values.Add(_amount.ToString().Split('.')[0]);
-            _values.Add("ordType");
+            _values.Add("isbid");
+            _values.Add(_side == MarketSide.Bid ? "true" : "false");
+            //_values.Add("orderQty");
+            //_values.Add(_amount.ToString().Split('.')[0]);
+            _values.Add("order_type");
             switch (_type)
             {
                 case OrderType.Limit:
-                    _values.Add("Limit");
+                    _values.Add("LIMIT");
                     _values.Add("price");
                     _values.Add(_price.ToString());
                     break;
                 case OrderType.Market:
-                    _values.Add("Market");
+                    _values.Add("MARKET");
+                    _values.Add("price");
+                    _values.Add("0");
                     break;
             }
+            _values.Add("amount");
+            _values.Add(_amount.ToString());
+            _values.Add("stop_price");
+            _values.Add("0");
 
-            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
-            _order.Id = _token["orderID"].Value<string>();
+            _order.Id = _token["orderId"].Value<string>();
             _order.Pair = _pair;
             _order.Side = _side;
             _order.Amount = _amount;
@@ -433,18 +409,19 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCancel
         public OrderItem OrderCancel(string _pair, string _orderId)
         {
-            string _url = "/api/v1/cancel/order";
+            string _url = "/v1/cancel/order";
 
-            JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
+            //JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, "order_id", _orderId, "pair", _pair);
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
             _order.Id = _token["orderId"].Value<string>();
-            _order.Pair = _token["detail"]["pairName"].Value<string>();
-            _order.Side = _token["detail"]["isBid"].Value<bool>() ? MarketSide.Bid : MarketSide.Ask;
-            _order.Amount = _token["detail"]["totalNumber"].Value<decimal>();
-            _order.Price = _token["detail"]["limitPrice"].Value<decimal>();
-            string _status = _token["detail"]["orderStatus"].Value<string>();
+            _order.Pair = _token["detail"][1].Value<string>();
+            _order.Side = _token["detail"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["detail"][4].Value<decimal>();
+            _order.Price = _token["detail"][5].Value<decimal>();
+            string _status = _token["detail"][9].Value<string>();
             switch (_status)
             {
                 case "1": _order.Status = OrderStatus.New; break;
@@ -453,8 +430,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 case "4": _order.Status = OrderStatus.Canceled; break;
             }
 
-            _order.FilledAmount = _token["detail"]["numberGet"].Value<decimal>();
-            _order.FilledPrice = _token["detail"]["avgPrice"].Value<decimal>();
+            _order.FilledAmount = _token["detail"][3].Value<decimal>();
+            _order.FilledPrice = _token["detail"][6].Value<decimal>();
 
             return _order;
         }
@@ -463,26 +440,19 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderDetail
         public OrderItem OrderDetail(string _symbol, string _id)
         {
-            string _url = "/api/v1/cancel/order";
-            JToken _token = this.HttpCall(HttpCallMethod.Form, "POST", _url, true,
-                "pair", _symbol,
+            string _url = "/v1/detail/order";
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true,
                 "order_id", _id
                 );
-
             if (_token == null) { return null; }
-            if (_token["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _token.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
-            }
 
             OrderItem _order = new OrderItem();
-            _order.Id = _token["orderId"].Value<string>();
-            _order.Pair = _token["detail"]["pairName"].Value<string>();
-            _order.Side = _token["detail"]["isBid"].Value<bool>() ? MarketSide.Bid : MarketSide.Ask;
-            _order.Amount = _token["detail"]["totalNumber"].Value<decimal>();
-            _order.Price = _token["detail"]["limitPrice"].Value<decimal>();
-            string _status = _token["detail"]["orderStatus"].Value<string>();
+            _order.Id = _token["data"][0].Value<string>();
+            _order.Pair = _token["data"][1].Value<string>();
+            _order.Side = _token["data"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["data"][4].Value<decimal>();
+            _order.Price = _token["data"][5].Value<decimal>();
+            string _status = _token["data"][9].Value<string>();
             switch (_status)
             {
                 case "1": _order.Status = OrderStatus.New; break;
@@ -491,8 +461,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 case "4": _order.Status = OrderStatus.Canceled; break;
             }
 
-            _order.FilledAmount = _token["detail"]["numberGet"].Value<decimal>();
-            _order.FilledPrice = _token["detail"]["avgPrice"].Value<decimal>();
+            _order.FilledAmount = _token["detail"][3].Value<decimal>();
+            _order.FilledPrice = _token["detail"][6].Value<decimal>();
 
             return _order;
         }
@@ -504,13 +474,10 @@ namespace Lion.SDK.Bitcoin.Markets
             string _url = "/v1/mine/limit";
             JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_json == null) { return null; }
-            if (_json["code"].Value<int>() != 0)
-            {
-                this.OnLog(_url, _json.ToString(Newtonsoft.Json.Formatting.None));
-                return null;
-            }
+
             MiningStatus _status = new MiningStatus();
             _status.DateTime = DateTime.UtcNow;
+            //question  {{  "mined": "0.27800000",  "canmine": "99.72200000",  "limit": "100.00000000"}}
             _status.Maximum = _json["limit"].Value<decimal>();
             _status.Current = _json["mined"].Value<decimal>();
 

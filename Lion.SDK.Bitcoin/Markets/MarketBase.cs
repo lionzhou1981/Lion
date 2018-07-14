@@ -258,8 +258,8 @@ namespace Lion.SDK.Bitcoin.Markets
                                 _query += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
                             }
 
-                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
-                            _http.EndResponse(_query);
+                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}{(_query==""?"":_query)}", "");
+                            _http.EndResponse();
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
                         }
