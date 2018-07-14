@@ -124,7 +124,7 @@ namespace Lion.Net.Sockets
         [DllImport("kernel32")]
         public static extern int GetCurrentThreadId();
         #endregion
-        
+
         #region 事件
         #region OnSocketAccept Socket接入事件
         /// <summary>
@@ -135,7 +135,7 @@ namespace Lion.Net.Sockets
         /// Session开始事件调用
         /// </summary>
         /// <param name="_socket">连入的Socket对象</param>
-        internal virtual bool OnSocketAccept(Socket _socket) { if (this.OnSocketAcceptEvent != null && _socket != null) { return this.OnSocketAcceptEvent(_socket); } else { return true; } }
+        internal virtual bool OnSocketAccept(Socket _socket) { if (this._shutingdown) return false; if (this.OnSocketAcceptEvent != null && _socket != null) { return this.OnSocketAcceptEvent(_socket); } else { return true; } }
         #endregion
 
         #region OnSessionStart Session开始事件
@@ -147,7 +147,7 @@ namespace Lion.Net.Sockets
         /// Session开始事件调用
         /// </summary>
         /// <param name="_session">SocketSession 对象</param>
-        internal virtual void OnSessionStart(SocketSession _session) { if (this.OnSessionStartEvent != null && _session != null) { this.OnSessionStartEvent(_session); } }
+        internal virtual void OnSessionStart(SocketSession _session) { if (this._shutingdown) return; if (this.OnSessionStartEvent != null && _session != null) { this.OnSessionStartEvent(_session); } }
         #endregion
 
         #region OnSessionEnd Session结束事件
@@ -195,7 +195,7 @@ namespace Lion.Net.Sockets
         /// </summary>
         /// <param name="_socket">Server模式是SocketSession对象, Client模式是SocketEngine对象</param>
         /// <param name="_receivedByteArray">接受到的byte数组</param>
-        internal virtual void OnReceive(object _socket, byte[] _receivedByteArray) { if (this.OnReceiveEvent != null) { this.OnReceiveEvent(_socket, _receivedByteArray); } }
+        internal virtual void OnReceive(object _socket, byte[] _receivedByteArray) { if (this._shutingdown) return; if (this.OnReceiveEvent != null) { this.OnReceiveEvent(_socket, _receivedByteArray); } }
         #endregion
 
         #region OnReceivingPackage 正在接受数据包事件
@@ -208,7 +208,7 @@ namespace Lion.Net.Sockets
         /// </summary>
         /// <param name="_socket">Server模式是SocketSession对象, Client模式是SocketEngine对象</param>
         /// <param name="_package">接受中的数据协议包对象</param>
-        internal virtual void OnReceivingPackage(object _socket, object _package) { if (this.OnReceivingPackageEvent != null && _package != null) { this.OnReceivingPackageEvent(_socket, _package); } }
+        internal virtual void OnReceivingPackage(object _socket, object _package) { if (this._shutingdown) return; if (this.OnReceivingPackageEvent != null && _package != null) { this.OnReceivingPackageEvent(_socket, _package); } }
         #endregion
 
         #region OnReceivedPackage 接受完成数据包事件
@@ -367,10 +367,11 @@ namespace Lion.Net.Sockets
             BitConverter.GetBytes(_keep1).CopyTo(this.keepAliveByteArray, 0);
             BitConverter.GetBytes(_keep2).CopyTo(this.keepAliveByteArray, Marshal.SizeOf(_keep0));
             BitConverter.GetBytes(_keep3).CopyTo(this.keepAliveByteArray, Marshal.SizeOf(_keep0) * 2);
+
         }
         ~SocketEngine()
         {
-            this.Dispose(false);
+            this.Dispose(true);
         }
         #endregion
 
@@ -415,7 +416,9 @@ namespace Lion.Net.Sockets
                 this.type = SocketEngineType.Server;
 
                 this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-//                this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+                this.socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+                this.socket.LingerState.LingerTime = 0;
+
                 this.socket.Bind(_endPoint);
                 this.socket.Listen(this.limitedPending);
 
@@ -453,6 +456,12 @@ namespace Lion.Net.Sockets
         private void BeginAccept()
         {
             SocketSession _socketSession = this.Sessions.Pop();
+            if (_shutingdown)
+            {
+                if (_socketSession != null)
+                    _socketSession.Disconnect();
+                return;
+            }
             if (_socketSession != null)
             {
                 #region Session池可用
@@ -502,6 +511,7 @@ namespace Lion.Net.Sockets
                 this.BeginAccept();
                 #endregion
             }
+
         }
         #endregion
 
@@ -552,7 +562,7 @@ namespace Lion.Net.Sockets
         #region BeginReceive
         private void BeginReceive(SocketAsyncEventArgs _socketAsyncEventArgs)
         {
-            if (!_socketAsyncEventArgs.AcceptSocket.ReceiveAsync(_socketAsyncEventArgs))
+            if (!_shutingdown && !_socketAsyncEventArgs.AcceptSocket.ReceiveAsync(_socketAsyncEventArgs))
             {
                 this.EndReceive(_socketAsyncEventArgs);
             }
@@ -565,7 +575,7 @@ namespace Lion.Net.Sockets
             try
             {
                 bool _disconnect = false;
-                if (_socketAsyncEventArgs == null || _socketAsyncEventArgs.SocketError != SocketError.Success || _socketAsyncEventArgs.BytesTransferred <= 0) { _disconnect = true; }
+                if (_socketAsyncEventArgs == null || _socketAsyncEventArgs.SocketError != SocketError.Success || _socketAsyncEventArgs.BytesTransferred <= 0 || _shutingdown) { _disconnect = true; }
 
                 SocketSession _socketSession = (SocketSession)_socketAsyncEventArgs.UserToken;
                 if (!_disconnect)
@@ -749,6 +759,7 @@ namespace Lion.Net.Sockets
         /// <param name="_socket">断开连接的端口</param>
         public void BeginDisconnect(Socket _socket)
         {
+
             try
             {
                 if (_socket != null && _socket.Connected)
@@ -1044,7 +1055,8 @@ namespace Lion.Net.Sockets
 
             while (this.timeroutThreadRunning && this.socket != null && this.socket.Connected)
             {
-                _count++; if (_count <= _keep) { Thread.Sleep(1000); continue; } _count = 0;
+                _count++; if (_count <= _keep) { Thread.Sleep(1000); continue; }
+                _count = 0;
                 this.SendPackage(this.Protocols[0].KeepAlivePackage);
             }
         }
@@ -1084,30 +1096,40 @@ namespace Lion.Net.Sockets
         #endregion
 
         #region Shutdown
+        bool _shutingdown = false;
         /// <summary>
         /// 停止并关闭连接端口
         /// </summary>
         public void Shutdown()
         {
-            if (this.Sessions != null)
-            {
-                for (int i = 0; i < this.Sessions.Length; i++)
-                {
-                    if (this.Sessions[i].Status == SocketSessionStatus.Connected)
-                    {
-                        this.Sessions[i].Disconnect();
-                    }
-                }
-            }
+            _shutingdown = true;
+
+            try { this.socket.Shutdown(SocketShutdown.Both); } catch { }
 
             try
             {
+                if (this.Sessions != null)
+                {
+                    for (int i = 0; i < this.Sessions.Length; i++)
+                    {
+                        if (this.Sessions[i].Status == SocketSessionStatus.Connected)
+                        {
+                            this.Sessions[i].Disconnect();
+                        }
+                    }
+                }
+            }
+            catch { }
+            try
+            {
+                System.Threading.Thread.Sleep(1000);
                 this.socket.Close();
             }
             catch { }
             try
             {
-                this.socket.Disconnect(false);
+
+                this.socket.Disconnect(true);
             }
             catch { }
             this.timeroutThreadRunning = false;
@@ -1128,8 +1150,10 @@ namespace Lion.Net.Sockets
                 if (this.bufferManager != null) { this.bufferManager.Dispose(); }
                 this.Protocols = null;
                 this.socketEndPoint = null;
+                this.socket = null;
             }
             this.Disposed = true;
+
         }
         public void Dispose()
         {
