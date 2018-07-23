@@ -15,11 +15,8 @@ namespace Lion.SDK.Bitcoin.Markets
     public class FCoin : MarketBase
     {
         #region FCoin
-        public FCoin(string _key, string _secret)
+        public FCoin(string _key, string _secret) : base(_key, _secret)
         {
-            this.Key = _key;
-            this.Secret = _secret;
-
             base.Name = "FCN";
             base.WebSocket = "wss://api.fcoin.com/v2/ws";
             base.HttpUrl = "https://api.fcoin.com";
@@ -43,13 +40,18 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region SubscribeDepth
-        public void SubscribeDepth(string _pair,string _type)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:type(L20,L100,full)</param>
+        public override void SubscribeDepth(string _pair, params object[] _values)
         {
             JObject _json = new JObject();
             _json.Add("type", "hello");
             _json.Add("ts", DateTimePlus.DateTime2JSTime(DateTime.UtcNow));
             _json.Add("cmd", "sub");
-            _json.Add("args", new JArray("depth.L20.btcusdt"));
+            _json.Add("args", new JArray($"depth.{_values[0]}.{_pair}"));
 
             if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
             if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }

@@ -15,11 +15,8 @@ namespace Lion.SDK.Bitcoin.Markets
     public class Huobi :  MarketBase 
     {
         #region Huobi
-        public Huobi(string _key, string _secret)
+        public Huobi(string _key, string _secret) : base(_key, _secret)
         {
-            base.Key = _key;
-            base.Secret = _secret;
-
             base.Name = "HUO";
             base.WebSocket = "wss://api.huobi.pro/ws";
             base.HttpUrl= "https://api.huobi.pro";
@@ -82,16 +79,21 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region SubscribeDepth
-        public void SubscribeDepth(string _symbol, string _type)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_symbol"></param>
+        /// <param name="_values">0:type(step0-5)</param>
+        public override void SubscribeDepth(string _pair, params object[] _values)
         {
-            string _id = $"market.{_symbol}.depth.{_type}";
+            string _id = $"market.{_pair}.depth.{_values[0]}";
 
             JObject _json = new JObject();
             _json["sub"] = _id;
             _json["id"] = DateTime.UtcNow.Ticks;
 
-            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
-            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+            if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
             this.Send(_json);
         }

@@ -16,11 +16,8 @@ namespace Lion.SDK.Bitcoin.Markets
     public class BitDAO : MarketBase
     {
         #region BitDAO
-        public BitDAO(string _key, string _secret)
+        public BitDAO(string _key, string _secret) : base(_key, _secret)
         {
-            base.Key = _key;
-            base.Secret = _secret;
-
             base.Name = "BTD";
             base.WebSocket = "wss://api.bitdao.com/wsv1";
             base.HttpUrl = "https://api.bitdao.com/";
@@ -51,7 +48,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region SubscribeDepth
-        public void SubscribeDepth(string _pair, int _limit = 10, int _prec = 0)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_symbol"></param>
+        /// <param name="_values">0:limit(10-100) 1:prec(0-3)</param>
+        public override void SubscribeDepth(string _pair, params object[] _values)
         {
             if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
             if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
@@ -60,8 +62,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["event"] = "subscribe";
             _json["channel"] = "depth";
             _json["pair"] = _pair;
-            _json["depth"] = _limit;
-            _json["prec"] = _prec;
+            _json["depth"] = (int)_values[0];
+            _json["prec"] = _values.Length > 1 ? (int)_values[1] : 0;
             this.Send(_json);
         }
         #endregion

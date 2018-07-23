@@ -17,11 +17,8 @@ namespace Lion.SDK.Bitcoin.Markets
         private long commandId = 1;
 
         #region CoinEx
-        public CoinEx(string _key, string _secret)
+        public CoinEx(string _key, string _secret) : base(_key, _secret)
         {
-            base.Key = _key;
-            base.Secret = _secret;
-
             base.Name = "CEX";
             base.WebSocket = "wss://socket.coinex.com/";
             base.HttpUrl = "https://api.coinex.com";
@@ -61,12 +58,17 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region SubscribeDepth
-        public void SubscribeDepth(string _symbol, int _limit = 10, string _interval = "0")
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:limit(5/10/20) 1:interval('0','0.1','0.01',...)</param>
+        public override void SubscribeDepth(string _pair, params object[] _values)
         {
-            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
-            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+            if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
-            this.Send("depth.subscribe", new JArray(_symbol, _limit, _interval));
+            this.Send("depth.subscribe", new JArray(_pair, _values[0], _values[1]));
         }
         #endregion
 
