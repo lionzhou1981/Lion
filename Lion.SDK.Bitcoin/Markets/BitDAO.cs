@@ -176,9 +176,12 @@ namespace Lion.SDK.Bitcoin.Markets
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
             Dictionary<string, string> _list = new Dictionary<string, string>();
-            for (int i = 0; i < _keyValues.Length; i += 2)
+            if (_method.ToUpper() == "POST")
             {
-                _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
+                for (int i = 0; i < _keyValues.Length; i += 2)
+                {
+                    _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
+                }
             }
             string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString();
             _list.Add("api_key", base.Key);
@@ -190,6 +193,13 @@ namespace Lion.SDK.Bitcoin.Markets
             _list.Add("auth_sign", MD5.Encode(_sign + base.Secret).ToLower());
 
             IList<string> _keyValueList = new List<string>();
+            if (_method.ToUpper() == "GET")
+            {
+                foreach (var _item in _keyValues)
+                {
+                    _keyValueList.Add(_item.ToString());
+                }
+            }
             foreach (KeyValuePair<string, string> _item in _list)
             {
                 _keyValueList.Add(_item.Key);
@@ -414,11 +424,11 @@ namespace Lion.SDK.Bitcoin.Markets
             string _url = "/v1/cancel/order";
 
             //JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
-            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, "order_id", _orderId, "pair", _pair);
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "order_id", _orderId, "pair", _pair);
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
-            _order.Id = _token["orderId"].Value<string>();
+            _order.Id = _token["orderid"].Value<string>();
             _order.Pair = _token["detail"][1].Value<string>();
             _order.Side = _token["detail"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
             _order.Amount = _token["detail"][4].Value<decimal>();
@@ -449,12 +459,12 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
-            _order.Id = _token["data"][0].Value<string>();
-            _order.Pair = _token["data"][1].Value<string>();
-            _order.Side = _token["data"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
-            _order.Amount = _token["data"][4].Value<decimal>();
-            _order.Price = _token["data"][5].Value<decimal>();
-            string _status = _token["data"][9].Value<string>();
+            _order.Id = _token[0].Value<string>();
+            _order.Pair = _token[1].Value<string>();
+            _order.Side = _token[5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token[4].Value<decimal>();
+            _order.Price = _token[5].Value<decimal>();
+            string _status = _token[9].Value<string>();
             switch (_status)
             {
                 case "1": _order.Status = OrderStatus.New; break;
@@ -463,8 +473,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 case "4": _order.Status = OrderStatus.Canceled; break;
             }
 
-            _order.FilledAmount = _token["detail"][3].Value<decimal>();
-            _order.FilledPrice = _token["detail"][6].Value<decimal>();
+            _order.FilledAmount = _token[3].Value<decimal>();
+            _order.FilledPrice = _token[6].Value<decimal>();
 
             return _order;
         }
