@@ -52,6 +52,12 @@ namespace Lion.SDK.Bitcoin.Markets
         private Thread threadWebSocket;
         private Thread threadBalance;
 
+        public MarketBase(string _key = "", string _secret = "")
+        {
+            this.Key = _key;
+            this.Secret = _secret;
+        }
+
         #region Event
         public event ConnectedEventHandle OnConnectedEvent = null;
         public event DisconnectedEventHandle OnDisconnectedEvent = null;
@@ -346,6 +352,7 @@ namespace Lion.SDK.Bitcoin.Markets
         protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
         protected abstract object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues);
         protected abstract JToken HttpCallResult(JToken _token);
+        public abstract void SubscribeDepth(string _pair, params object[] _values);
         public abstract Ticker GetTicker(string _symbol);
         public abstract Books GetDepths(string _pair, params string[] _values);
         public abstract Trade[] GetTrades(string _pair, params string[] _values);

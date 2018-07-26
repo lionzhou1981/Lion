@@ -14,11 +14,8 @@ namespace Lion.SDK.Bitcoin.Markets
         private ConcurrentDictionary<string, string> Channels;
 
         #region Bitfinex
-        public Bitfinex(string _key, string _secret)
+        public Bitfinex(string _key, string _secret) : base(_key, _secret)
         {
-            base.Key = _key;
-            base.Secret = _secret;
-
             base.Name = "BFX";
             base.WebSocket = "wss://api.bitfinex.com/ws/2";
             base.HttpUrl = "https://api.bitfinex.com";
@@ -89,18 +86,23 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region SubscribeDepth
-        public void SubscribeDepth(string _symbol, string _prec = "P0", string _freq = "F0", int _len = 100)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_pair"></param>
+        /// <param name="_values">0:prec(P0) 1:freq(F0) 2:len(25,100)</param>
+        public override void SubscribeDepth(string _pair, params object[] _values)
         {
             JObject _json = new JObject();
             _json["event"] = "subscribe";
             _json["channel"] = "book";
-            _json["pair"] = _symbol;
-            _json["prec"] = _prec;
-            _json["freq"] = _freq;
-            _json["len"] = _len;
+            _json["pair"] = _pair;
+            _json["prec"] = _values[0].ToString();
+            _json["freq"] = _values[1].ToString();
+            _json["len"] = (int)_values[2];
 
-            if (this.Books[_symbol, MarketSide.Bid] == null) { this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
-            if (this.Books[_symbol, MarketSide.Ask] == null) { this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+            if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+            if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
 
             this.Send(_json);
         }
