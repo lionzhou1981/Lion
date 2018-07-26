@@ -390,36 +390,41 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
-            string _data = "";
+            string _query = "";
+            JObject _json = new JObject();
             for (int i = 0; i < _keyValues.Length - 1; i += 2)
             {
-                _data += _data == "" ? "" : "&";
-                _data += _keyValues[i] + "=" + System.Web.HttpUtility.UrlEncode(_keyValues[i + 1].ToString());
+                _query += _query == "" ? "" : "&";
+                _query += _keyValues[i] + "=" + System.Web.HttpUtility.UrlEncode(_keyValues[i + 1].ToString());
+
+                Type _valueType = _keyValues[i + 1].GetType();
+                if (_valueType == typeof(int)) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
+                else if (_valueType == typeof(bool)) { _json[_keyValues[i]] = (bool)_keyValues[i + 1]; }
+                else if (_valueType == typeof(decimal)) { _json[_keyValues[i]] = (decimal)_keyValues[i + 1]; }
+                else if (_valueType == typeof(long)) { _json[_keyValues[i]] = (long)_keyValues[i + 1]; }
+                else if (_valueType == typeof(JArray)) { _json[_keyValues[i]] = (JArray)_keyValues[i + 1]; }
+                else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
             }
 
-            string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
+            string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddHours(1)).ToString();
             string _sign = _method;
             if (_method == "GET")
             {
-                _url += _data == "" ? "" : "?";
-                _url += _data;
+                _url += _query == "" ? "" : "?";
+                _url += _query;
                 _sign += _url + _nonce;
             }
             else
             {
-                _sign += _url + _nonce + _data;
+                _sign += _url + _nonce + _json.ToString(Newtonsoft.Json.Formatting.None);
             }
             _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
 
             _http.Headers.Add("accept", "application/json");
             _http.Headers.Add("api-key", base.Key);
             _http.Headers.Add("api-signature", _sign);
-            _http.Headers.Add("api-nonce", _nonce);
-            if (_method == "POST")
-            {
-                _http.Headers.Add("x-requested-with", "XMLHttpRequest");
-                _http.Headers.Add("content-type", "application/x-www-form-urlencoded");
-            }
+            _http.Headers.Add("api-expires", _nonce);
+            if (_method == "POST") { _http.ContentType="application/json"; }
 
             return _keyValues;
         }
@@ -578,7 +583,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public override Balances GetBalances()
         {
             string _url = "/api/v1/user/margin";
-            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true);
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "GET", _url, true);
             if (_token == null) { return null; }
 
             string _symbol = _token["currency"].Value<string>();
@@ -602,7 +607,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             string _url = "/api/v1/order";
 
-            IList<string> _values = new List<string>();
+            IList<object> _values = new List<object>();
             _values.Add("symbol");
             _values.Add(_symbol);
             _values.Add("side");

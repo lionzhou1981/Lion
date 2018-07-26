@@ -265,7 +265,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     #endregion
                     case HttpCallMethod.Json:
-                        #region PostJson
+                        #region Json
                         {
                             JObject _json = new JObject();
                             for (int i = 0; i < _keyValues.Length; i += 2)
@@ -273,6 +273,7 @@ namespace Lion.SDK.Bitcoin.Markets
                                 Type _valueType = _keyValues[i + 1].GetType();
                                 if (_valueType == typeof(int)) { _json[_keyValues[i]] = (int)_keyValues[i + 1]; }
                                 else if (_valueType == typeof(bool)) { _json[_keyValues[i]] = (bool)_keyValues[i + 1]; }
+                                else if (_valueType == typeof(decimal)) { _json[_keyValues[i]] = (decimal)_keyValues[i + 1]; }
                                 else if (_valueType == typeof(long)) { _json[_keyValues[i]] = (long)_keyValues[i + 1]; }
                                 else if (_valueType == typeof(JArray)) { _json[_keyValues[i]] = (JArray)_keyValues[i + 1]; }
                                 else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
