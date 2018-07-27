@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.WebSockets;
@@ -420,6 +420,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 _sign += _url + _nonce + _json.ToString(Newtonsoft.Json.Formatting.None);
             }
+            Console.WriteLine(_sign);
             _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
 
             _http.Headers.Add("accept", "application/json");
@@ -631,7 +632,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
-
+            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
             return _token["orderID"].Value<string>();
         }
         #endregion

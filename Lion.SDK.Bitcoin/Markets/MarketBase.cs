@@ -28,12 +28,6 @@ namespace Lion.SDK.Bitcoin.Markets
     public delegate void OrderUpdateEventHandle(OrderItem _orderItem);
     #endregion
 
-    #region Old
-    public delegate void WebSocketErrorEventHandle(string _code, string _message);
-    public delegate void BookChangedEventHandle(string _side, decimal _price, decimal _amount);
-    public delegate void BookUpdatedEventHandle(Dictionary<decimal, decimal> _asks, Dictionary<decimal, decimal> _bids);
-    #endregion
-
     public abstract class MarketBase
     {
         public string Name = "";
@@ -360,15 +354,5 @@ namespace Lion.SDK.Bitcoin.Markets
         public abstract Balances GetBalances();
 
         protected void Log(string _text) => this.OnLog(this.Name, _text);
-
-        #region Old
-        public event WebSocketErrorEventHandle OnErrorEvent = null;
-        public event BookChangedEventHandle OnBookChangedEvent = null;
-        public event BookUpdatedEventHandle OnBookUpdatedEvent = null;
-
-        internal virtual void OnError(string _code, string _message) { if (this.OnErrorEvent != null) { this.OnErrorEvent(_code, _message); } }
-        internal virtual void OnBookChanged(string _side, decimal _price, decimal _amount) { if (this.OnBookChangedEvent != null) { this.OnBookChangedEvent(_side, _price, _amount); } }
-        internal virtual void OnBookUpdated(Dictionary<decimal,decimal> _asks, Dictionary<decimal, decimal> _bids) { if (this.OnBookUpdatedEvent != null) { this.OnBookUpdatedEvent(_asks,_bids); } }
-        #endregion
     }
 }
