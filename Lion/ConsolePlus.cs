@@ -46,6 +46,7 @@ namespace Lion
         }
         #endregion
 
+        #region Run
         public void Run()
         {
             while (true)
@@ -116,6 +117,7 @@ namespace Lion
                 }
             }
         }
+        #endregion
 
         public static void WriteLine(string _value)
         {
