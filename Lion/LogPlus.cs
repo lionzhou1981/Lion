@@ -5,6 +5,8 @@ using System.Threading;
 
 namespace Lion
 {
+    public enum LogLevel { DEBUG, INFO, WRAN, ERROR, FATEL }
+
     public class LogPlus : IDisposable
     {
         private string path;

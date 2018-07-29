@@ -75,7 +75,7 @@ namespace Lion.Net.Sockets
     /// <summary>
     /// 断开连接事件句柄
     /// </summary>
-    public delegate void OnDisconnectEventHandler();
+    public delegate void OnDisconnectEventHandler(SocketEngine _socket = null);
     #endregion
 
     #region OnExceptionEventHandler 发生异常的事件句柄
@@ -170,7 +170,7 @@ namespace Lion.Net.Sockets
         /// <summary>
         /// 断开连接事件调用
         /// </summary>
-        internal virtual void OnDisconnect() { if (this.OnDisconnectEvent != null) { this.OnDisconnectEvent(); } }
+        internal virtual void OnDisconnect(SocketEngine _socket = null) { if (this.OnDisconnectEvent != null) { this.OnDisconnectEvent(_socket); } }
         #endregion
 
         #region OnException 发生异常的事件
@@ -981,7 +981,7 @@ namespace Lion.Net.Sockets
             this.Handshaked = false;
             try
             {
-                this.OnDisconnect();
+                this.OnDisconnect(this);
             }
             catch (Exception _ex)
             {
