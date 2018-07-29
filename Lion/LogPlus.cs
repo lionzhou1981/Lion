@@ -58,7 +58,7 @@ namespace Lion
                 if (!this.logs.TryDequeue(out string _log)) { continue; }
 
                 string _filename = $"{this.path}{this.name}-{DateTime.UtcNow.ToString(this.timeFormatter)}.log";
-                File.WriteAllText(_filename, _log + "\r\n");
+                File.AppendAllText(_filename, _log + "\r\n");
             }
         }
         #endregion
