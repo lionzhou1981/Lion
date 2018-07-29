@@ -158,8 +158,6 @@ namespace Lion.Net.Sockets
             this.socketRxKey = _random.Next(10000000, 100000000).ToString();
             this.socketChecksum= _random.Next(10000000, 100000000).ToString();
 
-            Console.WriteLine("KEY :" + this.socketRxKey);
-
             JObject _json = new JObject();
             _json["code"] = this.Code;
             _json["time"] = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
@@ -175,15 +173,12 @@ namespace Lion.Net.Sockets
         {
             if (this.socketTxKey != "") { return false; }
 
-            Console.WriteLine("FK:" + this.socketTxKey);
             if (!this.rsa.Verify(this.socketChecksum, _json["check"].Value<string>()))
             {
-                Console.WriteLine("RSA Failed");
                 this.socketTxKey = "";
                 return true;
             }
             this.socketTxKey = _json["key"].Value<string>();
-            Console.WriteLine("FK:" + this.socketTxKey);
 
             JObject _result = new JObject();
             _result["check"] = this.rsa.Sign(_json["num"].Value<string>());
