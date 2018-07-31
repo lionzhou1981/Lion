@@ -74,8 +74,8 @@ namespace Lion.SDK.Bitcoin.Nodes.Ethereum
                         case "System.UInt16":
                         case "System.UInt32":
                         case "System.UInt64":
-                        case "Lion.SDK.Bitcoin.Nodes.Ethereum.Addre":
-                        case "Lion.SDK.BitCoin.Nodes.Ethereum.Number":
+                        case "Lion.SDK.Bitcoin.Nodes.Ethereum.Address":
+                        case "Lion.SDK.Bitcoin.Nodes.Ethereum.Number":
                             _dataList.Add(HexPlus.PadLeft(_itemData, 32));
                             break;
                         case "System.String":
@@ -101,8 +101,8 @@ namespace Lion.SDK.Bitcoin.Nodes.Ethereum
                     case "System.UInt16": _data = BitConverter.GetBytes((UInt16)_item); break;
                     case "System.UInt32": _data = BitConverter.GetBytes((UInt32)_item); break;
                     case "System.UInt64": _data = BitConverter.GetBytes((UInt64)_item); break;
-                    case "Lion.SDK.BitCoin.Nodes.Ethereum.Address": return ((Address)_item).ToData();
-                    case "Lion.SDK.BitCoin.Nodes.Ethereum.Number": _data = ((Number)_item).ToData();break;
+                    case "Lion.SDK.Bitcoin.Nodes.Ethereum.Address": return ((Address)_item).ToData();
+                    case "Lion.SDK.Bitcoin.Nodes.Ethereum.Number": _data = ((Number)_item).ToData();break;
                     case "System.String":
                         byte[] _stringBytes = Encoding.UTF8.GetBytes((string)_item);
                         byte[] _stringlengthBytes = BitConverter.GetBytes(_stringBytes.Length);
