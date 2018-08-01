@@ -39,9 +39,9 @@ namespace Lion.Net.Sockets
             byte[] _lengthArray = new byte[4];
             Array.Copy(_byteArray, _lengthArray, 4);
             if (BitConverter.IsLittleEndian) { Array.Reverse(_lengthArray); }
-            int _length = BitConverter.ToInt32(_lengthArray, 0);
+            int _packageSize = BitConverter.ToInt32(_lengthArray, 0);
 
-            if (_byteArray.Length < _length) { return false; }
+            if (_byteArray.Length < _packageSize) { return false; }
 
             string _key = "";
             if (_session == null)
@@ -54,14 +54,33 @@ namespace Lion.Net.Sockets
             }
             if (_key == "") { throw new Exception("DePackage failed: RxKey is empty."); }
 
-            byte[] _checkArray = new byte[_length - 16];
+            byte[] _checkArray = new byte[_packageSize - 16];
             Array.Copy(_byteArray, _checkArray, _checkArray.Length);
             string _check = System.Text.Encoding.UTF8.GetString(MD5.Encode2ByteArray(_checkArray));
 
             byte[] _md5Array = new byte[16];
-            Array.Copy(_byteArray, _length - 16, _md5Array, 0, 16);
+            Array.Copy(_byteArray, _packageSize - 16, _md5Array, 0, 16);
             string _md5 = System.Text.Encoding.UTF8.GetString(_md5Array);
-            return _check == _md5;
+
+            if (_session != null && _session.Protocol == null)
+            {
+                try
+                {
+                    byte[] _contentArray = new byte[_packageSize - 20];
+                    Array.Copy(_byteArray, 4, _contentArray, 0, _contentArray.Length);
+                    string _decoded = System.Text.Encoding.UTF8.GetString(DES.Decode2ByteArray(_contentArray, _key, System.Security.Cryptography.CipherMode.CBC));
+                    JObject _json = JObject.Parse(_decoded);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return _check == _md5;
+            }
         }
         #endregion
 
