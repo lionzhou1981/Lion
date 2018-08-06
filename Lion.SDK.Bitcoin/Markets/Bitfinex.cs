@@ -193,20 +193,21 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             JArray _array = (JArray)_token;
             JArray _list = (_array.Count == 2 && _array[1].Type == JTokenType.Array) ? _array[1].Value<JArray>() : _array;
-            _symbol = _symbol.Split('.')[1];
+
+            if (_list[1].ToString().ToLower() == "HB") { return; }
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _symbol;
-            _ticker.BidPrice = _list[1].Value<decimal>();
-            _ticker.BidAmount = _list[2].Value<decimal>();
-            _ticker.AskPrice = _list[3].Value<decimal>();
-            _ticker.AskAmount = _list[4].Value<decimal>();
-            _ticker.Change24H = _list[5].Value<decimal>();
-            _ticker.ChangeRate24H = _list[6].Value<decimal>();
-            _ticker.Last = _list[7].Value<decimal>();
-            _ticker.Volume24H = _list[8].Value<decimal>();
-            _ticker.High24H = _list[9].Value<decimal>();
-            _ticker.Low24H = _list[10].Value<decimal>();
+            _ticker.BidPrice = _list[0].Value<decimal>();
+            _ticker.BidAmount = _list[1].Value<decimal>();
+            _ticker.AskPrice = _list[2].Value<decimal>();
+            _ticker.AskAmount = _list[3].Value<decimal>();
+            _ticker.Change24H = _list[4].Value<decimal>();
+            _ticker.ChangeRate24H = _list[5].Value<decimal>();
+            _ticker.Last = _list[6].Value<decimal>();
+            _ticker.Volume24H = _list[7].Value<decimal>();
+            _ticker.High24H = _list[8].Value<decimal>();
+            _ticker.Low24H = _list[9].Value<decimal>();
             _ticker.DateTime = DateTime.UtcNow;
 
             base.Tickers[_symbol] = _ticker;
