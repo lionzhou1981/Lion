@@ -80,7 +80,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 string[] _command = _json["rep"].Value<string>().Split('.');
                 switch (_command[2])
                 {
-                    case "detail": this.ReceivedTicker(_command[1], _json["tick"].Value<JObject>()); break;
+                    case "detail": this.ReceivedTicker(_command[1], _json["data"].Value<JObject>()); break;
                 }
                 return;
             }
@@ -108,7 +108,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region RequestTickerThread
         private void RequestTickerThread(object _state)
         {
-            string _pair = _state.ToString();
+            string _pair = _state.ToString().ToLower();
 
             while (base.Running)
             {
@@ -134,7 +134,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.Low24H = _token["low"].Value<decimal>();
             _ticker.Volume24H = _token["vol"].Value<decimal>();
             _ticker.Volume24H2 = _token["amount"].Value<decimal>();
-            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["ts"].Value<long>() / 1000);
+            //_ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["ts"].Value<long>() / 1000);
+            _ticker.DateTime = DateTime.UtcNow;
 
             base.Tickers[_symbol] = _ticker;
         }
