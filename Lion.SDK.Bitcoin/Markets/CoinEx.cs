@@ -239,12 +239,12 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 Ticker _ticker = new Ticker();
                 _ticker.Pair = _pair;
-                _ticker.Last = _item["last"].Value<decimal>();
-                _ticker.High24H = _item["high"].Value<decimal>();
-                _ticker.Low24H = _item["low"].Value<decimal>();
-                _ticker.Open24H = _item["open"].Value<decimal>();
-                _ticker.Volume24H = _item["volume"].Value<decimal>();
-                _ticker.Volume24H2 = _item["deal"].Value<decimal>();
+                _ticker.Last = _item[_pair]["last"].Value<decimal>();
+                _ticker.High24H = _item[_pair]["high"].Value<decimal>();
+                _ticker.Low24H = _item[_pair]["low"].Value<decimal>();
+                _ticker.Open24H = _item[_pair]["open"].Value<decimal>();
+                _ticker.Volume24H = _item[_pair]["volume"].Value<decimal>();
+                _ticker.Volume24H2 = _item[_pair]["deal"].Value<decimal>();
                 _ticker.DateTime = DateTime.UtcNow;
 
                 this.Tickers[_pair] = _ticker;
