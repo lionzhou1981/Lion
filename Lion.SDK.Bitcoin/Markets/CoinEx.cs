@@ -40,6 +40,9 @@ namespace Lion.SDK.Bitcoin.Markets
                         _json["params"][0].Value<bool>() ? "FULL" : "UPDATE",
                         _json["params"][1].Value<JObject>());
                     break;
+                case "state.update":
+                    this.ReceivedTicker("", _json["params"]);
+                    break;
                 default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
             }
         }
@@ -54,18 +57,6 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["id"] = this.commandId++;
 
             this.Send(_json);
-        }
-        #endregion
-
-        #region SubscribeTicker
-        public override void SubscribeTicker(string _pair)
-        {
-        }
-        #endregion
-
-        #region ReceivedTicker
-        protected override void ReceivedTicker(string _symbol, JToken _token)
-        {
         }
         #endregion
 
@@ -227,6 +218,36 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                 }
                 #endregion
+            }
+        }
+        #endregion
+
+        #region SubscribeTicker
+        public override void SubscribeTicker(string _pair)
+        {
+            this.Send("state.subscribe", new JArray(_pair));
+        }
+        #endregion
+
+        #region ReceivedTicker
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+            JArray _array = (JArray)_token;
+            foreach (JObject _item in _array)
+            {
+                string _pair = ((JProperty)_item.First).Name;
+
+                Ticker _ticker = new Ticker();
+                _ticker.Pair = _pair;
+                _ticker.Last = _item["last"].Value<decimal>();
+                _ticker.High24H = _item["high"].Value<decimal>();
+                _ticker.Low24H = _item["low"].Value<decimal>();
+                _ticker.Open24H = _item["open"].Value<decimal>();
+                _ticker.Volume24H = _item["volume"].Value<decimal>();
+                _ticker.Volume24H2 = _item["deal"].Value<decimal>();
+                _ticker.DateTime = DateTime.UtcNow;
+
+                this.Tickers[_pair] = _ticker;
             }
         }
         #endregion
