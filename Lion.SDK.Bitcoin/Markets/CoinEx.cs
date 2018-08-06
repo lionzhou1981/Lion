@@ -57,6 +57,18 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region SubscribeTicker
+        public override void SubscribeTicker(string _pair)
+        {
+        }
+        #endregion
+
+        #region ReceivedTicker
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+        }
+        #endregion
+
         #region SubscribeDepth
         /// <summary>
         /// 
@@ -288,19 +300,30 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
             if (_token == null) { return null; }
 
-            Ticker _ticker = new Ticker();
-            _ticker.Pair = _pair;
-            _ticker.Last = _token["ticker"]["last"].Value<decimal>();
-            _ticker.BidPrice = _token["ticker"]["buy"].Value<decimal>();
-            _ticker.BidAmount = _token["ticker"]["buy_amount"].Value<decimal>();
-            _ticker.AskPrice = _token["ticker"]["sell"].Value<decimal>();
-            _ticker.AskAmount = _token["ticker"]["sell_amount"].Value<decimal>();
-            _ticker.Open24H = _token["ticker"]["open"].Value<decimal>();
-            _ticker.High24H = _token["ticker"]["high"].Value<decimal>();
-            _ticker.Low24H = _token["ticker"]["low"].Value<decimal>();
-            _ticker.Volume24H = _token["ticker"]["vol"].Value<decimal>();
+            try
+            {
+                JObject _value = _token["ticker"].Value<JObject>();
 
-            return _ticker;
+                Ticker _ticker = new Ticker();
+                _ticker.Pair = _pair;
+                _ticker.Last = _value["last"].Value<decimal>();
+                _ticker.BidPrice = _value["buy"].Value<decimal>();
+                _ticker.BidAmount = _value["buy_amount"].Value<decimal>();
+                _ticker.AskPrice = _value["sell"].Value<decimal>();
+                _ticker.AskAmount = _value["sell_amount"].Value<decimal>();
+                _ticker.Open24H = _value["open"].Value<decimal>();
+                _ticker.High24H = _value["high"].Value<decimal>();
+                _ticker.Low24H = _value["low"].Value<decimal>();
+                _ticker.Volume24H = _value["vol"].Value<decimal>();
+
+                return _ticker;
+            }
+            catch (Exception _ex)
+            {
+                Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+                Console.WriteLine(_ex.ToString());
+                return null;
+            }
         }
         #endregion
 

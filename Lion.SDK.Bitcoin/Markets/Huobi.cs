@@ -68,6 +68,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 string[] _command = _json["ch"].Value<string>().Split('.');
                 switch (_command[2])
                 {
+                    case "ticker": this.ReceivedTicker(_command[1], _json["tick"].Value<JObject>()); break;
                     case "depth": this.ReceivedDepth(_command[1], _command[3], _json["tick"].Value<JObject>()); break;
                 }
                 return;
@@ -75,6 +76,29 @@ namespace Lion.SDK.Bitcoin.Markets
             #endregion
 
             this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None));
+        }
+        #endregion
+
+        #region SubscribeTicker
+
+        public override void SubscribeTicker(string _pair)
+        {
+            string _id = $"market.{_pair}.kline.1min";
+
+            JObject _json = new JObject();
+            _json["sub"] = _id;
+            _json["id"] = DateTime.UtcNow.Ticks;
+
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceivedTicker
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+            Ticker _ticker = new Ticker();
+            _ticker.Pair = _symbol;
+            //_ticker
         }
         #endregion
 
@@ -252,7 +276,7 @@ namespace Lion.SDK.Bitcoin.Markets
             string _url = $"/market/detail/merged?symbol={_pair}";
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
-            if (_token == null) { return null; }
+            if (_token == null || _token["status"] + "" != "ok") { return null; }
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;

@@ -34,6 +34,8 @@ namespace Lion.SDK.Bitcoin.Markets
         public string WebSocket = "";
         public string HttpUrl = "";
 
+        public Tickers Tickers = new Tickers();
+
         public Books Books = new Books();
         public Orders Orders = new Orders();
         public Balances Balances = new Balances();
@@ -343,11 +345,13 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
         protected abstract object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues);
         protected abstract JToken HttpCallResult(JToken _token);
+        public abstract void SubscribeTicker(string _pair);
         public abstract void SubscribeDepth(string _pair, params object[] _values);
-        public abstract Ticker GetTicker(string _symbol);
+        protected abstract void ReceivedTicker(string _symbol, JToken _token);
+        protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
+        public abstract Ticker GetTicker(string _pair);
         public abstract Books GetDepths(string _pair, params string[] _values);
         public abstract Trade[] GetTrades(string _pair, params string[] _values);
         public abstract KLine[] GetKLines(string _pair, KLineType _type, params string[] _values);

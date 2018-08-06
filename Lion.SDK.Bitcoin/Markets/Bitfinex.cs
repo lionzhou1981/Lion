@@ -30,48 +30,55 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             if (_token is JObject)
             {
+                #region 消息回复
                 JObject _item = (JObject)_token;
                 switch (_item["event"].Value<string>())
                 {
                     case "ping": this.Send("{\"event\":\"pong\"}"); break;
                     case "subscribed":
-                        string _value = $"{_item["channel"].Value<string>()}.{_item["pair"].Value<string>()}.{_item["prec"].Value<string>()}.{_item["freq"].Value<string>()}.{_item["len"].Value<string>()}";
-                        this.Channels.AddOrUpdate(_item["chanId"].Value<string>(), _value, (k, v) => _value);
-                        break;
+                        {
+                            string _channel = _item["channel"].Value<string>();
+                            string _value = "";
+                            switch (_channel)
+                            {
+                                case "ticker":
+                                    _value = $"{_channel}.{_item["pair"].Value<string>()}";
+                                    break;
+                                case "book":
+                                    _value = $"{_channel}.{_item["pair"].Value<string>()}.{_item["prec"].Value<string>()}.{_item["freq"].Value<string>()}.{_item["len"].Value<string>()}";
+                                    break;
+                            }
+                            this.Channels.AddOrUpdate(_item["chanId"].Value<string>(), _value, (k, v) => _value);
+                            break;
+                        }
                     case "unsubscribed": this.Channels.TryRemove(_item["chanId"].Value<string>(), out string _out); break;
                     default: this.OnLog("RECV", _item.ToString(Newtonsoft.Json.Formatting.None)); break;
                 }
+                #endregion
             }
             else if (_token is JArray)
             {
+                #region 数据回复
                 JArray _array = (JArray)_token;
                 string _channelId = _array[0].Value<string>();
 
-                if (_array.Count == 2 && _array[1].Type == JTokenType.Array)
+                if (!this.Channels.TryGetValue(_channelId, out string _value))
                 {
-                    this.ReceiveSubscribe(_channelId, _array[1].Value<JArray>());
+                    this.OnLog("RECV", $"Channel not found {_channelId}");
+                    return;
                 }
-                else if (_array.Count != 2)
+
+                string[] _channel = _value.Split('.');
+                switch (_channel[0])
                 {
-                    this.ReceiveSubscribe(_channelId, _array);
+                    case "ticker":
+                        this.ReceivedTicker(_channel[1], _array);
+                        break;
+                    case "book":
+                        this.ReceivedDepth(_channel[1], _array[0].Type == JTokenType.Array ? "START" : "UPDATE", _array);
+                        break;
                 }
-            }
-        }
-        #endregion
-
-        #region ReceiveSubscribe
-        public void ReceiveSubscribe(string _channelId, JArray _item)
-        {
-            if (!this.Channels.TryGetValue(_channelId, out string _value))
-            {
-                this.OnLog("RECV", $"Channel not found {_channelId}");
-                return;
-            }
-
-            string[] _channel = _value.Split('.');
-            if (_channel[0] == "book")
-            {
-                this.ReceivedDepth(_channel[1], _item[0].Type == JTokenType.Array ? "START" : "UPDATE", _item);
+                #endregion
             }
         }
         #endregion
@@ -80,7 +87,6 @@ namespace Lion.SDK.Bitcoin.Markets
         protected override void Clear()
         {
             base.Clear();
-
             this.Channels?.Clear();
         }
         #endregion
@@ -111,7 +117,9 @@ namespace Lion.SDK.Bitcoin.Markets
         #region ReceivedDepth
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
-            JArray _list = (JArray)_token;
+            JArray _array = (JArray)_token;
+            JArray _list = (_array.Count == 2 && _array[1].Type == JTokenType.Array) ? _array[1].Value<JArray>() : _array;
+            _symbol = _symbol.Split('.')[1];
 
             if (_type == "START")
             {
@@ -165,6 +173,43 @@ namespace Lion.SDK.Bitcoin.Markets
                     }
                 }
             }
+        }
+        #endregion
+
+        #region SubscribeTicker
+        public override void SubscribeTicker(string _pair)
+        {
+            JObject _json = new JObject();
+            _json["event"] = "subscribe";
+            _json["channel"] = "ticker";
+            _json["pair"] = _pair;
+
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceivedTicker
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+            JArray _array = (JArray)_token;
+            JArray _list = (_array.Count == 2 && _array[1].Type == JTokenType.Array) ? _array[1].Value<JArray>() : _array;
+            _symbol = _symbol.Split('.')[1];
+
+            Ticker _ticker = new Ticker();
+            _ticker.Pair = _symbol;
+            _ticker.BidPrice = _list[1].Value<decimal>();
+            _ticker.BidAmount = _list[2].Value<decimal>();
+            _ticker.AskPrice = _list[3].Value<decimal>();
+            _ticker.AskAmount = _list[4].Value<decimal>();
+            _ticker.Change24H = _list[5].Value<decimal>();
+            _ticker.ChangeRate24H = _list[6].Value<decimal>();
+            _ticker.Last = _list[7].Value<decimal>();
+            _ticker.Volume24H = _list[8].Value<decimal>();
+            _ticker.High24H = _list[9].Value<decimal>();
+            _ticker.Low24H = _list[10].Value<decimal>();
+            _ticker.DateTime = DateTime.UtcNow;
+
+            base.Tickers[_symbol] = _ticker;
         }
         #endregion
 
@@ -223,16 +268,25 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
             if (_token == null) { return null; }
 
-            Ticker _ticker = new Ticker();
-            _ticker.Pair = _pair;
-            _ticker.Last = _token["last_price"].Value<decimal>();
-            _ticker.BidPrice = _token["bid"].Value<decimal>();
-            _ticker.AskPrice = _token["ask"].Value<decimal>();
-            _ticker.High24H = _token["high"].Value<decimal>();
-            _ticker.Low24H = _token["low"].Value<decimal>();
-            _ticker.Volume24H = _token["volume"].Value<decimal>();
+            try
+            {
+                Ticker _ticker = new Ticker();
+                _ticker.Pair = _pair;
+                _ticker.Last = _token["last_price"].Value<decimal>();
+                _ticker.BidPrice = _token["bid"].Value<decimal>();
+                _ticker.AskPrice = _token["ask"].Value<decimal>();
+                _ticker.High24H = _token["high"].Value<decimal>();
+                _ticker.Low24H = _token["low"].Value<decimal>();
+                _ticker.Volume24H = _token["volume"].Value<decimal>();
 
-            return _ticker;
+                return _ticker;
+            }
+            catch (Exception _ex)
+            {
+                Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+                Console.WriteLine(_ex.ToString());
+                return null;
+            }
         }
         #endregion
 

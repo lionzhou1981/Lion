@@ -36,13 +36,6 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
         #endregion
-
-        #region Clear
-        public new void Clear()
-        {
-            base.Clear();
-        }
-        #endregion
     }
     #endregion
 
@@ -244,6 +237,47 @@ namespace Lion.SDK.Bitcoin.Markets
     }
     #endregion
 
+    #region Tickers
+    public class Tickers : ConcurrentDictionary<string, Ticker>
+    {
+        #region this[pair,side]
+        public new Ticker this[string _pair]
+        {
+            get
+            {
+                if (this.TryGetValue(_pair, out Ticker _ticker))
+                {
+                    return _ticker;
+                }
+                return null;
+            }
+            set
+            {
+                Ticker _ticker = value;
+                _ticker.Pair = _pair;
+                this.AddOrUpdate(_pair, _ticker, (k, v) => {
+                    v.Last = _ticker.Last;
+                    v.LastAmount = _ticker.LastAmount;
+                    v.BidPrice = _ticker.BidPrice;
+                    v.BidAmount = _ticker.BidAmount;
+                    v.AskPrice = _ticker.AskPrice;
+                    v.AskAmount = _ticker.AskAmount;
+                    v.Open24H = _ticker.Open24H;
+                    v.High24H = _ticker.High24H;
+                    v.Low24H = _ticker.Low24H;
+                    v.Volume24H = _ticker.Volume24H;
+                    v.Volume24H2 = _ticker.Volume24H2;
+                    v.Change24H = _ticker.Change24H;
+                    v.ChangeRate24H = _ticker.ChangeRate24H;
+                    v.DateTime = _ticker.DateTime;
+                    return v;
+                });
+            }
+        }
+        #endregion
+    }
+    #endregion
+
     #region Ticker
     public class Ticker
     {
@@ -261,6 +295,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public decimal Volume24H2 = 0M;
         public decimal Change24H = 0M;
         public decimal ChangeRate24H = 0M;
+        public DateTime DateTime = DateTime.MinValue;
     }
     #endregion
 

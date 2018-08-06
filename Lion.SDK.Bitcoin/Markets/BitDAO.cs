@@ -47,6 +47,16 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        public override void SubscribeTicker(string _pair)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+            throw new NotImplementedException();
+        }
+
         #region SubscribeDepth
         /// <summary>
         /// 
