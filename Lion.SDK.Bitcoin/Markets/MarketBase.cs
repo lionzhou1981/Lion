@@ -43,15 +43,15 @@ namespace Lion.SDK.Bitcoin.Markets
         protected bool Running = false;
         protected string Key;
         protected string Secret;
+        protected Dictionary<string, Thread> Threads;
 
         private ClientWebSocket webSocket = null;
-        private Thread threadWebSocket;
-        private Thread threadBalance;
 
         public MarketBase(string _key = "", string _secret = "")
         {
             this.Key = _key;
             this.Secret = _secret;
+            this.Threads = new Dictionary<string, Thread>();
         }
 
         #region Event
@@ -89,8 +89,9 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             this.Running = true;
 
-            this.threadWebSocket = new Thread(new ThreadStart(this.StartWebSocket));
-            this.threadWebSocket.Start();
+            Thread _thread = new Thread(new ThreadStart(this.StartWebSocket));
+            this.Threads.Add("WebSocket", _thread);
+            _thread.Start();
         }
         #endregion
 
@@ -194,7 +195,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     #endregion
                 }
             }
-
         }
         #endregion
 
@@ -246,7 +246,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 HttpClient _http = new HttpClient(5000);
                 _http.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
-                if (_auth) { _keyValues = HttpCallAuth(_http, _httpMethod,ref _url, _keyValues); }
+                if (_auth) { _keyValues = HttpCallAuth(_http, _httpMethod, ref _url, _keyValues); }
 
                 switch (_callMethod)
                 {
@@ -260,7 +260,7 @@ namespace Lion.SDK.Bitcoin.Markets
                                 _query += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
                             }
 
-                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}{(_query==""?"":_query)}", "");
+                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}{(_query == "" ? "" : _query)}", "");
                             _http.EndResponse();
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
@@ -322,10 +322,11 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpMonitorBalance
         public void HttpMonitorBalance(object _delay = null)
         {
-            if (this.threadBalance == null)
+            if (!this.Threads.ContainsKey("Balance"))
             {
-                this.threadBalance = new Thread(this.HttpMonitorBalance);
-                this.threadBalance.Start();
+                Thread _thread = new Thread(this.HttpMonitorBalance);
+                this.Threads.Add("Balance", _thread);
+                _thread.Start();
                 return;
             }
 

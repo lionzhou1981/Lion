@@ -12,14 +12,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Huobi :  MarketBase 
+    public class Huobi : MarketBase
     {
         #region Huobi
         public Huobi(string _key, string _secret) : base(_key, _secret)
         {
             base.Name = "HUO";
             base.WebSocket = "wss://api.huobi.pro/ws";
-            base.HttpUrl= "https://api.huobi.pro";
+            base.HttpUrl = "https://api.huobi.pro";
             base.OnReceivingEvent += Huobi_OnReceivingEvent;
             base.OnReceivedEvent += Huobi_OnReceivedEvent;
         }
@@ -68,8 +68,19 @@ namespace Lion.SDK.Bitcoin.Markets
                 string[] _command = _json["ch"].Value<string>().Split('.');
                 switch (_command[2])
                 {
-                    case "ticker": this.ReceivedTicker(_command[1], _json["tick"].Value<JObject>()); break;
                     case "depth": this.ReceivedDepth(_command[1], _command[3], _json["tick"].Value<JObject>()); break;
+                }
+                return;
+            }
+            #endregion
+
+            #region Ticker
+            if (_json.Property("rep") != null && _json.Property("status") != null && _json["status"].Value<string>() == "ok")
+            {
+                string[] _command = _json["rep"].Value<string>().Split('.');
+                switch (_command[2])
+                {
+                    case "detail": this.ReceivedTicker(_command[1], _json["tick"].Value<JObject>()); break;
                 }
                 return;
             }
@@ -83,13 +94,32 @@ namespace Lion.SDK.Bitcoin.Markets
 
         public override void SubscribeTicker(string _pair)
         {
-            string _id = $"market.{_pair}.kline.1min";
+            string _threadCode = $"Ticker-{_pair}";
+            if (!base.Threads.ContainsKey(_threadCode))
+            {
+                Thread _thread = new Thread(new ParameterizedThreadStart(this.RequestTickerThread));
+                base.Threads.Add(_threadCode, _thread);
+                _thread.Start(_pair);
+            }
 
-            JObject _json = new JObject();
-            _json["sub"] = _id;
-            _json["id"] = DateTime.UtcNow.Ticks;
+        }
+        #endregion
 
-            this.Send(_json);
+        #region RequestTickerThread
+        private void RequestTickerThread(object _state)
+        {
+            string _pair = _state.ToString();
+
+            while (base.Running)
+            {
+                Thread.Sleep(1000);
+
+                JObject _json = new JObject();
+                _json["req"] = $"market.{_pair}.detail";
+                _json["id"] = _pair + "_" + DateTime.UtcNow.Ticks;
+
+                this.Send(_json);
+            }
         }
         #endregion
 
@@ -98,7 +128,15 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             Ticker _ticker = new Ticker();
             _ticker.Pair = _symbol;
-            //_ticker
+            _ticker.Open24H = _token["open"].Value<decimal>();
+            _ticker.Last = _token["close"].Value<decimal>();
+            _ticker.High24H = _token["high"].Value<decimal>();
+            _ticker.Low24H = _token["low"].Value<decimal>();
+            _ticker.Volume24H = _token["vol"].Value<decimal>();
+            _ticker.Volume24H2 = _token["amount"].Value<decimal>();
+            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["ts"].Value<long>() / 1000);
+
+            base.Tickers[_symbol] = _ticker;
         }
         #endregion
 
@@ -154,7 +192,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     _bidItems.Remove(_temps[0]);
                 }
             }
-            foreach(KeyValuePair<string, BookItem> _item in _bidItems)
+            foreach (KeyValuePair<string, BookItem> _item in _bidItems)
             {
                 this.OnBookDelete(_item.Value);
             }
@@ -198,7 +236,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region HttpCallAuth
-        protected override object[] HttpCallAuth(HttpClient _http, string _method,ref string _url, object[] _keyValues)
+        protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
             string _time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
 
