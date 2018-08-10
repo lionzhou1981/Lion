@@ -13,20 +13,20 @@ namespace Lion
         private string name;
         private string timeFormatter;
         private ConcurrentQueue<string> logs;
-        private bool runing;
+        private bool running;
         private Thread thread;
 
         public int Sleep = 100;
 
         #region LogPlus
-        public LogPlus(string _path,string _name,string _timeFormatter= "yyyyMMddHH")
+        public LogPlus(string _path, string _name, string _timeFormatter = "yyyyMMddHH")
         {
             this.path = _path + (_path.EndsWith("/", StringComparison.Ordinal) ? "" : "/");
             this.name = _name;
             this.timeFormatter = _timeFormatter;
             this.logs = new ConcurrentQueue<string>();
 
-            this.runing = true;
+            this.running = true;
             this.thread = new Thread(new ThreadStart(this.WriteThread));
             this.thread.Start();
         }
@@ -37,7 +37,7 @@ namespace Lion
         #region WriteThread
         private void WriteThread()
         {
-            while (this.runing)
+            while (this.running)
             {
                 Thread.Sleep(this.Sleep);
 
@@ -63,6 +63,6 @@ namespace Lion
         }
         #endregion
 
-        public void Dispose() => this.runing = false;
+        public void Dispose() => this.running = false;
     }
 }
