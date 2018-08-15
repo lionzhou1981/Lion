@@ -19,6 +19,17 @@ namespace Lion.SDK.Bitcoin.Markets
         public Fundings Fundings;
         public int BookSize = 0;
 
+        public override string WebSocket
+        {
+            get
+            {
+                string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
+                string _sign = "GET/realtime" + _nonce;
+                _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
+                return $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={base.Key}";
+            }
+        }
+
         #region Bitmex
         public Bitmex(string _key, string _secret) : base(_key, _secret)
         {
@@ -35,11 +46,6 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Start
         public override void Start()
         {
-            string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
-            string _sign = "GET/realtime" + _nonce;
-            _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
-            base.WebSocket = $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={base.Key}";
-
             base.Start();
         }
         #endregion

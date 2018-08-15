@@ -31,7 +31,6 @@ namespace Lion.SDK.Bitcoin.Markets
     public abstract class MarketBase
     {
         public string Name = "";
-        public string WebSocket = "";
         public string HttpUrl = "";
 
         public Tickers Tickers = new Tickers();
@@ -46,6 +45,8 @@ namespace Lion.SDK.Bitcoin.Markets
         protected Dictionary<string, Thread> Threads;
 
         private ClientWebSocket webSocket = null;
+        private string webSocketUrl = "";
+        public virtual string WebSocket { get => this.webSocketUrl; set => this.webSocketUrl = value; }
 
         public MarketBase(string _key = "", string _secret = "")
         {
