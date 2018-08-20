@@ -53,11 +53,17 @@ namespace Lion
         #region WriteToFile
         private void WriteToFile()
         {
+            string _file = "";
+            StreamWriter _writer = null;
             while (this.logs.Count > 0)
             {
                 if (!this.logs.TryDequeue(out string _log)) { continue; }
 
                 string _filename = $"{this.path}{this.name}-{DateTime.UtcNow.ToString(this.timeFormatter)}.log";
+                if (_writer == null)
+                {
+                    _file = _filename;
+                }
                 File.AppendAllText(_filename, _log + "\r\n");
             }
         }

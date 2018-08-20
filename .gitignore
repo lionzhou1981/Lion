@@ -264,3 +264,5 @@ __pycache__/
 /Lion.Data.SqlClient/Properties/PublishProfiles
 /Lion.Net/Properties/PublishProfiles
 /Lion.SDK.Bitcoin/Properties/PublishProfiles
+.DS_Store
+.DS_Store

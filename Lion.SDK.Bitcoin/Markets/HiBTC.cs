@@ -18,7 +18,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HiBTC
         public HiBTC(string _key, string _secret) : base(_key, _secret)
         {
-            base.Name = "BTD";
+            base.Name = "HIB";
             base.WebSocket = "wss://api.hibtc.com/wsv1";
             base.HttpUrl = "https://api.hibtc.com/";
             base.OnReceivedEvent += HiBTC_OnReceivedEvent;
@@ -512,7 +512,6 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             string _url = "/v1/auth/orders";
 
-            //JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true);
             if (_token == null) { return null; }
 
