@@ -103,7 +103,7 @@ namespace Lion.Net.Sockets
             byte[] _lengthArray = new byte[4];
             Array.Copy(_byteArray, _lengthArray, 4);
             if (BitConverter.IsLittleEndian) { Array.Reverse(_lengthArray); }
-            _packageSize = BitConverter.ToUInt32(_lengthArray, 0); 
+            _packageSize = BitConverter.ToUInt32(_lengthArray, 0);
 
             try
             {
@@ -156,17 +156,8 @@ namespace Lion.Net.Sockets
         public bool IsKeepAlivePackage(object _object, object _socket)
         {
             JObject _json = (JObject)_object;
-            if (_json["id"] == null) { return false; }
-            if (_json["id"].Value<string>() == "10002") { return true; }
-            if (_json["id"].Value<string>() != "10001") { return false; }
-
-            _json = new JObject();
-            _json["id"] = "10002";
-
-            if (_socket is SocketEngine) { ((SocketEngine)_socket).SendPackage(_json); }
-            if (_socket is SocketSession) { ((SocketSession)_socket).SendPackage(_json); }
-
-            return true;
+            string _id = _json.Property("id") == null ? "" : _json["id"].Value<string>();
+            return _id == "10001" || _id == "10002";
         }
         #endregion
 
@@ -175,7 +166,7 @@ namespace Lion.Net.Sockets
         {
             Random _random = new Random(RandomPlus.RandomSeed);
             this.socketRxKey = _random.Next(10000000, 100000000).ToString();
-            this.socketChecksum= _random.Next(10000000, 100000000).ToString();
+            this.socketChecksum = _random.Next(10000000, 100000000).ToString();
 
             JObject _json = new JObject();
             _json["code"] = this.Code;

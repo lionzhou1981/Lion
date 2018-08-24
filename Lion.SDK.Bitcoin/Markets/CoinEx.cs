@@ -225,7 +225,11 @@ namespace Lion.SDK.Bitcoin.Markets
         #region SubscribeTicker
         public override void SubscribeTicker(string _pair)
         {
-            this.Send("state.subscribe", new JArray(_pair));
+            this.SubscribeTicker(new JArray(_pair));
+        }
+        public void SubscribeTicker(JArray _json)
+        {
+            this.Send("state.subscribe", _json);
         }
         #endregion
 

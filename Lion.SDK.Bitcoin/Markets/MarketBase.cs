@@ -231,11 +231,19 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             if (this.webSocket == null || this.webSocket.State != WebSocketState.Open) { return; }
 
-            this.webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(_text)),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None).Wait();
+            try
+            {
+                this.webSocket.SendAsync(
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(_text)),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None).Wait();
+            }
+            catch
+            {
+                this.webSocket.Dispose();
+                this.webSocket = null;
+            }
         }
         #endregion
 
