@@ -23,17 +23,5 @@ namespace Lion.SDK.Bitcoin.Nodes.Ethereum
         {
             return new Address(_address);
         }
-
-        public static bool IsAddress(string _address)
-        {
-            if (!_address.StartsWith("0x"))
-                return false;
-            var _num64 = _address.Substring(2);
-            BigInteger _valueOf = BigInteger.Zero;
-            if (System.Numerics.BigInteger.TryParse(_num64, System.Globalization.NumberStyles.AllowHexSpecifier, null, out _valueOf))
-                return _valueOf != BigInteger.Zero;
-            else
-                return false;
-        }
     }
 }
