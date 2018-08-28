@@ -52,7 +52,7 @@ namespace Lion.Encrypt
                 if (_index < 0) { throw new FormatException($"Invalid Base58 character `{_base58[i]}` at position {i}"); }
                 _int = _int * 58 + _index;
             }
-
+ 
             IEnumerable<byte> _zeros = Enumerable.Repeat((byte)0, _base58.TakeWhile(c => c == '1').Count());
             IEnumerable<byte> data = _int.ToByteArray().Reverse().SkipWhile(b => b == 0);
             return _zeros.Concat(data).ToArray();
