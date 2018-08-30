@@ -31,7 +31,7 @@ namespace Lion.Encrypt
             {
                 int _remainder = (int)(_dataInt % 58);
                 _dataInt /= 58;
-                _result = Base58.Base58characters[_remainder] + _result;
+                _result = Base58characters[_remainder] + _result;
             }
 
             for (var i = 0; i < _dataWithChecksum.Length && _dataWithChecksum[i] == 0; i++)
