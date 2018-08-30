@@ -117,7 +117,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         && _task.Status != TaskStatus.Faulted
                         && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
 
-                    if (_task.Status != TaskStatus.RanToCompletion || this.webSocket.State != WebSocketState.Open)
+                    if (_task.Status != TaskStatus.RanToCompletion || this.webSocket == null || this.webSocket.State != WebSocketState.Open)
                     {
                         this.Clear();
                         continue;

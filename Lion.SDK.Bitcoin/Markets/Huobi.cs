@@ -114,11 +114,19 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 Thread.Sleep(1000);
 
-                JObject _json = new JObject();
-                _json["req"] = $"market.{_pair}.detail";
-                _json["id"] = _pair + "_" + DateTime.UtcNow.Ticks;
+                try
+                {
+                    JObject _json = new JObject();
+                    _json["req"] = $"market.{_pair}.detail";
+                    _json["id"] = _pair + "_" + DateTime.UtcNow.Ticks;
 
-                this.Send(_json);
+                    this.Send(_json);
+                }
+                catch (Exception _ex)
+                {
+                    this.OnLog("RequestTickerThread", _state + "");
+                    this.OnLog("RequestTickerThread", _ex.ToString());
+                }
             }
         }
         #endregion
