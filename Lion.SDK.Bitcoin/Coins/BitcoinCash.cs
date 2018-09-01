@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Numerics;
+using System.Security.Cryptography;
 using Lion;
 using Lion.Encrypt;
 
@@ -9,10 +9,11 @@ namespace Lion.SDK.Bitcoin.Coins
 {
     public class BitcoinCash
     {
-        private const string CHARSET_BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-        private const string CHARSET_CASHADDR = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+        #region Var
+        internal const string CHARSET_BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        internal const string CHARSET_CASHADDR = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
-        private static readonly sbyte[] DICT_CASHADDR = new sbyte[128]{
+        internal static readonly sbyte[] DICT_CASHADDR = new sbyte[128]{
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -23,7 +24,7 @@ namespace Lion.SDK.Bitcoin.Coins
             1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
         };
 
-        private static readonly sbyte[] DICT_BASE58 = new sbyte[128]{
+        internal static readonly sbyte[] DICT_BASE58 = new sbyte[128]{
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -33,39 +34,27 @@ namespace Lion.SDK.Bitcoin.Coins
             -1, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, -1, 44, 45, 46,
             47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, -1, -1, -1, -1, -1
         };
+        #endregion
 
-        private static ulong PolyMod(byte[] input, ulong startValue = 1)
+        #region PolyMod
+        internal static ulong PolyMod(byte[] input, ulong startValue = 1)
         {
             for (uint i = 0; i < 42; i++)
             {
                 ulong c0 = startValue >> 35;
                 startValue = ((startValue & 0x07ffffffff) << 5) ^ ((ulong)input[i]);
-                if ((c0 & 0x01) != 0)
-                {
-                    startValue ^= 0x98f2bc8e61;
-                }
-                if ((c0 & 0x02) != 0)
-                {
-                    startValue ^= 0x79b76d99e2;
-                }
-                if ((c0 & 0x04) != 0)
-                {
-                    startValue ^= 0xf33e5fb3c4;
-                }
-                if ((c0 & 0x08) != 0)
-                {
-                    startValue ^= 0xae2eabe2a8;
-                }
-                if ((c0 & 0x10) != 0)
-                {
-                    startValue ^= 0x1e4f43e470;
-                }
+                if ((c0 & 0x01) != 0) { startValue ^= 0x98f2bc8e61; }
+                if ((c0 & 0x02) != 0) { startValue ^= 0x79b76d99e2; }
+                if ((c0 & 0x04) != 0) { startValue ^= 0xf33e5fb3c4; }
+                if ((c0 & 0x08) != 0) { startValue ^= 0xae2eabe2a8; }
+                if ((c0 & 0x10) != 0) { startValue ^= 0x1e4f43e470; }
             }
             return startValue ^ 1;
         }
+        #endregion
 
         #region Bits8to5
-        private static byte[] Bits8to5(byte[] _bytes)
+        internal static byte[] Bits8to5(byte[] _bytes)
         {
             byte[] _converted = new byte[34 + 8];
             int _a1 = 0, _a2 = 0;
@@ -87,7 +76,7 @@ namespace Lion.SDK.Bitcoin.Coins
         #endregion
 
         #region Bits5to8
-        private static byte[] Bits5to8(byte[] bytes)
+        internal static byte[] Bits5to8(byte[] bytes)
         {
             byte[] converted = new byte[(1 + 20) + 4];
             int a1 = 0, a2 = 0;
@@ -174,7 +163,6 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 throw new Exception("Old address is longer or shorter than expected.");
             }
-
 
             SHA256 hasher = SHA256.Create();
             byte[] checksum = hasher.ComputeHash(hasher.ComputeHash(addrBytes, 0, 21));
@@ -320,38 +308,38 @@ namespace Lion.SDK.Bitcoin.Coins
             string _prefix = "";
             if (_address.IndexOf(':') > 0)
             {
-                _prefix = _address.Split(':')[0];
-                _address = _address.Split(':')[1];
+                _prefix = _address.Split(':')[0].ToLower();
+                _address = _address.Split(':')[1].ToLower();
             }
 
+            if (_address.StartsWith("bc1") || _address.StartsWith("tb1")) { _version = null; return false; }
             if (Bitcoin.IsAddress(_address, out _version)) { return true; }
 
             bool _mainnet = false;
-            if (_prefix == "bitcoincash:" || _prefix == "") { _mainnet = true; }
-            else if (_prefix == "bchtest:") { _mainnet = false; }
-            else { throw new Exception("Unexpected colon character."); }
+            if (_prefix == "bitcoincash:" || _prefix == "") { _mainnet = true; } else if (_prefix == "bchtest:") { _mainnet = false; } else { throw new Exception("Unexpected colon character."); }
 
             byte[] _decoded = new byte[42];
             for (int i = 0; i < _decoded.Length; i++)
             {
                 int value = DICT_CASHADDR[_address[i]];
-                if (value != -1) { _decoded[i] = (byte)value; }
-                else { throw new Exception("Address contains unexpected character."); }
+                if (value != -1) { _decoded[i] = (byte)value; } else { throw new Exception("Address contains unexpected character."); }
             }
             _decoded = Bits5to8(_decoded);
 
             bool _isP2PKH = false;
             switch (_decoded[0])
             {
-                case 0x00: _isP2PKH = true; break;
-                case 0x08: _isP2PKH = false; break;
-                default: throw new Exception("Unexpected address byte.");
+                case 0x00:
+                    _isP2PKH = true;
+                    break;
+                case 0x08:
+                    _isP2PKH = false;
+                    break;
+                default:
+                    throw new Exception("Unexpected address byte.");
             }
 
-            if (_mainnet && _isP2PKH) { _decoded[0] = 0x00; }
-            else if (_mainnet && !_isP2PKH) { _decoded[0] = 0x05; }
-            else if (!_mainnet && _isP2PKH) { _decoded[0] = 0x6f; }
-            else { _decoded[0] = 0xc4; }
+            if (_mainnet && _isP2PKH) { _decoded[0] = 0x00; } else if (_mainnet && !_isP2PKH) { _decoded[0] = 0x05; } else if (!_mainnet && _isP2PKH) { _decoded[0] = 0x6f; } else { _decoded[0] = 0xc4; }
 
             _version = _decoded[0];
             return true;
