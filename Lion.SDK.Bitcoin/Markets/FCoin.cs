@@ -253,7 +253,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;
-            _ticker.Last = _token["ticker"][0].Value<decimal>();
+            _ticker.LastPrice = _token["ticker"][0].Value<decimal>();
             _ticker.LastAmount = _token["ticker"][1].Value<decimal>();
             _ticker.BidPrice = _token["ticker"][2].Value<decimal>();
             _ticker.BidAmount = _token["ticker"][3].Value<decimal>();
