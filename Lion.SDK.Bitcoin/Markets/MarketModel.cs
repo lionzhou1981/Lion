@@ -256,7 +256,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 Ticker _ticker = value;
                 _ticker.Pair = _pair;
                 this.AddOrUpdate(_pair, _ticker, (k, v) => {
-                    v.LastPrice = _ticker.Last;
+                    v.LastPrice = _ticker.LastPrice;
                     v.LastAmount = _ticker.LastAmount;
                     v.BidPrice = _ticker.BidPrice;
                     v.BidAmount = _ticker.BidAmount;

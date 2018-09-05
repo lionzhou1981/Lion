@@ -52,8 +52,6 @@ namespace Lion.SDK.Bitcoin.Markets
         #region SubscribeTicker
         public override void SubscribeTicker(string _pair)
         {
-            if (this.Tickers[_pair] == null) { this.Tickers[_pair] = new Ticker(); }
-
             JObject _json = new JObject();
             _json["event"] = "subscribe";
             _json["channel"] = "ticker";
@@ -75,7 +73,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.Volume24H = _token["vol"].Value<decimal>();
             _ticker.Change24H = _token["dchange"].Value<decimal>();
             _ticker.ChangeRate24H = _token["dchange_pec"].Value<decimal>();
-            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>());
+            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>()/1000);
             this.Tickers[_pair] = _ticker;
         }
         #endregion
