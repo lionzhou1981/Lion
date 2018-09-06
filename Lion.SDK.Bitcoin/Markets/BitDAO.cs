@@ -132,7 +132,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     {
                         if (_size > 0)
                         {
-                            if (_price > this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price)) { base.Clear(); return; }
                             BookItem _bookItem = this.Books[_pair, MarketSide.Bid].Update(_id, _size);
                             if (_bookItem == null)
                             {
@@ -157,7 +156,6 @@ namespace Lion.SDK.Bitcoin.Markets
                     {
                         if (_size > 0)
                         {
-                            if (Math.Abs(_price) < this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                             BookItem _bookItem = this.Books[_pair, MarketSide.Ask].Update(_id, _size);
                             if (_bookItem == null)
                             {
@@ -179,6 +177,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
+                if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
         }
