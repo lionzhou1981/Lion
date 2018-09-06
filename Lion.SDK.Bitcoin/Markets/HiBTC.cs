@@ -73,7 +73,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.Volume24H = _token["vol"].Value<decimal>();
             _ticker.Change24H = _token["dchange"].Value<decimal>();
             _ticker.ChangeRate24H = _token["dchange_pec"].Value<decimal>();
-            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>()/1000);
+            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>() / 1000);
             this.Tickers[_pair] = _ticker;
         }
         #endregion
@@ -198,6 +198,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
+                if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
         }
