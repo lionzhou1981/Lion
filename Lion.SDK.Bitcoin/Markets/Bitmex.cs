@@ -23,6 +23,8 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             get
             {
+                if (base.Key == "" || base.Secret == "") { return "wss://www.bitmex.com/realtime"; }
+
                 string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
                 string _sign = "GET/realtime" + _nonce;
                 _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
@@ -84,20 +86,14 @@ namespace Lion.SDK.Bitcoin.Markets
                 case "margin": this.ReceivedMergin(_action, _list); break;
                 case "instrument": this.ReceiveInstrument(_action, _list); break;
                 case "order": this.ReceiveOrder(_action, _list); break;
+                case "quote": this.ReceiveQuote(_action, _list); break;
                 default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
             }
         }
         #endregion
 
-        public override void SubscribeTicker(string _pair)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceivedTicker(string _symbol, JToken _token)
-        {
-            throw new NotImplementedException();
-        }
+        public override void SubscribeTicker(string _pair) => throw new NotImplementedException();
+        protected override void ReceivedTicker(string _symbol, JToken _token) => throw new NotImplementedException();
 
         #region SubscribeDepth
         /// <summary>
@@ -405,6 +401,46 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region SubscribeQuote
+        public void SubscribeQuote(params string[] _pairs)
+        {
+            JObject _json = new JObject();
+            _json.Add("op", "subscribe");
+            if (_pairs.Length==0)
+            {
+                _json.Add("args", new JArray($"quote"));
+            }
+            else
+            {
+                JArray _list = new JArray();
+                foreach(string _pair in _pairs)
+                {
+                    _list.Add($"quote:{_pair}");
+                }
+                _json.Add("args", _list);
+            }
+            this.Send(_json);
+        }
+        #endregion
+
+        #region ReceiveQuote
+        private void ReceiveQuote(string _action, JArray _list)
+        {
+            foreach(JObject _item in _list)
+            {
+                Ticker _ticker = new Ticker();
+                _ticker.Pair = _item["symbol"].Value<string>();
+                _ticker.BidPrice = _item["bidPrice"].Value<decimal>();
+                _ticker.BidAmount = _item["bidSize"].Value<decimal>();
+                _ticker.AskPrice = _item["askPrice"].Value<decimal>();
+                _ticker.AskAmount = _item["askSize"].Value<decimal>();
+                _ticker.DateTime = _item["timestamp"].Value<DateTime>();
+
+                this.Tickers.AddOrUpdate(_item["symbol"].Value<string>(), _ticker, (k, v) => _ticker);
+            }
+        }
+        #endregion
+
         #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
@@ -466,7 +502,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;
-            _ticker.Last = _token["lastPrice"].Value<decimal>();
+            _ticker.LastPrice = _token["lastPrice"].Value<decimal>();
             _ticker.BidPrice = _token["bidPrice"].Value<decimal>();
             _ticker.AskPrice = _token["askPrice"].Value<decimal>();
             _ticker.High24H = _token["highPrice"].Value<decimal>();

@@ -40,22 +40,43 @@ namespace Lion.SDK.Bitcoin.Markets
                             _json["pair"].Value<string>(),
                             ((JObject)_json["data"]).Property("change") == null ? "START" : "UPDATE",
                             _json["data"]); break;
-
+                    case "ticker":
+                        this.ReceivedTicker(_json["pair"].Value<string>(), _json["data"]);
+                        break;
                     default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
                 }
             }
         }
         #endregion
 
+        #region SubscribeTicker
         public override void SubscribeTicker(string _pair)
         {
-            throw new NotImplementedException();
+            JObject _json = new JObject();
+            _json["event"] = "subscribe";
+            _json["channel"] = "ticker";
+            _json["pair"] = _pair;
+            this.Send(_json);
         }
+        #endregion
 
-        protected override void ReceivedTicker(string _symbol, JToken _token)
+        #region ReceivedTicker
+        protected override void ReceivedTicker(string _pair, JToken _token)
         {
-            throw new NotImplementedException();
+            Ticker _ticker = new Ticker();
+            _ticker.Pair = _pair;
+            _ticker.BidPrice = _token["buy"].Value<decimal>();
+            _ticker.AskPrice = _token["sell"].Value<decimal>();
+            _ticker.High24H = _token["high"].Value<decimal>();
+            _ticker.Low24H = _token["low"].Value<decimal>();
+            _ticker.LastPrice = _token["last"].Value<decimal>();
+            _ticker.Volume24H = _token["vol"].Value<decimal>();
+            _ticker.Change24H = _token["dchange"].Value<decimal>();
+            _ticker.ChangeRate24H = _token["dchange_pec"].Value<decimal>();
+            _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>() / 1000);
+            this.Tickers[_pair] = _ticker;
         }
+        #endregion
 
         #region SubscribeDepth
         /// <summary>
@@ -177,6 +198,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
+                if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
         }
@@ -244,7 +266,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;
-            _ticker.Last = _token["last"].Value<decimal>();
+            _ticker.LastPrice = _token["last"].Value<decimal>();
             _ticker.BidPrice = _token["buy"].Value<decimal>();
             _ticker.AskPrice = _token["sell"].Value<decimal>();
             _ticker.High24H = _token["high"].Value<decimal>();

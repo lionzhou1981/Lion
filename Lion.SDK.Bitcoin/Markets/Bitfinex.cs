@@ -204,7 +204,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.AskAmount = _list[3].Value<decimal>();
             _ticker.Change24H = _list[4].Value<decimal>();
             _ticker.ChangeRate24H = _list[5].Value<decimal>();
-            _ticker.Last = _list[6].Value<decimal>();
+            _ticker.LastPrice = _list[6].Value<decimal>();
             _ticker.Volume24H = _list[7].Value<decimal>();
             _ticker.High24H = _list[8].Value<decimal>();
             _ticker.Low24H = _list[9].Value<decimal>();
@@ -273,7 +273,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 Ticker _ticker = new Ticker();
                 _ticker.Pair = _pair;
-                _ticker.Last = _token["last_price"].Value<decimal>();
+                _ticker.LastPrice = _token["last_price"].Value<decimal>();
                 _ticker.BidPrice = _token["bid"].Value<decimal>();
                 _ticker.AskPrice = _token["ask"].Value<decimal>();
                 _ticker.High24H = _token["high"].Value<decimal>();
