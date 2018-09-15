@@ -312,7 +312,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 _address = _address.Split(':')[1].ToLower();
             }
 
-            if (_address.StartsWith("bc1") || _address.StartsWith("tb1")) { _version = null; return false; }
+            if (_address.ToLower().StartsWith("bc1") || _address.ToLower().StartsWith("tb1")) { _version = null; return false; }
             if (Bitcoin.IsAddress(_address, out _version)) { return true; }
 
             bool _mainnet = false;

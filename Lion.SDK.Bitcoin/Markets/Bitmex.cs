@@ -92,22 +92,8 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-<<<<<<< Updated upstream
         public override void SubscribeTicker(string _pair) => throw new NotImplementedException();
         protected override void ReceivedTicker(string _symbol, JToken _token) => throw new NotImplementedException();
-=======
-        #region SubscribeTicker
-        public override void SubscribeTicker(string _pair)
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
-
-        protected override void ReceivedTicker(string _symbol, JToken _token)
-        {
-            throw new NotImplementedException();
-        }
->>>>>>> Stashed changes
 
         #region SubscribeDepth
         /// <summary>
@@ -423,14 +409,14 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             JObject _json = new JObject();
             _json.Add("op", "subscribe");
-            if (_pairs.Length==0)
+            if (_pairs.Length == 0)
             {
                 _json.Add("args", new JArray($"quote"));
             }
             else
             {
                 JArray _list = new JArray();
-                foreach(string _pair in _pairs)
+                foreach (string _pair in _pairs)
                 {
                     _list.Add($"quote:{_pair}");
                 }
@@ -443,7 +429,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region ReceiveQuote
         private void ReceiveQuote(string _action, JArray _list)
         {
-            foreach(JObject _item in _list)
+            foreach (JObject _item in _list)
             {
                 Ticker _ticker = new Ticker();
                 _ticker.Pair = _item["symbol"].Value<string>();
