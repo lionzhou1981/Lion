@@ -318,6 +318,7 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             try
             {
+                this.OnLog("HTTP", $"RX: {_result}");
                 return this.HttpCallResult(JToken.Parse(_result));
             }
             catch (Exception _ex)

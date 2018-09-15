@@ -92,8 +92,22 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+<<<<<<< Updated upstream
         public override void SubscribeTicker(string _pair) => throw new NotImplementedException();
         protected override void ReceivedTicker(string _symbol, JToken _token) => throw new NotImplementedException();
+=======
+        #region SubscribeTicker
+        public override void SubscribeTicker(string _pair)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+
+        protected override void ReceivedTicker(string _symbol, JToken _token)
+        {
+            throw new NotImplementedException();
+        }
+>>>>>>> Stashed changes
 
         #region SubscribeDepth
         /// <summary>
@@ -482,7 +496,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _http.Headers.Add("api-key", base.Key);
             _http.Headers.Add("api-signature", _sign);
             _http.Headers.Add("api-expires", _nonce);
-            if (_method == "POST") { _http.ContentType="application/json"; }
+            if (_method == "POST") { _http.ContentType = "application/json"; }
 
             return _keyValues;
         }
@@ -538,7 +552,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 decimal _price = _item["price"].Value<decimal>();
                 decimal _amount = _item["amount"].Value<decimal>();
                 string _side = _item["side"].Value<string>().ToLower();
-                if(_side== "Sell")
+                if (_side == "Sell")
                 {
                     _askList.Insert(_price.ToString(), _price, _amount);
                 }
@@ -687,8 +701,9 @@ namespace Lion.SDK.Bitcoin.Markets
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
-            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
-            return _token["orderID"].Value<string>();
+
+
+            return _token["orderID"]?.Value<string>();
         }
         #endregion
 

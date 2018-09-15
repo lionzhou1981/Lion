@@ -15,7 +15,7 @@ namespace Lion.SDK.Bitcoin.Markets
     #endregion
 
     #region Books
-    public class Books: ConcurrentDictionary<string, BookItems>
+    public class Books : ConcurrentDictionary<string, BookItems>
     {
         public long Timestamp = 0;
 
@@ -88,7 +88,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public BookItem Delete(string _id)
         {
             BookItem _item;
-            if(!this.TryRemove(_id, out _item)) { return null; }
+            if (!this.TryRemove(_id, out _item)) { return null; }
             return _item;
         }
         #endregion
@@ -97,7 +97,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public void Resize(int _size)
         {
             BookItem[] _list = this.ToArray();
-            for(int i = _size; i < _list.Length; i++)
+            for (int i = _size; i < _list.Length; i++)
             {
                 BookItem _removed;
                 this.TryRemove(_list[i].Id, out _removed);
@@ -129,7 +129,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 if (this.Side == MarketSide.Ask)
                 {
-                    if(_item.Price > _price)
+                    if (_item.Price > _price)
                     {
                         return _count;
                     }
@@ -151,6 +151,14 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
             }
             return 0M;
+        }
+        #endregion
+
+        #region GetTop
+        public BookItem GetTop()
+        {
+            BookItem[] _list = this.ToArray();
+            return _list.Length > 0 ? _list[0] : null;
         }
         #endregion
     }
@@ -257,7 +265,8 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 Ticker _ticker = value;
                 _ticker.Pair = _pair;
-                this.AddOrUpdate(_pair, _ticker, (k, v) => {
+                this.AddOrUpdate(_pair, _ticker, (k, v) =>
+                {
                     v.LastPrice = _ticker.LastPrice;
                     v.LastAmount = _ticker.LastAmount;
                     v.BidPrice = _ticker.BidPrice;
