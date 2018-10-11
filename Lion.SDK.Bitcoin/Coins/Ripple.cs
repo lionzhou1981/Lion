@@ -14,11 +14,17 @@ namespace Lion.SDK.Bitcoin.Coins
         //private static  int[] _mIndexes;
 
         public static bool IsAddress(string _address)
-        { 
+        {
+            var _factAddress = (_address.Contains(":") ? _address.Split(':')[0].Trim() : _address);
+            var _tag = (_address.Contains(":") ? _address.Split(':')[1].Trim() : "");
+            long _tagValue = 0;
+            if (!string.IsNullOrWhiteSpace(_tag) && !long.TryParse(_tag, out _tagValue))
+                return false;
+
             var _mIndexes = BuildIndexes(Alphabet.ToCharArray());
             try
             {
-                DecodeAndCheck(_address, _mIndexes);
+                DecodeAndCheck(_factAddress, _mIndexes);
                 return true;
             }
             catch
