@@ -18,7 +18,9 @@ namespace Lion.SDK.Bitcoin.Markets
             base.HttpUrl = "https://api.binance.com";
             base.OnReceivedEvent += Binance_OnReceivedEvent;
         }
+        #endregion
 
+        #region Binance_OnReceivedEvent
         private void Binance_OnReceivedEvent(JToken _token)
         {
             JObject _json = (JObject)_token["data"];
