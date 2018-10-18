@@ -38,7 +38,21 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetBalances
         public override Balances GetBalances()
         {
-            throw new NotImplementedException();
+            string _url = "/api/v3/account";
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            if (_token == null) { return null; }
+
+            Balances _balances = new Balances();
+            foreach (JToken _item in _token["balances"])
+            {
+                _balances[_item["asset"].ToString()] = new BalanceItem()
+                {
+                    Symbol = _item["asset"].ToString(),
+                    Free = _item["free"].Value<decimal>(),
+                    Lock = _item["locked"].Value<decimal>()
+                };
+            }
+            return _balances;
         }
         #endregion
 
@@ -96,7 +110,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
             }
-            string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
+            string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString() + DateTime.UtcNow.Millisecond.ToString();
             _list.Add("timestamp", _time);
 
             string _sign = "";
@@ -123,6 +137,14 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpCallResult
         protected override JToken HttpCallResult(JToken _token)
         {
+            if (_token == null) { return null; }
+
+            JObject _json = (JObject)_token;
+            if (_json.Property("code") != null && _json.Property("msg") != null)
+            {
+                this.Log(_json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
             return _token;
         }
         #endregion
@@ -237,7 +259,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public string OrderCreate(string _symbol, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            string _url = "/api/v3/order";
+            string _url = "/api/v3/order/test";
 
             IList<object> _values = new List<object>();
             _values.Add("symbol");
@@ -260,10 +282,39 @@ namespace Lion.SDK.Bitcoin.Markets
             }
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
-            if (_token == null) { return null; }
+            if (_token == null || _token.ToString().Trim() == "{}") { return null; }
             Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
-            return _token["orderID"].Value<string>();
+            return _token["orderId"].Value<string>();
         }
         #endregion
+
+        #region OrderDetail
+        public OrderItem OrderDetail(string _symbol, string _id)
+        {
+            string _url = "/api/v3/order";
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "symbol", _symbol, "orderId", _id);
+            if (_token == null) { return null; }
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["orderId"].Value<string>();
+            _order.Pair = _token["symbol"].Value<string>();
+            _order.Side = _token["side"].Value<string>().ToUpper() == "BUY" ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["origQty"].Value<decimal>();
+            _order.Price = _token["price"].Value<decimal>();
+            string _status = _token["status"].Value<string>();
+            switch (_status)
+            {
+                case "NEW": _order.Status = OrderStatus.New; break;
+                case "PARTIALLY_FILLED": _order.Status = OrderStatus.Filling; break;
+                case "FILLED": _order.Status = OrderStatus.Filled; break;
+                case "CANCELED": _order.Status = OrderStatus.Canceled; break;
+            }
+            _order.FilledAmount = _token["executedQty"].Value<decimal>();
+            //_order.FilledPrice = _token[6].Value<decimal>();
+
+            return _order;
+        }
+        #endregion
+
     }
 }
