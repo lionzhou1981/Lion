@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,11 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Binance : MarketBase
     {
+        ConcurrentQueue<JObject> QueueDepth = new ConcurrentQueue<JObject>();
+        long LastUpdateId = 0;
+        WebClientPlus WebClient = new WebClientPlus(10000);
+        string SnapshotUrl = "https://www.binance.com/api/v1/depth";
+
         #region Binance
         public Binance(string _key, string _secret) : base(_key, _secret)
         {
@@ -30,7 +36,7 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             if (_token["stream"].Value<string>().Contains("depth"))
             {
-                //this.ReceivedDepth(_json["s"].Value<string>(), "", _json);
+                this.ReceivedDepth(_json["s"].Value<string>(), "", _json);
             }
         }
         #endregion
@@ -88,10 +94,10 @@ namespace Lion.SDK.Bitcoin.Markets
         public override void SubscribeDepth(string _pair, params object[] _values)
         {
             base.WebSocket += $"{_pair.ToLower()}@depth/";
+            this.SnapshotUrl += $"?symbol={_pair}&limit=10";
 
             if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
             if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
-
         }
         #endregion
 
@@ -110,8 +116,8 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 _list.Add(_keyValues[i].ToString(), _keyValues[i + 1].ToString());
             }
-            string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString() + DateTime.UtcNow.Millisecond.ToString();
-            _list.Add("timestamp", _time);
+            //string _time = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString() + DateTime.UtcNow.Millisecond.ToString();
+            //_list.Add("timestamp", _time);
 
             string _sign = "";
             foreach (var _item in _list)
@@ -119,7 +125,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 _sign += $"{_item.Key}={_item.Value}&";
             }
             _sign = _sign.Remove(_sign.Length - 1);
-            _list.Add("signature", SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower());
+            _list.Add("signature", SHA.EncodeHMACSHA256ToHex(_sign, base.Secret).ToLower());
 
             IList<string> _keyValueList = new List<string>();
             foreach (KeyValuePair<string, string> _item in _list)
@@ -154,72 +160,159 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             try
             {
+                this.OnLog($"ReceivedDepth:book.count={this.Books[_symbol, MarketSide.Bid].Count}:{this.Books[_symbol, MarketSide.Ask].Count}");
                 //this.OnLog(_token.ToString());
                 JObject _json = (JObject)_token;
-
-                #region Bid
-                JArray _bids = _token["b"].Value<JArray>();
-                foreach (JArray _item in _bids)
+                this.QueueDepth.Enqueue(_json);
+                long _U = _json["U"].Value<long>();
+                long _u = _json["u"].Value<long>();
+                this.OnLog($"ReceivedDepth:U={_U},u={_u},e={_json["e"]}");
+                if (this.Books[_symbol, MarketSide.Bid].Count < 1 && this.Books[_symbol, MarketSide.Ask].Count < 1)
                 {
-                    decimal _price = _item[0].Value<decimal>();
-                    decimal _amount = _item[1].Value<decimal>();
-                    string _id = Math.Abs(_price).ToString();
-
-                    if (_amount > 0M)
+                    string _snapshot = this.WebClient.DownloadString(this.SnapshotUrl);
+                    JObject _jsonSnapshot = JObject.Parse(_snapshot);
+                    this.LastUpdateId = _jsonSnapshot["lastUpdateId"].Value<long>();
+                    this.OnLog($"ReceivedDepth:lastUpdateId={this.LastUpdateId}");
+                    if (this.LastUpdateId + 1 > _u)
                     {
-                        BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Update(_id, _amount);
-                        if (_bookItem == null)
+                        #region Bid
+                        JArray _bids = _jsonSnapshot["bids"].Value<JArray>();
+                        foreach (JArray _item in _bids)
                         {
-                            _bookItem = this.Books[_symbol, MarketSide.Bid].Insert(_id, Math.Abs(_price), _amount);
-                            this.OnBookInsert(_bookItem);
+                            decimal _price = _item[0].Value<decimal>();
+                            decimal _amount = _item[1].Value<decimal>();
+                            string _id = Math.Abs(_price).ToString();
+
+                            if (_amount > 0M)
+                            {
+                                BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Update(_id, _amount);
+                                if (_bookItem == null)
+                                {
+                                    _bookItem = this.Books[_symbol, MarketSide.Bid].Insert(_id, Math.Abs(_price), _amount);
+                                    this.OnBookInsert(_bookItem);
+                                }
+                                else
+                                {
+                                    this.OnBookUpdate(_bookItem);
+                                }
+                            }
+                            else
+                            {
+                                BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Delete(_id);
+                                if (_bookItem != null)
+                                {
+                                    this.OnBookDelete(_bookItem);
+                                }
+                            }
+                        }
+                        #endregion
+                        #region Ask
+                        JArray _asks = _jsonSnapshot["asks"].Value<JArray>();
+                        foreach (JArray _item in _asks)
+                        {
+                            decimal _price = _item[0].Value<decimal>();
+                            decimal _amount = _item[1].Value<decimal>();
+                            string _id = Math.Abs(_price).ToString();
+
+                            if (_amount > 0M)
+                            {
+                                BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Update(_id, _amount);
+                                if (_bookItem == null)
+                                {
+                                    _bookItem = this.Books[_symbol, MarketSide.Ask].Insert(_id, Math.Abs(_price), _amount);
+                                    this.OnBookInsert(_bookItem);
+                                }
+                                else
+                                {
+                                    this.OnBookUpdate(_bookItem);
+                                }
+                            }
+                            else
+                            {
+                                BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Delete(_id);
+                                if (_bookItem != null)
+                                {
+                                    this.OnBookDelete(_bookItem);
+                                }
+                            }
+                        }
+                        #endregion
+                        return;
+                    }
+                }
+
+                if (_U <= this.LastUpdateId + 1 && _u >= this.LastUpdateId + 1)
+                {
+                    this.OnLog($"ReceivedDepth:true");
+                    #region Bid
+                    JArray _b = _token["b"].Value<JArray>();
+                    foreach (JArray _item in _b)
+                    {
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        string _id = Math.Abs(_price).ToString();
+
+                        if (_amount > 0M)
+                        {
+                            BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Update(_id, _amount);
+                            if (_bookItem == null)
+                            {
+                                _bookItem = this.Books[_symbol, MarketSide.Bid].Insert(_id, Math.Abs(_price), _amount);
+                                this.OnBookInsert(_bookItem);
+                            }
+                            else
+                            {
+                                this.OnBookUpdate(_bookItem);
+                            }
                         }
                         else
                         {
-                            this.OnBookUpdate(_bookItem);
+                            BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Delete(_id);
+                            if (_bookItem != null)
+                            {
+                                this.OnBookDelete(_bookItem);
+                            }
                         }
                     }
-                    else
-                    {
-                        BookItem _bookItem = this.Books[_symbol, MarketSide.Bid].Delete(_id);
-                        if (_bookItem != null)
-                        {
-                            this.OnBookDelete(_bookItem);
-                        }
-                    }
-                }
-                #endregion
+                    #endregion
 
-                #region Ask
-                JArray _asks = _token["a"].Value<JArray>();
-                foreach (JArray _item in _asks)
-                {
-                    decimal _price = _item[0].Value<decimal>();
-                    decimal _amount = _item[1].Value<decimal>();
-                    string _id = Math.Abs(_price).ToString();
-
-                    if (_amount > 0M)
+                    #region Ask
+                    JArray _a = _token["a"].Value<JArray>();
+                    foreach (JArray _item in _a)
                     {
-                        BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Update(_id, _amount);
-                        if (_bookItem == null)
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        string _id = Math.Abs(_price).ToString();
+
+                        if (_amount > 0M)
                         {
-                            _bookItem = this.Books[_symbol, MarketSide.Ask].Insert(_id, Math.Abs(_price), _amount);
-                            this.OnBookInsert(_bookItem);
+                            BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Update(_id, _amount);
+                            if (_bookItem == null)
+                            {
+                                _bookItem = this.Books[_symbol, MarketSide.Ask].Insert(_id, Math.Abs(_price), _amount);
+                                this.OnBookInsert(_bookItem);
+                            }
+                            else
+                            {
+                                this.OnBookUpdate(_bookItem);
+                            }
                         }
                         else
                         {
-                            this.OnBookUpdate(_bookItem);
+                            BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Delete(_id);
+                            if (_bookItem != null)
+                            {
+                                this.OnBookDelete(_bookItem);
+                            }
                         }
                     }
-                    else
-                    {
-                        BookItem _bookItem = this.Books[_symbol, MarketSide.Ask].Delete(_id);
-                        if (_bookItem != null)
-                        {
-                            this.OnBookDelete(_bookItem);
-                        }
-                    }
+                    #endregion
+                    this.LastUpdateId = _u;
                 }
-                #endregion
+                else
+                {
+                    this.OnLog($"ReceivedDepth:false");
+                }
             }
             catch (Exception _ex)
             {

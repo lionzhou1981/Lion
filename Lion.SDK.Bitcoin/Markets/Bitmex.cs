@@ -27,7 +27,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 string _nonce = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString();
                 string _sign = "GET/realtime" + _nonce;
-                _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
+                _sign = SHA.EncodeHMACSHA256ToHex(_sign, base.Secret).ToLower();
                 return $"wss://www.bitmex.com/realtime?api-nonce={_nonce}&api-signature={_sign}&api-key={base.Key}";
             }
         }
@@ -473,7 +473,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 _sign += _url + _nonce + _json.ToString(Newtonsoft.Json.Formatting.None);
             }
             Console.WriteLine(_sign);
-            _sign = SHA.EncodeHMACSHA256(_sign, base.Secret).ToLower();
+            _sign = SHA.EncodeHMACSHA256ToHex(_sign, base.Secret).ToLower();
 
             _http.Headers.Add("accept", "application/json");
             _http.Headers.Add("api-key", base.Key);
