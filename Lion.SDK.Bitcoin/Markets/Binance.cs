@@ -160,19 +160,19 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             try
             {
-                this.OnLog($"ReceivedDepth:book.count={this.Books[_symbol, MarketSide.Bid].Count}:{this.Books[_symbol, MarketSide.Ask].Count}");
+                //this.OnLog($"ReceivedDepth:book.count={this.Books[_symbol, MarketSide.Bid].Count}:{this.Books[_symbol, MarketSide.Ask].Count}");
                 //this.OnLog(_token.ToString());
                 JObject _json = (JObject)_token;
                 this.QueueDepth.Enqueue(_json);
                 long _U = _json["U"].Value<long>();
                 long _u = _json["u"].Value<long>();
-                this.OnLog($"ReceivedDepth:U={_U},u={_u},e={_json["e"]}");
+                //this.OnLog($"ReceivedDepth:U={_U},u={_u},e={_json["e"]}");
                 if (this.Books[_symbol, MarketSide.Bid].Count < 1 && this.Books[_symbol, MarketSide.Ask].Count < 1)
                 {
                     string _snapshot = this.WebClient.DownloadString(this.SnapshotUrl);
                     JObject _jsonSnapshot = JObject.Parse(_snapshot);
                     this.LastUpdateId = _jsonSnapshot["lastUpdateId"].Value<long>();
-                    this.OnLog($"ReceivedDepth:lastUpdateId={this.LastUpdateId}");
+                    //this.OnLog($"ReceivedDepth:lastUpdateId={this.LastUpdateId}");
                     if (this.LastUpdateId + 1 > _u)
                     {
                         #region Bid
@@ -243,7 +243,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 if (_U <= this.LastUpdateId + 1 && _u >= this.LastUpdateId + 1)
                 {
-                    this.OnLog($"ReceivedDepth:true");
+                    //this.OnLog($"ReceivedDepth:true");
                     #region Bid
                     JArray _b = _token["b"].Value<JArray>();
                     foreach (JArray _item in _b)
@@ -311,7 +311,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
                 else
                 {
-                    this.OnLog($"ReceivedDepth:false");
+                    //this.OnLog($"ReceivedDepth:false");
                 }
 
                 this.Books[_symbol, MarketSide.Ask].OrderBy(b => b.Value.Price);
@@ -391,7 +391,8 @@ namespace Lion.SDK.Bitcoin.Markets
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null || _token.ToString().Trim() == "{}") { return null; }
-            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+            this.OnLog(_token.ToString(Newtonsoft.Json.Formatting.None));
+            //Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
             return _token["orderId"].Value<string>();
         }
         #endregion

@@ -110,6 +110,19 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["codes"] = new JArray() { _pair };
             this.SocketCommand.Add(_json);
         }
+        public void SubscribeDepth(JArray _pair, params object[] _values)
+        {
+            foreach (string _item in _pair)
+            {
+                this.Books[_item, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+                this.Books[_item, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+            }
+
+            JObject _json = new JObject();
+            _json["type"] = "orderbook";
+            _json["codes"] = _pair;
+            this.SocketCommand.Add(_json);
+        }
         #endregion
 
         #region SubscribeTicker
