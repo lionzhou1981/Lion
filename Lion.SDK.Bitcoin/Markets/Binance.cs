@@ -313,6 +313,21 @@ namespace Lion.SDK.Bitcoin.Markets
                 {
                     this.OnLog($"ReceivedDepth:false");
                 }
+
+                this.Books[_symbol, MarketSide.Ask].OrderBy(b => b.Value.Price);
+                for (int i = this.Books[_symbol, MarketSide.Ask].Count - 1; i >= 0; i--)
+                {
+                    if (this.Books[_symbol, MarketSide.Ask].Count <= 10) { break; }
+                    this.Books[_symbol, MarketSide.Ask].TryRemove(this.Books[_symbol, MarketSide.Ask].ElementAt(i).Key,out BookItem _remove);
+                }
+
+                this.Books[_symbol, MarketSide.Bid].OrderByDescending(b => b.Value.Price);
+                for (int i = this.Books[_symbol, MarketSide.Bid].Count - 1; i >= 0; i--)
+                {
+                    if (this.Books[_symbol, MarketSide.Bid].Count <= 10) { break; }
+                    this.Books[_symbol, MarketSide.Bid].TryRemove(this.Books[_symbol, MarketSide.Bid].ElementAt(i).Key, out BookItem _remove);
+                }
+
             }
             catch (Exception _ex)
             {

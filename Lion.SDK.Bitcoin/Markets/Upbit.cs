@@ -102,6 +102,9 @@ namespace Lion.SDK.Bitcoin.Markets
         #region SubscribeDepth
         public override void SubscribeDepth(string _pair, params object[] _values)
         {
+            this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+            this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+
             JObject _json = new JObject();
             _json["type"] = "orderbook";
             _json["codes"] = new JArray() { _pair };
@@ -180,10 +183,11 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region ReceivedDepth
-        protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
+        protected override void ReceivedDepth(string _pair, string _type, JToken _token)
         {
-            this.Books[_symbol, MarketSide.Ask] = new BookItems(MarketSide.Ask);
-            this.Books[_symbol, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+            this.Books[_pair, MarketSide.Ask].Clear();
+            this.Books[_pair, MarketSide.Bid].Clear();
+
             BookItem _bookItem;
             foreach (var _item in _token)
             {
@@ -192,9 +196,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 decimal _askSize = _item["ask_size"].Value<decimal>();
                 decimal _bidSize = _item["bid_size"].Value<decimal>();
 
-                _bookItem = this.Books[_symbol, MarketSide.Ask].Insert(_askPrice.ToString(), Math.Abs(_askPrice), _askSize);
+                _bookItem = this.Books[_pair, MarketSide.Ask].Insert(_askPrice.ToString(), Math.Abs(_askPrice), _askSize);
                 this.OnBookInsert(_bookItem);
-                _bookItem = this.Books[_symbol, MarketSide.Bid].Insert(_bidPrice.ToString(), Math.Abs(_bidPrice), _bidSize);
+                _bookItem = this.Books[_pair, MarketSide.Bid].Insert(_bidPrice.ToString(), Math.Abs(_bidPrice), _bidSize);
                 this.OnBookInsert(_bookItem);
             }
         }
@@ -213,13 +217,13 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _symbol, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
+        public string OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             string _url = "/orders";
 
             IList<object> _values = new List<object>();
             _values.Add("market");
-            _values.Add(_symbol);
+            _values.Add(_pair);
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "bid" : "ask");
             _values.Add("volume");
