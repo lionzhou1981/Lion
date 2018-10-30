@@ -243,6 +243,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 if (_U <= this.LastUpdateId + 1 && _u >= this.LastUpdateId + 1)
                 {
+                    this.Books.Timestamp= _token["E"].Value<long>();
                     //this.OnLog($"ReceivedDepth:true");
                     #region Bid
                     JArray _b = _token["b"].Value<JArray>();

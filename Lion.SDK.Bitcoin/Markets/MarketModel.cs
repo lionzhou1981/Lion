@@ -17,6 +17,8 @@ namespace Lion.SDK.Bitcoin.Markets
     #region Books
     public class Books: ConcurrentDictionary<string, BookItems>
     {
+        public long Timestamp = 0;
+
         #region this[pair,side]
         public BookItems this[string _pair, MarketSide _side]
         {

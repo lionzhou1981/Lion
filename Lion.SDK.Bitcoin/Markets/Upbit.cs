@@ -42,7 +42,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         this.ReceivedTicker(_json["code"].Value<string>(), _token);
                         break;
                     case "orderbook":
-                        this.ReceivedDepth(_json["code"].Value<string>(), _type, _json["orderbook_units"]);
+                        this.ReceivedDepth(_json["code"].Value<string>(), _type, _token);
                         break;
                     default: this.OnLog("RECV", _json.ToString(Newtonsoft.Json.Formatting.None)); break;
                 }
@@ -114,8 +114,8 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             foreach (string _item in _pair)
             {
-                this.Books[_item, MarketSide.Ask] = new BookItems(MarketSide.Ask);
-                this.Books[_item, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+                if (this.Books[_item, MarketSide.Bid] == null) { this.Books[_item, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_item, MarketSide.Ask] == null) { this.Books[_item, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
             }
 
             JObject _json = new JObject();
@@ -202,7 +202,8 @@ namespace Lion.SDK.Bitcoin.Markets
             this.Books[_pair, MarketSide.Bid].Clear();
 
             BookItem _bookItem;
-            foreach (var _item in _token)
+            this.Books.Timestamp= _token["timestamp"].Value<long>();
+            foreach (var _item in _token["orderbook_units"])
             {
                 decimal _askPrice = _item["ask_price"].Value<decimal>();
                 decimal _bidPrice = _item["bid_price"].Value<decimal>();
