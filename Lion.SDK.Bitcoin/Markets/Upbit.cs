@@ -110,18 +110,23 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["codes"] = new JArray() { _pair };
             this.SocketCommand.Add(_json);
         }
-        public void SubscribeDepth(JArray _pair, params object[] _values)
+        public override void SubscribeDepth(JToken _token)
         {
-            foreach (string _item in _pair)
+            JArray _arr = new JArray();
+            foreach (string _pair in _token)
             {
-                if (this.Books[_item, MarketSide.Bid] == null) { this.Books[_item, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
-                if (this.Books[_item, MarketSide.Ask] == null) { this.Books[_item, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+                _arr.Add(_pair);
             }
 
             JObject _json = new JObject();
             _json["type"] = "orderbook";
-            _json["codes"] = _pair;
+            _json["codes"] = _token;
             this.SocketCommand.Add(_json);
+
+            this.Send(this.SocketCommand.ToString());
+
         }
         #endregion
 

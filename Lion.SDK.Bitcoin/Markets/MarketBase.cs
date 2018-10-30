@@ -359,6 +359,7 @@ namespace Lion.SDK.Bitcoin.Markets
         protected abstract JToken HttpCallResult(JToken _token);
         public abstract void SubscribeTicker(string _pair);
         public abstract void SubscribeDepth(string _pair, params object[] _values);
+        public abstract void SubscribeDepth(JToken _token);
         protected abstract void ReceivedTicker(string _symbol, JToken _token);
         protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
         public abstract Ticker GetTicker(string _pair);

@@ -168,6 +168,22 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send(_json);
         }
+        public override void SubscribeDepth(JToken _token)
+        {
+            foreach (string _pair in _token)
+            {
+                string _id = $"market.{_pair}.depth.step0";
+
+                JObject _json = new JObject();
+                _json["sub"] = _id;
+                _json["id"] = DateTime.UtcNow.Ticks;
+
+                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+
+                this.Send(_json);
+            }
+        }
         #endregion
 
         #region ReceivedDepth
@@ -241,6 +257,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Books[_symbol, MarketSide.Bid] = _bidList;
             this.Books[_symbol, MarketSide.Ask] = _askList;
+            this.Books.Timestamp = _token["ts"].Value<long>();
         }
         #endregion
 

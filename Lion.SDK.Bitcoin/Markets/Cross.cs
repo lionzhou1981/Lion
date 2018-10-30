@@ -96,6 +96,9 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["prec"] = _values.Length > 1 ? (int)_values[1] : 0;
             this.Send(_json);
         }
+        public override void SubscribeDepth(JToken _token)
+        {
+        }
         #endregion
 
         #region ReceivedDepth
