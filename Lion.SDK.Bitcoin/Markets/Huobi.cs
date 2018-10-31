@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
@@ -14,6 +16,8 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Huobi : MarketBase
     {
+        private GZipStream zip;
+
         #region Huobi
         public Huobi(string _key, string _secret) : base(_key, _secret)
         {
@@ -22,6 +26,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.HttpUrl = "https://api.huobi.pro";
             base.OnReceivingEvent += Huobi_OnReceivingEvent;
             base.OnReceivedEvent += Huobi_OnReceivedEvent;
+
+            this.zip = new GZipStream(new MemoryStream(), CompressionMode.Decompress);
         }
         #endregion
 
@@ -50,6 +56,10 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_json.Property("ping") != null)
             {
                 this.Send(new JObject() { ["pong"] = _json["ping"].Value<long>() });
+                return;
+            }
+            else if (_json.Property("pong") != null)
+            {
                 return;
             }
             #endregion
