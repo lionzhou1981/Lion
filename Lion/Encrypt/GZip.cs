@@ -19,12 +19,16 @@ namespace  Lion.Encrypt
             MemoryStream _stream = new MemoryStream();
 
             GZipStream _zip = new GZipStream(new MemoryStream(_binary), CompressionMode.Decompress);
-            byte[] _buffer = new byte[_bufferSize];
-            int _count;
-            while ((_count = _zip.Read(_buffer, 0, _buffer.Length)) != 0)
+            byte[] _block = new byte[1024];
+            while (true)
             {
-                _stream.Write(_buffer, 0, _count);
+                int _count = _zip.Read(_block, 0, _block.Length);
+                if (_count <= 0)
+                    break;
+                else
+                    _stream.Write(_block, 0, _count);
             }
+            
             _zip.Close();
             return _stream.ToArray();
         }

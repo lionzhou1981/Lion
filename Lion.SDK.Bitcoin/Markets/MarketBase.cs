@@ -97,9 +97,12 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region StartWebSocket
+        public byte[] _bufferedBytes = new byte[0];
+        public string _bufferedText = "";
         private void StartWebSocket()
         {
-            string _bufferedText = "";
+            _bufferedBytes = new byte[0];
+            _bufferedText = "";
             int _bufferedStart = 0;
             int _bufferedLevel = 0;
 
@@ -110,6 +113,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 {
                     #region 建立连接
                     this.webSocket = new ClientWebSocket();
+                    _bufferedBytes = new byte[0];
                     _bufferedText = "";
 
                     Task _task = this.webSocket.ConnectAsync(new Uri(this.WebSocket), CancellationToken.None);
@@ -152,7 +156,17 @@ namespace Lion.SDK.Bitcoin.Markets
                     #endregion
 
                     #region 处理数据
-                    _bufferedText += this.OnReceivingEvent == null ? Encoding.UTF8.GetString(_buffer, 0, _task.Result.Count) : this.OnReceiving(ref _buffer);
+
+                    if (_task.Result.Count == 0) { continue; }
+
+                    int _start = _bufferedBytes.Length;
+                    Array.Resize(ref _bufferedBytes, _bufferedBytes.Length + _task.Result.Count);
+                    Array.Copy(_buffer,0, _bufferedBytes, _start, _task.Result.Count);
+                    if (!_task.Result.EndOfMessage) { continue; }
+
+                    string _receivedText = this.OnReceivingEvent == null ? Encoding.UTF8.GetString(_bufferedBytes) : this.OnReceiving(ref _bufferedBytes);
+                    _bufferedText += _receivedText;
+                    _bufferedBytes = new byte[0];
 
                     while (_bufferedText.Length > 0)
                     {
@@ -191,7 +205,9 @@ namespace Lion.SDK.Bitcoin.Markets
                             _bufferedLevel = 0;
                             break;
                         }
-                        if (_bufferedLevel > 0) { _bufferedStart = _bufferedText.Length; break; }
+                        if (_bufferedLevel > 0) {
+                            _bufferedStart = _bufferedText.Length; break;
+                        }
                     }
                     #endregion
                 }
