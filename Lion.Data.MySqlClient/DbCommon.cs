@@ -35,7 +35,7 @@ namespace Lion.Data.MySqlClient
         /// <param name="_dbUsername">数据库用户名</param>
         /// <param name="_dbPassword">数据库密码</param>
         /// <param name="_dbDatabase">数据库名</param>
-        public DbCommon(string _dbAddress,string _dbPort, string _dbUsername, string _dbPassword, string _dbDatabase)
+        public DbCommon(string _dbAddress, string _dbPort, string _dbUsername, string _dbPassword, string _dbDatabase)
         {
             this.DbConnection = new MySqlConnection($"Persist Security Info=False;server={_dbAddress};port={_dbPort};user id={_dbUsername};pwd={_dbPassword};database={_dbDatabase};SslMode=None");
             this.DbTransaction = null;
@@ -147,7 +147,7 @@ namespace Lion.Data.MySqlClient
                 _dbCommand.Connection = this.DbTransaction.Connection;
             }
             else
-             {
+            {
                 _dbCommand.Connection = this.DbConnection;
             }
             return new MySqlDataAdapter((MySqlCommand)_dbCommand);
@@ -230,7 +230,7 @@ namespace Lion.Data.MySqlClient
         #endregion
         #endregion
 
-        #region GetGetDataScalar
+        #region GetDataScalar
         #region GetDataScalar(string)
         /// <summary>
         /// 取DataScalar对象
