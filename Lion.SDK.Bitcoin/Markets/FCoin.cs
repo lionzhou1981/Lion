@@ -317,7 +317,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             IList<Trade> _result = new List<Trade>();
             JArray _trades = _token.Value<JArray>();
-            foreach(JToken _item in _trades)
+            foreach (JToken _item in _trades)
             {
                 Trade _trade = new Trade();
                 _trade.Id = _item["id"].Value<string>();
@@ -390,7 +390,7 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return null; }
 
             Balances _balances = new Balances();
-            foreach(JToken _item in _token.Value<JArray>())
+            foreach (JToken _item in _token.Value<JArray>())
             {
                 _balances[_item["currency"].Value<string>()] = new BalanceItem()
                 {
@@ -403,8 +403,8 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        #region MakeOrder
-        public string MakeOrder(string _pair, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
+        #region OrderCreate
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             IList<string> _values = new List<string>();
             _values.Add("symbol");
@@ -415,16 +415,17 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add(_type == OrderType.Market ? "market" : "limit");
             _values.Add("amount");
             _values.Add(_amount.ToString());
-            if(_type== OrderType.Limit)
+            if (_type == OrderType.Limit)
             {
                 _values.Add("price");
                 _values.Add(_price.ToString());
             }
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", "/v2/orders", true, _values.ToArray());
-            if (_token == null) { return ""; }
+            if (_token == null) { return null; }
 
-            return _token["id"].Value<string>();
+            return null;
+            //return _token["id"].Value<string>();
         }
         #endregion
     }

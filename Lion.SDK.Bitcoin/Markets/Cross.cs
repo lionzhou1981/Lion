@@ -407,7 +407,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public OrderItem OrderCreate(string _pair, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             string _url = "POST/v1/api/placeOrder";
 

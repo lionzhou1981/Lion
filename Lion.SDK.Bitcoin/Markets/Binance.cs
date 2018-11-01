@@ -246,7 +246,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                 if (_U <= this.LastUpdateId + 1 && _u >= this.LastUpdateId + 1)
                 {
-                    this.Books.Timestamp= _token["E"].Value<long>();
+                    this.Books.Timestamp = _token["E"].Value<long>();
                     //this.OnLog($"ReceivedDepth:true");
                     #region Bid
                     JArray _b = _token["b"].Value<JArray>();
@@ -322,7 +322,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 for (int i = this.Books[_symbol, MarketSide.Ask].Count - 1; i >= 0; i--)
                 {
                     if (this.Books[_symbol, MarketSide.Ask].Count <= 10) { break; }
-                    this.Books[_symbol, MarketSide.Ask].TryRemove(this.Books[_symbol, MarketSide.Ask].ElementAt(i).Key,out BookItem _remove);
+                    this.Books[_symbol, MarketSide.Ask].TryRemove(this.Books[_symbol, MarketSide.Ask].ElementAt(i).Key, out BookItem _remove);
                 }
 
                 this.Books[_symbol, MarketSide.Bid].OrderByDescending(b => b.Value.Price);
@@ -369,13 +369,13 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _symbol, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             string _url = "/api/v3/order/test";
 
             IList<object> _values = new List<object>();
             _values.Add("symbol");
-            _values.Add(_symbol.ToUpper());
+            _values.Add(_pair.ToUpper());
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "BUY" : "SELL");
             _values.Add("quantity");
@@ -396,8 +396,9 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null || _token.ToString().Trim() == "{}") { return null; }
             this.OnLog(_token.ToString(Newtonsoft.Json.Formatting.None));
-            //Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
-            return _token["orderId"].Value<string>();
+
+            return null;
+            //return _token["orderId"].Value<string>();
         }
         #endregion
 

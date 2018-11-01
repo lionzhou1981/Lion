@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
-    public class Bitfinex :  MarketBase 
+    public class Bitfinex : MarketBase
     {
         private ConcurrentDictionary<string, string> Channels;
 
@@ -132,8 +132,8 @@ namespace Lion.SDK.Bitcoin.Markets
                 foreach (JArray _item in _list)
                 {
                     decimal _price = _item[0].Value<decimal>();
-                    int _count =  _item[1].Value<int>();
-                    decimal _amount =_item[2].Value<decimal>();
+                    int _count = _item[1].Value<int>();
+                    decimal _amount = _item[2].Value<decimal>();
                     MarketSide _side = _amount > 0 ? MarketSide.Bid : MarketSide.Ask;
                     string _id = _price.ToString();
 
@@ -164,7 +164,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
                 else
                 {
-                    BookItem _item = _items.Update(_price.ToString(),Math.Abs(_amount));
+                    BookItem _item = _items.Update(_price.ToString(), Math.Abs(_amount));
                     if (_item == null)
                     {
                         _item = _items.Insert(_price.ToString(), _price, _amount);
@@ -240,7 +240,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
 
                 _result.Add(_keyValues[i]);
-                _result.Add(_keyValues[i+1]);
+                _result.Add(_keyValues[i + 1]);
             }
 
             string _payload = _json.ToString(Newtonsoft.Json.Formatting.None);
@@ -448,6 +448,13 @@ namespace Lion.SDK.Bitcoin.Markets
                 };
             }
             return _balances;
+        }
+        #endregion
+
+        #region OrderCreate
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
+        {
+            return null;
         }
         #endregion
     }

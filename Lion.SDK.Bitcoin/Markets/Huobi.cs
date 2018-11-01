@@ -512,5 +512,12 @@ namespace Lion.SDK.Bitcoin.Markets
             return _balances;
         }
         #endregion
+
+        #region OrderCreate
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
+        {
+            return null;
+        }
+        #endregion
     }
 }

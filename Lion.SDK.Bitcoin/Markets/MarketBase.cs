@@ -161,7 +161,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     int _start = _bufferedBytes.Length;
                     Array.Resize(ref _bufferedBytes, _bufferedBytes.Length + _task.Result.Count);
-                    Array.Copy(_buffer,0, _bufferedBytes, _start, _task.Result.Count);
+                    Array.Copy(_buffer, 0, _bufferedBytes, _start, _task.Result.Count);
                     if (!_task.Result.EndOfMessage) { continue; }
 
                     string _receivedText = this.OnReceivingEvent == null ? Encoding.UTF8.GetString(_bufferedBytes) : this.OnReceiving(ref _bufferedBytes);
@@ -205,7 +205,8 @@ namespace Lion.SDK.Bitcoin.Markets
                             _bufferedLevel = 0;
                             break;
                         }
-                        if (_bufferedLevel > 0) {
+                        if (_bufferedLevel > 0)
+                        {
                             _bufferedStart = _bufferedText.Length; break;
                         }
                     }
@@ -384,6 +385,8 @@ namespace Lion.SDK.Bitcoin.Markets
         public abstract Trade[] GetTrades(string _pair, params string[] _values);
         public abstract KLine[] GetKLines(string _pair, KLineType _type, params string[] _values);
         public abstract Balances GetBalances();
+
+        public abstract OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M);
 
         protected void Log(string _text) => this.OnLog(this.Name, _text);
     }

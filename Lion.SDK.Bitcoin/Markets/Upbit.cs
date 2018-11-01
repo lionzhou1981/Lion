@@ -207,7 +207,7 @@ namespace Lion.SDK.Bitcoin.Markets
             this.Books[_pair, MarketSide.Bid].Clear();
 
             BookItem _bookItem;
-            this.Books.Timestamp= _token["timestamp"].Value<long>();
+            this.Books.Timestamp = _token["timestamp"].Value<long>();
             foreach (var _item in _token["orderbook_units"])
             {
                 decimal _askPrice = _item["ask_price"].Value<decimal>();
@@ -236,7 +236,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             string _url = "/orders";
 
@@ -261,8 +261,10 @@ namespace Lion.SDK.Bitcoin.Markets
             }
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
-            if (_token == null) { return ""; }
-            return _token["uuid"].Value<string>();
+            if (_token == null) { return null; }
+
+            return null;
+            //return _token["uuid"].Value<string>();
         }
         #endregion
     }

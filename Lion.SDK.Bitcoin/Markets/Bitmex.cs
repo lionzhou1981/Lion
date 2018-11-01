@@ -661,13 +661,13 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderCreate
-        public string OrderCreate(string _symbol, OrderType _type, MarketSide _side, decimal _amount, decimal _price = 0M)
+        public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
             string _url = "/api/v1/order";
 
             IList<object> _values = new List<object>();
             _values.Add("symbol");
-            _values.Add(_symbol);
+            _values.Add(_pair);
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "Buy" : "Sell");
             _values.Add("orderQty");
@@ -688,8 +688,8 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
 
-
-            return _token["orderID"]?.Value<string>();
+            return null;
+            //return _token["orderID"]?.Value<string>();
         }
         #endregion
 
