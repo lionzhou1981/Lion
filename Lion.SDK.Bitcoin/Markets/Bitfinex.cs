@@ -260,6 +260,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpCallResult
         protected override JToken HttpCallResult(JToken _token)
         {
+            if (_token.ToString().Trim() == "" || _token.ToString().Trim() == "{}") { return null; }
             return _token;
         }
         #endregion
@@ -454,7 +455,31 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            return null;
+            string _url = "/v1/order/new";
+
+            IList<string> _values = new List<string>();
+            _values.Add("symbol");
+            _values.Add(_pair);
+            _values.Add("amount");
+            _values.Add(_amount.ToString());
+            _values.Add("price");
+            _values.Add(_price.ToString());
+            _values.Add("side");
+            _values.Add(_side == MarketSide.Bid ? "buy" : "sell");
+            _values.Add("type");
+            _values.Add(_type == OrderType.Market ? "market" : "limit");
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return null; }
+
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["order_id"].Value<string>();
+            _item.Pair = _token["symbol"].Value<string>();
+            _item.Side = _token["side"].Value<string>().ToLower() == "buy" ? MarketSide.Bid : MarketSide.Ask;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["original_amount"].Value<decimal>();
+            //_item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["timestamp"].Value<string>().Split('.')[0]));
+            return _item;
         }
         #endregion
     }

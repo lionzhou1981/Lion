@@ -371,7 +371,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            string _url = "/api/v3/order/test";
+            string _url = "/api/v3/order";
 
             IList<object> _values = new List<object>();
             _values.Add("symbol");
@@ -397,8 +397,14 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null || _token.ToString().Trim() == "{}") { return null; }
             this.OnLog(_token.ToString(Newtonsoft.Json.Formatting.None));
 
-            return null;
-            //return _token["orderId"].Value<string>();
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["orderId"].Value<string>();
+            _item.Pair = _token["symbol"].Value<string>();
+            _item.Side = _token["side"].Value<string>() == "SELL" ? MarketSide.Ask : MarketSide.Bid;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["origQty"].Value<decimal>();
+            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["transactTime"].Value<string>().Remove(10)));
+            return _item;
         }
         #endregion
 
