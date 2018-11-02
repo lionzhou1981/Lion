@@ -1,13 +1,10 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Specialized;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Lion.SDK.Bitcoin.Markets
 {
@@ -263,8 +260,14 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
 
-            return null;
-            //return _token["uuid"].Value<string>();
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["uuid"].Value<string>();
+            _item.Pair = _token["market"].Value<string>();
+            _item.Side = _token["side"].Value<string>().ToLower() == "bid" ? MarketSide.Bid : MarketSide.Ask;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["volume"].Value<decimal>();
+            _item.CreateTime = _token["created_at"].Value<DateTime>();
+            return _item;
         }
         #endregion
     }

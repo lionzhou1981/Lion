@@ -17,6 +17,7 @@ namespace Lion.SDK.Bitcoin.Markets
     public class Huobi : MarketBase
     {
         private GZipStream zip;
+        private string AccountId;
 
         #region Huobi
         public Huobi(string _key, string _secret) : base(_key, _secret)
@@ -28,6 +29,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.OnReceivedEvent += Huobi_OnReceivedEvent;
 
             this.zip = new GZipStream(new MemoryStream(), CompressionMode.Decompress);
+
+            if (_key != "" && _secret != "") { this.AccountId = this.GetAccountId(); }
         }
         #endregion
 
@@ -513,10 +516,56 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region GetAccountId
+        public string GetAccountId()
+        {
+            string _url = "/v1/account/accounts";
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            if (_token == null) { return null; }
+
+            if (_token["status"].Value<string>() == "ok")
+            {
+                return _token["data"][0]["id"].Value<string>();
+            }
+            return "";
+        }
+        #endregion
+
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            return null;
+            string _url = "/v1/order/orders/place";
+
+            IList<string> _values = new List<string>();
+            _values.Add("account-id");
+            _values.Add(this.AccountId);
+            _values.Add("amount");
+            _values.Add(_amount.ToString());
+            _values.Add("source");
+            _values.Add("api");
+            _values.Add("symbol");
+            _values.Add(_pair);
+            _values.Add("type");
+            _values.Add($"{(_side == MarketSide.Bid ? "buy" : "sell")}-{(_type == OrderType.Market ? "market" : "limit")}");
+            if (_type == OrderType.Limit)
+            {
+                _values.Add("price");
+                _values.Add(_price.ToString());
+            }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return null; }
+
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["id"].Value<string>();
+            _item.Pair = _token["symbol"].Value<string>();
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["amount"].Value<decimal>();
+            _item.FilledAmount = _token["filled-amount"].Value<decimal>();
+            string[] _arr= _token["type"].Value<string>().Split('-');
+            _item.Side = _arr[0] == "buy" ? MarketSide.Bid : MarketSide.Ask;
+            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["created-at"].Value<string>().Remove(10)));
+            return _item;
         }
         #endregion
     }
