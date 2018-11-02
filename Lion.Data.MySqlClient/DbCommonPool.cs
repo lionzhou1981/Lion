@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Threading;
 using MySql.Data.MySqlClient;
 
 namespace Lion.Data.MySqlClient
 {
-    public class DbCommonPool
+    public class DbCommonPool : IDisposable
     {
         private string dbHost;
         private string dbPort;
@@ -13,9 +14,8 @@ namespace Lion.Data.MySqlClient
         private string dbPass;
         private string dbName;
 
-        private int current = 0;
-        private object locker = new object();
-        private DbCommon[] dbCommons;
+        private int size;
+        private ConcurrentQueue<DbCommon> dbCommonQueue;
         private Thread thread;
         private bool running = false;
 
@@ -29,7 +29,8 @@ namespace Lion.Data.MySqlClient
             this.dbPass = _dbPass;
             this.dbName = _dbName;
 
-            this.dbCommons = new DbCommon[_size];
+            this.size = _size;
+            this.dbCommonQueue = new ConcurrentQueue<DbCommon>();
         }
 
         #region Start
@@ -48,21 +49,17 @@ namespace Lion.Data.MySqlClient
             {
                 Thread.Sleep(10);
 
-                for (int i = 0; i < this.dbCommons.Length && this.running; i++)
+                while (this.dbCommonQueue.Count < this.size)
                 {
-                    if (this.dbCommons[i] == null ||
-                       this.dbCommons[i].Status == System.Data.ConnectionState.Broken ||
-                       this.dbCommons[i].Status == System.Data.ConnectionState.Closed)
+                    try
                     {
-                        try
-                        {
-                            this.dbCommons[i] = new DbCommon(this.dbHost, this.dbPort, this.dbUser, this.dbPass, this.dbName);
-                            this.dbCommons[i].Open();
-                        }
-                        catch (Exception _ex)
-                        {
-                            if (this.LogAction != null) { this.LogAction($"DbCommon init failed. ({_ex.Message})"); }
-                        }
+                        DbCommon _dbCommon = new DbCommon(this.dbHost, this.dbPort, this.dbUser, this.dbPass, this.dbName);
+                        _dbCommon.Open();
+                        this.dbCommonQueue.Enqueue(_dbCommon);
+                    }
+                    catch
+                    {
+                        this.LogAction("Can not open db connection.");
                     }
                 }
             }
@@ -74,111 +71,25 @@ namespace Lion.Data.MySqlClient
         {
             this.running = false;
 
-            for (int i = 0; i < this.dbCommons.Length; i++)
+            while (this.dbCommonQueue.Count > 0)
             {
-                if (this.dbCommons[i] == null ||
-                        this.dbCommons[i].Status == System.Data.ConnectionState.Broken ||
-                        this.dbCommons[i].Status == System.Data.ConnectionState.Closed) { continue; }
-
-                this.dbCommons[i].Close();
-                this.dbCommons[i].Dispose();
+                if (!this.dbCommonQueue.TryDequeue(out DbCommon _dbCommon)) { continue; }
+                _dbCommon.Close();
             }
         }
         #endregion
+
+        public void Dispose() => this.Stop();
 
         #region GetDbCommon
         public DbCommon GetDbCommon()
         {
-            lock (this.locker)
-            {
-                for (int i = 0; i < this.dbCommons.Length; i++)
-                {
-                    int _index = i + this.current;
-                    if (_index >= this.dbCommons.Length) { _index -= this.dbCommons.Length; }
-                    if (this.dbCommons[_index] == null || this.dbCommons[_index].Status != ConnectionState.Open) { continue; }
+            if (this.dbCommonQueue.TryDequeue(out DbCommon _dbCommon)) { return _dbCommon; }
 
-                    this.current = i;
-                    return this.dbCommons[_index];
-                }
-            }
-            throw new Exception("Can not found avaliable DbCommon.");
+            DbCommon _dbCommonNew = new DbCommon(this.dbHost, this.dbPort, this.dbUser, this.dbPass, this.dbName);
+            _dbCommonNew.Open();
+            return _dbCommonNew;
         }
-        #endregion
-
-        #region GetDataTable
-        #region GetDataTable(string)
-        /// <summary>
-        /// 取DataTable对象
-        /// </summary>
-        /// <param name="_tsql">执行语句</param>
-        /// <returns>DataTable对象</returns>
-        public DataTable GetDataTable(string _tsql)
-        {
-            DbCommon _dbCommon = this.GetDbCommon();
-            return _dbCommon.GetDataTable(_tsql);
-        }
-        #endregion
-
-        #region GetDataTable(MySqlCommand)
-        /// <summary>
-        /// 取DataTable对象
-        /// </summary>
-        /// <param name="_dbCommand">执行对象</param>
-        /// <returns>DataTable对象</returns>
-        public DataTable GetDataTable(MySqlCommand _dbCommand)
-        {
-            DbCommon _dbCommon = this.GetDbCommon();
-            return _dbCommon.GetDataTable(_dbCommand);
-        }
-        #endregion
-        #endregion
-
-        #region GetDataScalar
-        #region GetDataScalar(string)
-        /// <summary>
-        /// 取DataScalar对象
-        /// </summary>
-        /// <param name="_tsql">执行语句</param>
-        /// <returns>标量对象</returns>
-        public object GetDataScalar(string _tsql) => this.GetDataScalar(new MySqlCommand(_tsql));
-        #endregion
-
-        #region GetDataScalar(MySqlCommand)
-        /// <summary>
-        /// 取DataScalar对象
-        /// </summary>
-        /// <param name="_dbCommand">执行对象</param>
-        /// <returns>标量对象</returns>
-        public object GetDataScalar(MySqlCommand _dbCommand)
-        {
-            DbCommon _dbCommon = this.GetDbCommon();
-            return _dbCommon.GetDataScalar(_dbCommand);
-        }
-        #endregion
-        #endregion
-
-        #region Execute
-        #region Execute(string)
-        /// <summary>
-        /// 执行命令
-        /// </summary>
-        /// <param name="_tsql">执行语句</param>
-        /// <returns>影响行数</returns>
-        public int Execute(string _tsql) => this.Execute(new MySqlCommand(_tsql));
-        #endregion
-
-        #region Execute(MySqlCommand)
-        /// <summary>
-        /// 执行命令
-        /// </summary>
-        /// <param name="_dbCommand">执行对象</param>
-        /// <returns>影响行数</returns>
-        public int Execute(MySqlCommand _dbCommand)
-        {
-            DbCommon _dbCommon = this.GetDbCommon();
-            return _dbCommon.Execute(_dbCommand);
-        }
-        #endregion
         #endregion
     }
 }
