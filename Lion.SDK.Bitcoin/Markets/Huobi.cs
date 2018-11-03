@@ -8,6 +8,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
@@ -30,7 +31,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.zip = new GZipStream(new MemoryStream(), CompressionMode.Decompress);
 
-            if (_key != "" && _secret != "") { this.AccountId = this.GetAccountId(); }
+            if (_key != "" && _secret != "") { this.AccountId = this.GetAccountId("spot"); }
         }
         #endregion
 
@@ -277,7 +278,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
-            string _time = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
+            string _time = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
 
             if (_method == "GET")
             {
@@ -305,8 +306,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     _result.Add(_keyValues[i]);
                     _result.Add(_keyValues[i + 1]);
                 }
-                string _sign = "GET\napi.huobi.pro\n" + _url + "\n" + _query;
-                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret).Replace("+", "%2B").Replace("=", "%3D");
+                string _sign = _method + "\napi.huobi.pro\n" + _url + "\n" + _query.Replace(":", "%3A");
+                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret);
 
                 _result.Add("Signature");
                 _result.Add(_signed);
@@ -319,12 +320,10 @@ namespace Lion.SDK.Bitcoin.Markets
                 string _query = "AccessKeyId=" + base.Key;
                 _query += "&SignatureMethod=HmacSHA256";
                 _query += "&SignatureVersion=2";
-                _query += "&Timestamp=" + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T").Replace(":", "%3A");
-                string _sign = "GET\napi.huobi.pro\n" + _url + "\n" + _query;
-                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret).Replace("+", "%2B").Replace("=", "%3D");
-                _url = _query + "&Signature=" + _signed;
 
-                _http.Headers.Add("Content-Type", "application/json");
+                string _sign = _method + "\napi.huobi.pro\n" + _url + "\n" + _query + "&Timestamp=" + _time.Replace(":", "%3A");
+                string _signed = SHA.EncodeHMACSHA256ToBase64(_sign, base.Secret);
+                _url += "?" + _query + "&Timestamp=" + HttpUtility.UrlEncode(_time) + "&Signature=" + HttpUtility.UrlEncode(_signed);
                 return _keyValues;
                 #endregion
             }
@@ -517,15 +516,22 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetAccountId
-        public string GetAccountId()
+        public string GetAccountId(string _type)
         {
             string _url = "/v1/account/accounts";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
-            if (_token == null) { return null; }
+            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+            if (_token == null) { return ""; }
 
             if (_token["status"].Value<string>() == "ok")
             {
-                return _token["data"][0]["id"].Value<string>();
+                foreach (JObject _item in _token["data"].Value<JArray>())
+                {
+                    if (_item["type"].Value<string>() == _type)
+                    {
+                        return _item["id"].Value<string>();
+                    }
+                }
             }
             return "";
         }
@@ -557,14 +563,7 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return null; }
 
             OrderItem _item = new OrderItem();
-            _item.Id = _token["id"].Value<string>();
-            _item.Pair = _token["symbol"].Value<string>();
-            _item.Price = _token["price"].Value<decimal>();
-            _item.Amount = _token["amount"].Value<decimal>();
-            _item.FilledAmount = _token["filled-amount"].Value<decimal>();
-            string[] _arr= _token["type"].Value<string>().Split('-');
-            _item.Side = _arr[0] == "buy" ? MarketSide.Bid : MarketSide.Ask;
-            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["created-at"].Value<string>().Remove(10)));
+            _item.Id = _token["data"].Value<string>();
             return _item;
         }
         #endregion
