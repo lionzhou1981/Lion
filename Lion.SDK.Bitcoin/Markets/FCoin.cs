@@ -423,9 +423,13 @@ namespace Lion.SDK.Bitcoin.Markets
 
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", "/v2/orders", true, _values.ToArray());
             if (_token == null) { return null; }
-
+            if (_token["status"].Value<int>() == 0)
+            {
+                OrderItem _item = new OrderItem();
+                _item.Id = _token["data"].Value<string>();
+                return _item;
+            }
             return null;
-            //return _token["id"].Value<string>();
         }
         #endregion
     }

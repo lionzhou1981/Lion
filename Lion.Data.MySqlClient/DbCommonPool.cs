@@ -47,8 +47,7 @@ namespace Lion.Data.MySqlClient
         {
             while (this.running)
             {
-                Thread.Sleep(10);
-
+                if(this.dbCommonQueue.Count >= this.size) { Thread.Sleep(1); }
                 while (this.dbCommonQueue.Count < this.size)
                 {
                     try
