@@ -270,7 +270,7 @@ namespace Lion.SDK.Bitcoin.Markets
             string _result = "";
             try
             {
-                HttpClient _http = new HttpClient(5000);
+                HttpClient _http = new HttpClient(10000);
                 _http.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
                 if (_auth) { _keyValues = HttpCallAuth(_http, _httpMethod, ref _url, _keyValues); }
 
@@ -286,7 +286,8 @@ namespace Lion.SDK.Bitcoin.Markets
                                 _query += $"{_keyValues[i].ToString()}={HttpUtility.UrlEncode(_keyValues[i + 1].ToString())}";
                             }
 
-                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}{(_query == "" ? "" : _query)}", "");
+                            string _getUrl = $"{this.HttpUrl}{_url}{(_query == "" ? "" : _query)}";
+                            _http.BeginResponse(_httpMethod, _getUrl, "");
                             _http.EndResponse();
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
@@ -307,7 +308,9 @@ namespace Lion.SDK.Bitcoin.Markets
                                 else { _json[_keyValues[i]] = _keyValues[i + 1].ToString(); }
                             }
 
-                            _http.BeginResponse(_httpMethod, $"{this.HttpUrl}{_url}", "");
+                            string _jsonUrl = $"{this.HttpUrl}{_url}";
+                            _http.BeginResponse(_httpMethod, _jsonUrl, "");
+                            _http.Request.ContentType = "application/json";
                             _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Newtonsoft.Json.Formatting.None)));
                             _result = _http.GetResponseString(Encoding.UTF8);
                             break;
@@ -333,9 +336,9 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.OnLog("HTTP", $"{_url} HttpFailed\r\n{string.Join(",", _keyValues)}\r\n{_ex.Message}\r\n{_result}");
                 return null;
             }
+
             try
             {
-                this.OnLog("HTTP", $"RX: {_result}");
                 return this.HttpCallResult(JToken.Parse(_result));
             }
             catch (Exception _ex)
