@@ -13,9 +13,9 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Boombit
         public Boombit(string _key, string _secret) : base(_key, _secret)
         {
-            base.Name = "Cross";
-            base.WebSocket = "wss://api.boombit.com/wsv1";
-            base.HttpUrl = "https://api.boombit.com/v1";
+            base.Name = "BBT";
+            base.WebSocket = "wss://api.boombit.co.kr/wsv1";
+            base.HttpUrl = "https://api.boombit.co.kr/v1";
             base.OnReceivedEvent += Boombit_OnReceivedEvent;
         }
         #endregion
@@ -195,7 +195,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0)
         {
-            string _url = "POST/v1/api/placeOrder";
+            string _url = "api/v1/startautomine";
 
             IList<string> _values = new List<string>();
             _values.Add("pair");
@@ -444,6 +444,62 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.ChangeRate24H = _token["dchange_pec"].Value<decimal>();
             _ticker.DateTime = DateTimePlus.JSTime2DateTime(_token["timestamp"].Value<long>() / 1000);
             this.Tickers[_pair] = _ticker;
+        }
+        #endregion
+
+        #region AutoMineStart
+        public string AutoMineStart(string _pair, int _poolId, decimal _coin, decimal _money)
+        {
+            string _url = "/api/v1/startautomine";
+
+            IList<string> _values = new List<string>();
+            _values.Add("pair");
+            _values.Add(_pair);
+            _values.Add("pool_id");
+            _values.Add(_poolId.ToString());
+            _values.Add("coin_number");
+            _values.Add(_coin.ToString());
+            _values.Add("money_number");
+            _values.Add(_money.ToString());
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
+        }
+        #endregion
+
+        #region AutoMineStop
+        public string AutoMineStop(string _pair, int _poolId, decimal _coin, decimal _money)
+        {
+            string _url = "/api/v1/stopauthmine";
+
+            IList<string> _values = new List<string>();
+            _values.Add("pair");
+            _values.Add(_pair);
+            _values.Add("pool_id");
+            _values.Add(_poolId.ToString());
+            _values.Add("coin_number");
+            _values.Add(_coin.ToString());
+            _values.Add("money_number");
+            _values.Add(_money.ToString());
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
+        }
+        #endregion
+
+        #region autoMineingInfo
+        public string autoMineingInfo()
+        {
+            string _url = "/api/v1/automineinginfo";
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true);
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
         }
         #endregion
     }
