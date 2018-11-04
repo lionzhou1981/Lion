@@ -11,7 +11,6 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Bithumb : MarketBase
     {
-        //private string Pair;
         private string BooksLimit;
         private List<string> ListPair;
 
@@ -91,22 +90,22 @@ namespace Lion.SDK.Bitcoin.Markets
             throw new NotImplementedException();
         }
 
+        #region SubscribeDepth
         public override void SubscribeDepth(JToken _token)
         {
             foreach (string _pair in _token)
             {
                 this.ListPair.Add(_pair);
-
-                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
-                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
             }
         }
+        #endregion
 
         public override void SubscribeTicker(string _pair)
         {
             throw new NotImplementedException();
         }
 
+        #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
             string _query = "";
@@ -125,6 +124,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 _hmacsha512.ComputeHash(Encoding.UTF8.GetBytes(_sign));
                 _sign = ByteToString(_hmacsha512.Hash);
             }
+
             _sign = Convert.ToBase64String(StringToByte(_sign));
             _http.Headers.Add("Api-Key", base.Key);
             _http.Headers.Add("Api-Sign", _sign);
@@ -133,6 +133,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             return new object[0];
         }
+        #endregion
 
         protected override JToken HttpCallResult(JToken _token)
         {
@@ -149,27 +150,33 @@ namespace Lion.SDK.Bitcoin.Markets
             throw new NotImplementedException();
         }
 
+        #region Start
         public override void Start()
         {
             this.Running = true;
 
             foreach (string _pair in this.ListPair)
             {
-                Thread _thread = new Thread(new ParameterizedThreadStart(this.GetBooks));
+                Thread _thread = new Thread(new ParameterizedThreadStart(this.BooksRunner));
                 this.Threads.Add($"GetBooks_{_pair}", _thread);
                 _thread.Start(_pair);
             }
         }
+        #endregion
 
-        private void GetBooks(object _object)
+        #region BooksRunner
+        private void BooksRunner(object _object)
         {
             string _pair = _object.ToString();
             string _pairA = _pair.Contains("_") ? _pair.Split('_')[0] : _pair;
             string _url = $"/public/orderbook/{_pairA}";
-            if (this.BooksLimit != "") { _url += $"?count={this.BooksLimit}"; }
-            BookItem _bookItem;
-            string _result = "";
 
+            if (this.BooksLimit != "") { _url += $"?count={this.BooksLimit}"; }
+
+            this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+            this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+
+            string _result = "";
             while (this.Running)
             {
                 Thread.Sleep(1000);
@@ -179,24 +186,29 @@ namespace Lion.SDK.Bitcoin.Markets
                     WebClientPlus _client = new WebClientPlus(5000);
                     _result = _client.DownloadString($"{base.HttpUrl}{_url}");
                     _client.Dispose();
-                    JObject _json = JObject.Parse(_result);
-                    this.Books.Timestamp = _json["data"]["timestamp"].Value<long>();
 
-                    this.Books[_pair, MarketSide.Ask].Clear();
-                    this.Books[_pair, MarketSide.Bid].Clear();
+                    JObject _json = JObject.Parse(_result);
+
+                    BookItems _asks = new BookItems(MarketSide.Ask);
+                    BookItems _bids = new BookItems(MarketSide.Bid);
+
+                    this.Books.Timestamp = _json["data"]["timestamp"].Value<long>();
 
                     foreach (var _item in _json["data"]["asks"])
                     {
                         decimal _price = _item["price"].Value<decimal>();
-                        decimal _amount = _item["quantity"].Value<decimal>(); 
-                        _bookItem = this.Books[_pair, MarketSide.Ask].Insert(_price.ToString(), Math.Abs(_price), _amount);
+                        decimal _amount = _item["quantity"].Value<decimal>();
+                        _asks.Insert(_price.ToString(), Math.Abs(_price), _amount);
                     }
                     foreach (var _item in _json["data"]["bids"])
                     {
                         decimal _price = _item["price"].Value<decimal>();
                         decimal _amount = _item["quantity"].Value<decimal>();
-                        _bookItem = this.Books[_pair, MarketSide.Bid].Insert(_price.ToString(), Math.Abs(_price), _amount);
+                        _bids.Insert(_price.ToString(), Math.Abs(_price), _amount);
                     }
+
+                    this.Books[_pair, MarketSide.Ask] = _asks;
+                    this.Books[_pair, MarketSide.Bid] = _bids;
                 }
                 catch (Exception _ex)
                 {
@@ -205,6 +217,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
             }
         }
+        #endregion
 
         private string ByteToString(byte[] rgbyBuff)
         {
