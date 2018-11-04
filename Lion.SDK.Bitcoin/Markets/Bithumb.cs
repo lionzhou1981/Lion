@@ -167,16 +167,18 @@ namespace Lion.SDK.Bitcoin.Markets
             string _pairA = _pair.Contains("_") ? _pair.Split('_')[0] : _pair;
             string _url = $"/public/orderbook/{_pairA}";
             if (this.BooksLimit != "") { _url += $"?count={this.BooksLimit}"; }
-            WebClientPlus _client = new WebClientPlus(5000);
             BookItem _bookItem;
+            string _result = "";
 
             while (this.Running)
             {
-                Thread.Sleep(200);
+                Thread.Sleep(1000);
 
                 try
                 {
-                    string _result = _client.DownloadString($"{base.HttpUrl}{_url}");
+                    WebClientPlus _client = new WebClientPlus(5000);
+                    _result = _client.DownloadString($"{base.HttpUrl}{_url}");
+                    _client.Dispose();
                     JObject _json = JObject.Parse(_result);
                     this.Books.Timestamp = _json["data"]["timestamp"].Value<long>();
 
@@ -186,7 +188,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     foreach (var _item in _json["data"]["asks"])
                     {
                         decimal _price = _item["price"].Value<decimal>();
-                        decimal _amount = _item["quantity"].Value<decimal>();
+                        decimal _amount = _item["quantity"].Value<decimal>(); 
                         _bookItem = this.Books[_pair, MarketSide.Ask].Insert(_price.ToString(), Math.Abs(_price), _amount);
                     }
                     foreach (var _item in _json["data"]["bids"])
@@ -198,6 +200,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 }
                 catch (Exception _ex)
                 {
+                    this.OnLog($"GetBooks Error:{_result}");
                     this.OnLog($"GetBooks Error:{_ex.ToString()}");
                 }
             }
