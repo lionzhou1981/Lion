@@ -58,7 +58,51 @@ namespace Lion.SDK.Bitcoin.Markets
 
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string _url = "/trade";
+                IList<object> _values = new List<object>();
+                _pair = _pair.Contains("_") ? _pair.Split('_')[0] : _pair;
+
+                if (_type == OrderType.Limit)
+                {
+                    _url += "/place";
+                    _values.Add("order_currency");
+                    _values.Add(_pair);
+                    _values.Add("units");
+                    _values.Add(_amount);
+                    _values.Add("price");
+                    _values.Add(_price);
+                    _values.Add("type");
+                    _values.Add(_side == MarketSide.Ask ? "Sell" : "Buy");
+                }
+                else if (_type == OrderType.Market)
+                {
+                    if (_side == MarketSide.Ask)
+                    {
+                        _url += "/market_sell";
+                    }
+                    else
+                    {
+                        _url += "/market_buy";
+                    }
+                    _values.Add("currency");
+                    _values.Add(_pair);
+                    _values.Add("units");
+                    _values.Add(_amount);
+                }
+
+                JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+                if (_token == null) { return null; }
+
+                OrderItem _item = new OrderItem();
+                _item.Id = _token["order_id"].Value<string>();
+                return _item;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public OrderItem OrderCreate(MarketSide _side, string _pair, decimal _units)
@@ -137,7 +181,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
         protected override JToken HttpCallResult(JToken _token)
         {
-            throw new NotImplementedException();
+            return _token;
         }
 
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
