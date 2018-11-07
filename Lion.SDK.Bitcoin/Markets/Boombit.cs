@@ -23,6 +23,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region Boombit_OnReceivedEvent
         private void Boombit_OnReceivedEvent(JToken _token)
         {
+            //this.OnLog(_token.ToString());
             JObject _json = (JObject)_token;
             string _channel = _json.Property("channel") == null ? "" : _json["channel"].Value<string>();
 
@@ -423,6 +424,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
+                if (this.Books[_pair, MarketSide.Ask].Count <= 0 || this.Books[_pair, MarketSide.Bid].Count <= 0) { return; }
                 if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
@@ -470,19 +472,13 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region AutoMineStop
-        public string AutoMineStop(string _pair, int _poolId, decimal _coin, decimal _money)
+        public string AutoMineStop(string _automineId)
         {
             string _url = "/api/v1/stopauthmine";
 
             IList<string> _values = new List<string>();
-            _values.Add("pair");
-            _values.Add(_pair);
-            _values.Add("pool_id");
-            _values.Add(_poolId.ToString());
-            _values.Add("coin_number");
-            _values.Add(_coin.ToString());
-            _values.Add("money_number");
-            _values.Add(_money.ToString());
+            _values.Add("automine_id");
+            _values.Add("0");
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null) { return ""; }

@@ -111,24 +111,31 @@ namespace Lion.SDK.Bitcoin.Markets
                 Thread.Sleep(10);
                 if (this.webSocket == null || this.webSocket.State != WebSocketState.Open)
                 {
-                    #region 建立连接
-                    this.webSocket = new ClientWebSocket();
-                    _bufferedBytes = new byte[0];
-                    _bufferedText = "";
-
-                    Task _task = this.webSocket.ConnectAsync(new Uri(this.WebSocket), CancellationToken.None);
-                    while (_task.Status != TaskStatus.Canceled
-                        && _task.Status != TaskStatus.Faulted
-                        && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
-                    if (_task.Status != TaskStatus.RanToCompletion || this.webSocket == null || this.webSocket.State != WebSocketState.Open)
+                    try
                     {
-                        this.Clear();
-                        continue;
+                        #region 建立连接
+                        this.webSocket = new ClientWebSocket();
+                        _bufferedBytes = new byte[0];
+                        _bufferedText = "";
+
+                        Task _task = this.webSocket.ConnectAsync(new Uri(this.WebSocket), CancellationToken.None);
+                        while (_task.Status != TaskStatus.Canceled
+                            && _task.Status != TaskStatus.Faulted
+                            && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
+
+                        if (_task.Status != TaskStatus.RanToCompletion || this.webSocket == null || this.webSocket.State != WebSocketState.Open)
+                        {
+                            this.Clear();
+                            continue;
+                        }
+
+                        this.OnConnected();
+                        #endregion
+                    }
+                    catch (Exception)
+                    {
                     }
 
-                    this.OnConnected();
-                    #endregion
                 }
                 else
                 {
