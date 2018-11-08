@@ -152,14 +152,17 @@ namespace Lion.SDK.Bitcoin.Markets
         #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
+            IList<object> _keyValueList = _keyValues.ToList();
+            _keyValueList.Add("endpoint");
+            _keyValueList.Add(_url);
+
             string _query = "";
-            for (int i = 0; i < _keyValues.Length - 1; i += 2)
+            for (int i = 0; i < _keyValueList.Count - 1; i += 2)
             {
                 _query += _query == "" ? "" : "&";
-                _query += _keyValues[i] + "=" + _keyValues[i + 1].ToString();
+                _query += _keyValueList[i] + "=" + Uri.EscapeDataString(_keyValueList[i + 1].ToString());
             }
-            _query += "&endpoint=" + Uri.EscapeDataString(_url);
-            string _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
+            string _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString("D03");
             string _sign = _url + (char)0 + _query + (char)0 + _timestamp;
 
             byte[] _rgbyKey = Encoding.UTF8.GetBytes(this.Secret);
@@ -175,7 +178,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _http.Headers.Add("Api-Nonce", _timestamp);
             _http.ContentType = "application/x-www-form-urlencoded";
 
-            return new object[0];
+            return _keyValueList.ToArray();
         }
         #endregion
 
@@ -192,6 +195,13 @@ namespace Lion.SDK.Bitcoin.Markets
         protected override void ReceivedTicker(string _symbol, JToken _token)
         {
             throw new NotImplementedException();
+        }
+
+        public void GetBalance()
+        {
+            string _url = "/info/account";
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "order_currency", "BTC", "payment_currency", "KRW");
+            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
         }
 
         #region Start
