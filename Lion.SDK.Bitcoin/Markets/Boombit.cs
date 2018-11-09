@@ -46,7 +46,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
             string _url = "GET/v1/api/auth/wallet";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
@@ -496,6 +496,35 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return ""; }
 
             return _token.ToString();
+        }
+        #endregion
+
+        #region OrderDetail
+        public override OrderItem OrderDetail(string _id, params string[] _values)
+        {
+            string _url = "GET/v1/api/orderdetail";
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "order_id", _id);
+            if (_token == null) { return null; }
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _token[0].Value<string>();
+            _order.Pair = _token[1].Value<string>();
+            _order.Side = _token[5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token[4].Value<decimal>();
+            _order.Price = _token[5].Value<decimal>();
+            string _status = _token[9].Value<string>();
+            switch (_status)
+            {
+                case "1": _order.Status = OrderStatus.New; break;
+                case "2": _order.Status = OrderStatus.Filling; break;
+                case "3": _order.Status = OrderStatus.Filled; break;
+                case "4": _order.Status = OrderStatus.Canceled; break;
+            }
+
+            _order.FilledAmount = _token[3].Value<decimal>();
+            _order.FilledPrice = _token[6].Value<decimal>();
+
+            return _order;
         }
         #endregion
     }

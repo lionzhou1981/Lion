@@ -383,7 +383,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
             string _url = "/v2/accounts/balance";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
@@ -429,6 +429,13 @@ namespace Lion.SDK.Bitcoin.Markets
                 _item.Id = _token["data"].Value<string>();
                 return _item;
             }
+            return null;
+        }
+        #endregion
+
+        #region OrderDetail
+        public override OrderItem OrderDetail(string _id, params string[] _values)
+        {
             return null;
         }
         #endregion

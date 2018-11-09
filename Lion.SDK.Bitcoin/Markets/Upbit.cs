@@ -48,7 +48,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
             string _url = "/accounts";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
@@ -268,6 +268,13 @@ namespace Lion.SDK.Bitcoin.Markets
             _item.Amount = _token["volume"].Value<decimal>();
             _item.CreateTime = _token["created_at"].Value<DateTime>();
             return _item;
+        }
+        #endregion
+
+        #region OrderDetail
+        public override OrderItem OrderDetail( string _id, params string[] _values)
+        {
+            return null;
         }
         #endregion
     }

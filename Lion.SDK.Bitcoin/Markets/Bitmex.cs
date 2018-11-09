@@ -638,20 +638,20 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
             string _url = "/api/v1/user/margin";
             JToken _token = base.HttpCall(HttpCallMethod.Json, "GET", _url, true);
             if (_token == null) { return null; }
 
-            string _symbol = _token["currency"].Value<string>();
+            string _currency = _token["currency"].Value<string>();
             decimal _total = _token["walletBalance"].Value<decimal>() * 0.00000001M;
             decimal _free = _token["availableMargin"].Value<decimal>() * 0.00000001M;
 
             Balances _balances = new Balances();
-            _balances[_symbol] = new BalanceItem()
+            _balances[_currency] = new BalanceItem()
             {
-                Symbol = _symbol,
+                Symbol = _currency,
                 Free = _free,
                 Lock = _total - _free
             };
@@ -702,6 +702,13 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return false; }
 
             return _token["ordStatus"].Value<string>() == "Canceled";
+        }
+        #endregion
+
+        #region OrderDetail
+        public override OrderItem OrderDetail( string _id, params string[] _values)
+        {
+            return null;
         }
         #endregion
     }

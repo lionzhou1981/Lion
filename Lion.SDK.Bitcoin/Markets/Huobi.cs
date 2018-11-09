@@ -495,21 +495,27 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
-            string _url = "/v2/accounts/balance";
+            //string _url = "/v2/accounts/balance";
+            string _url = $"/v1/account/accounts/{this.AccountId}/balance";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_token == null) { return null; }
 
             Balances _balances = new Balances();
-            foreach (JToken _item in _token.Value<JArray>())
+            foreach (JToken _item in _token["data"]["list"].Value<JArray>())
             {
-                _balances[_item["currency"].Value<string>()] = new BalanceItem()
+                string _currency = _item["currency"].Value<string>().ToUpper();
+                if (_balances[_currency] == null) { _balances[_currency] = new BalanceItem(); }
+                if (_item["type"].Value<string>().Trim() == "trade")
                 {
-                    Symbol = _item["currency"].Value<string>(),
-                    Free = _item["available"].Value<decimal>(),
-                    Lock = _item["frozen"].Value<decimal>()
-                };
+                    _balances[_currency].Free = _item["balance"].Value<decimal>();
+                }
+                else if (_item["type"].Value<string>().Trim() == "frozen")
+                {
+                    _balances[_currency].Lock = _item["balance"].Value<decimal>();
+                }
+
             }
             return _balances;
         }
@@ -565,6 +571,36 @@ namespace Lion.SDK.Bitcoin.Markets
             OrderItem _item = new OrderItem();
             _item.Id = _token["data"].Value<string>();
             return _item;
+        }
+        #endregion
+
+        #region OrderDetail
+        public override OrderItem OrderDetail( string _orderId, params string[] _values)
+        {
+            string _url = $"/v1/order/orders/{_orderId}";
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "order_id", _orderId);
+            if (_token == null) { return null; }
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["id"].Value<string>();
+            _order.Pair = _token["symbol"].Value<string>();
+            string[] _arr = _token["symbol"].Value<string>().Split('-');
+            _order.Side = _arr[0] == "buy" ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["amount"].Value<decimal>();
+            _order.Price = _token["price"].Value<decimal>();
+            _order.FilledAmount = _token["field-amount"].Value<decimal>();
+            _order.FilledVolume = _token["field-cash-amount"].Value<decimal>();
+            string _status = _token["state"].Value<string>();
+            switch (_status)
+            {
+                case "submitting": 
+                case "submitted": _order.Status = OrderStatus.New; break;
+                case "partial-filled":
+                case "partial-canceled": _order.Status = OrderStatus.Filling; break;
+                case "filled": _order.Status = OrderStatus.Filled; break;
+                case "canceled": _order.Status = OrderStatus.Canceled; break;
+            }
+            return _order;
         }
         #endregion
     }

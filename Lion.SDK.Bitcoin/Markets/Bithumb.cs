@@ -31,9 +31,17 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        public override Balances GetBalances()
+        public override Balances GetBalances(string _symbol = "")
         {
-            throw new NotImplementedException();
+            string _url = "/info/balance";
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "currency", "eth");
+            foreach (JToken _item in _token)
+            {
+                //_item.
+            }
+
+            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+            return null;
         }
 
         public override Books GetDepths(string _pair, params string[] _values)
@@ -184,7 +192,16 @@ namespace Lion.SDK.Bitcoin.Markets
 
         protected override JToken HttpCallResult(JToken _token)
         {
-            return _token;
+            try
+            {
+                if (_token["status"].Value<string>() == "0000") { return _token["data"]; }
+
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
@@ -197,12 +214,36 @@ namespace Lion.SDK.Bitcoin.Markets
             throw new NotImplementedException();
         }
 
-        public void GetBalance()
+        #region OrderDetail
+        public override OrderItem OrderDetail(string _id, params string[] _values)
         {
-            string _url = "/info/account";
-            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "order_currency", "BTC", "payment_currency", "KRW");
-            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
+            string _url = "/info/order_detail";
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "order_id", _id, "type", _values[0] == "bid" ? "buy" : "sell");
+            if (_token == null) { return null; }
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _id;
+            _order.Pair = $"{_token["order_currency"].Value<string>()}_{_token["payment_currency"].Value<string>()}";
+            _order.Side = _token["type"].Value<string>() == "ask" ? MarketSide.Ask : MarketSide.Bid;
+            _order.FilledAmount = _token["units_traded"].Value<decimal>();
+            _order.FilledVolume = _token["total"].Value<decimal>();
+            decimal _amount = decimal.Parse(_values[1]);
+            if (_order.FilledAmount == 0M)
+            {
+                _order.Status = OrderStatus.New;
+            }
+            else if (_order.FilledAmount == _amount)
+            {
+                _order.Status = OrderStatus.Filled;
+            }
+            else if (_order.FilledAmount < _amount)
+            {
+                _order.Status = OrderStatus.Filling;
+            }
+
+            return _order;
         }
+        #endregion
 
         #region Start
         public override void Start()

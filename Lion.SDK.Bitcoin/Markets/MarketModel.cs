@@ -217,6 +217,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public decimal Amount;
         public decimal FilledPrice;
         public decimal FilledAmount;
+        public decimal FilledVolume;
         public OrderStatus Status;
         public DateTime CreateTime;
     }
