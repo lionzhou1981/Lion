@@ -113,30 +113,6 @@ namespace Lion.SDK.Bitcoin.Markets
             }
         }
 
-        public OrderItem OrderCreate(MarketSide _side, string _pair, decimal _units)
-        {
-            string _url = _side == MarketSide.Ask ? "/trade/market_sell" : "/trade/market_buy";
-            _pair = _pair.Contains("_") ? _pair.Split('_')[0] : _pair;
-
-            IList<object> _values = new List<object>();
-            _values.Add("currency");
-            _values.Add(_pair);
-            _values.Add("units");
-            _values.Add(_units);
-
-            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
-            if (_token == null) { return null; }
-
-            OrderItem _item = new OrderItem();
-            _item.Id = _token["uuid"].Value<string>();
-            _item.Pair = _token["market"].Value<string>();
-            _item.Side = _token["side"].Value<string>().ToLower() == "bid" ? MarketSide.Bid : MarketSide.Ask;
-            _item.Price = _token["price"].Value<decimal>();
-            _item.Amount = _token["volume"].Value<decimal>();
-            _item.CreateTime = _token["created_at"].Value<DateTime>();
-            return _item;
-        }
-
         public override void SubscribeDepth(string _pair, params object[] _values)
         {
             throw new NotImplementedException();

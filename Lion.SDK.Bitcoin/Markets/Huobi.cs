@@ -582,15 +582,15 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
-            _order.Id = _token["id"].Value<string>();
-            _order.Pair = _token["symbol"].Value<string>();
-            string[] _arr = _token["symbol"].Value<string>().Split('-');
+            _order.Id = _token["data"]["id"].Value<string>();
+            _order.Pair = _token["data"]["symbol"].Value<string>();
+            string[] _arr = _token["data"]["type"].Value<string>().Split('-');
             _order.Side = _arr[0] == "buy" ? MarketSide.Bid : MarketSide.Ask;
-            _order.Amount = _token["amount"].Value<decimal>();
-            _order.Price = _token["price"].Value<decimal>();
-            _order.FilledAmount = _token["field-amount"].Value<decimal>();
-            _order.FilledVolume = _token["field-cash-amount"].Value<decimal>();
-            string _status = _token["state"].Value<string>();
+            _order.Amount = _token["data"]["amount"].Value<decimal>();
+            _order.Price = _token["data"]["price"].Value<decimal>();
+            _order.FilledAmount = _token["data"]["field-amount"].Value<decimal>();
+            _order.FilledVolume = _token["data"]["field-cash-amount"].Value<decimal>();
+            string _status = _token["data"]["state"].Value<string>();
             switch (_status)
             {
                 case "submitting": 
