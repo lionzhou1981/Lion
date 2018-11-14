@@ -200,6 +200,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
+                if (this.Books[_pair, MarketSide.Ask].Count <= 0 || this.Books[_pair, MarketSide.Bid].Count <= 0) { return; }
                 if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
