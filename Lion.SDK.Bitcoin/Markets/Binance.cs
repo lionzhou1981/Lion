@@ -42,10 +42,11 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances(string _symbol = "")
+        public override Balances GetBalances(params object[] _pairs)
         {
             string _url = "/api/v3/account";
-            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
+            string _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, "timestamp", _timestamp);
             if (_token == null) { return null; }
 
             Balances _balances = new Balances();
@@ -57,6 +58,18 @@ namespace Lion.SDK.Bitcoin.Markets
                     Free = _item["free"].Value<decimal>(),
                     Lock = _item["locked"].Value<decimal>()
                 };
+            }
+            foreach (string _pair in _pairs)
+            {
+                if (!_balances.ContainsKey(_pair.ToUpper()))
+                {
+                    _balances[_pair.ToUpper()] = new BalanceItem()
+                    {
+                        Symbol = _pair.ToUpper(),
+                        Free = 0M,
+                        Lock = 0M
+                    };
+                }
             }
             return _balances;
         }
@@ -127,7 +140,10 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 _sign += $"{_item.Key}={_item.Value}&";
             }
-            _sign = _sign.Remove(_sign.Length - 1);
+            if (_sign != "")
+            {
+                _sign = _sign.Remove(_sign.Length - 1);
+            }
             _list.Add("signature", SHA.EncodeHMACSHA256ToHex(_sign, base.Secret).ToLower());
 
             IList<string> _keyValueList = new List<string>();

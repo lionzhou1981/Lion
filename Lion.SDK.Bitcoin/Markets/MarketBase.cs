@@ -394,7 +394,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public abstract Books GetDepths(string _pair, params string[] _values);
         public abstract Trade[] GetTrades(string _pair, params string[] _values);
         public abstract KLine[] GetKLines(string _pair, KLineType _type, params string[] _values);
-        public abstract Balances GetBalances(string _symbol = "");
+        public abstract Balances GetBalances(params object[] _pairs);
         public abstract OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M);
         public abstract OrderItem OrderDetail(string _orderId, params string[] _values);
 

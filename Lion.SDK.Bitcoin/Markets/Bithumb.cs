@@ -13,6 +13,7 @@ namespace Lion.SDK.Bitcoin.Markets
     {
         private string BooksLimit;
         private List<string> ListPair;
+        private Balances Balances = new Balances();
 
         #region Bithumb
         public Bithumb(string _key, string _secret) : base(_key, _secret)
@@ -23,6 +24,7 @@ namespace Lion.SDK.Bitcoin.Markets
             base.OnReceivedEvent += Bithumb_OnReceivedEvent;
 
             ListPair = new List<string>();
+
         }
 
         private void Bithumb_OnReceivedEvent(JToken _token)
@@ -31,17 +33,22 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
-        public override Balances GetBalances(string _symbol = "")
+        public override Balances GetBalances(params object[] _pairs)
         {
             string _url = "/info/balance";
-            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "currency", "eth");
-            foreach (JToken _item in _token)
-            {
-                //_item.
-            }
 
-            Console.WriteLine(_token.ToString(Newtonsoft.Json.Formatting.None));
-            return null;
+            foreach (string _pair in _pairs)
+            {
+                Thread.Sleep(1000);
+                JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "currency", _pair);
+                this.Balances[_pair.ToUpper()] = new BalanceItem()
+                {
+                    Symbol = _pair.ToUpper(),
+                    Free = _token[$"available_{_pair.ToLower()}"].Value<decimal>(),
+                    Lock = _token[$"in_use_{_pair.ToLower()}"].Value<decimal>()
+                };
+            }
+            return this.Balances;
         }
 
         public override Books GetDepths(string _pair, params string[] _values)

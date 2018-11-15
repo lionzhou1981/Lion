@@ -428,7 +428,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances(string _symbol = "")
+        public override Balances GetBalances(params object[] _pairs)
         {
             string _url = "/v1/balances";
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true);
@@ -439,7 +439,7 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 if (_item["type"].Value<string>() != "exchange") { continue; }
 
-                decimal _free = _item["amount"].Value<decimal>();
+                decimal _free = _item["available"].Value<decimal>();
                 decimal _total = _item["amount"].Value<decimal>();
                 _balances[_item["currency"].Value<string>()] = new BalanceItem()
                 {
