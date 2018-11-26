@@ -488,7 +488,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region autoMineingInfo
-        public string autoMineingInfo()
+        public string AutoMineingInfo()
         {
             string _url = "/api/v1/automineinginfo";
 

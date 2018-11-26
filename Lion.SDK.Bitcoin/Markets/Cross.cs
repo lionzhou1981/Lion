@@ -567,5 +567,55 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region AutoMineStart
+        public string AutoMineStart(string _pair, int _poolId, decimal _coin, decimal _money)
+        {
+            string _url = "/api/v1/startautomine";
+
+            IList<string> _values = new List<string>();
+            _values.Add("pair");
+            _values.Add(_pair);
+            _values.Add("pool_id");
+            _values.Add(_poolId.ToString());
+            _values.Add("coin_number");
+            _values.Add(_coin.ToString());
+            _values.Add("money_number");
+            _values.Add(_money.ToString());
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
+        }
+        #endregion
+
+        #region AutoMineStop
+        public string AutoMineStop(string _automineId)
+        {
+            string _url = "/api/v1/stopauthmine";
+
+            IList<string> _values = new List<string>();
+            _values.Add("automine_id");
+            _values.Add("0");
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
+        }
+        #endregion
+
+        #region autoMineingInfo
+        public string AutoMineingInfo()
+        {
+            string _url = "/api/v1/automineinginfo";
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true);
+            if (_token == null) { return ""; }
+
+            return _token.ToString();
+        }
+        #endregion
+
     }
 }
