@@ -17,7 +17,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public Bitfinex(string _key, string _secret) : base(_key, _secret)
         {
             base.Name = "BFX";
-            base.WebSocket = "wss://api.bitfinex.com/ws/2";
+            base.WebSocket = "wss://api.bitfinex.com/ws";
             base.HttpUrl = "https://api.bitfinex.com";
             base.OnReceivedEvent += Bitfinex_OnReceivedEvent;
 
@@ -75,7 +75,7 @@ namespace Lion.SDK.Bitcoin.Markets
                         this.ReceivedTicker(_channel[1], _array);
                         break;
                     case "book":
-                        this.ReceivedDepth(_channel[1], _array[0].Type == JTokenType.Array ? "START" : "UPDATE", _array);
+                        this.ReceivedDepth(_channel[1], _array[1].Type == JTokenType.Array ? "START" : "UPDATE", _array);
                         break;
                 }
                 #endregion
@@ -112,8 +112,23 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            foreach (string _pair in _token)
+            {
+                JObject _json = new JObject();
+                _json["event"] = "subscribe";
+                _json["channel"] = "book";
+                _json["pair"] = _pair;
+                _json["prec"] = "P0";
+                _json["freq"] = "F0";
+                //_json["len"] = (int)_values[0];
+
+                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+
+                this.Send(_json);
+            }
         }
         #endregion
 
@@ -122,7 +137,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             JArray _array = (JArray)_token;
             JArray _list = (_array.Count == 2 && _array[1].Type == JTokenType.Array) ? _array[1].Value<JArray>() : _array;
-            _symbol = _symbol.Split('.')[1];
+            //_symbol = _symbol.Split('.')[1];
 
             if (_type == "START")
             {
@@ -148,9 +163,9 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             else
             {
-                decimal _price = _list[0].Value<decimal>();
-                int _count = _list[1].Value<int>();
-                decimal _amount = _list[2].Value<decimal>();
+                decimal _price = _list[1].Value<decimal>();
+                int _count = _list[2].Value<int>();
+                decimal _amount = _list[3].Value<decimal>();
                 MarketSide _side = _amount > 0 ? MarketSide.Bid : MarketSide.Ask;
 
                 BookItems _items = this.Books[_symbol, _side];

@@ -112,7 +112,7 @@ namespace Lion.SDK.Bitcoin.Markets
             if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
             if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
         }
         #endregion

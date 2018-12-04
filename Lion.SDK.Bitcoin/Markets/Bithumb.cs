@@ -126,7 +126,7 @@ namespace Lion.SDK.Bitcoin.Markets
         }
 
         #region SubscribeDepth
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
             foreach (string _pair in _token)
             {

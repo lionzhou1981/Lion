@@ -122,7 +122,9 @@ namespace Lion.SDK.Bitcoin.Markets
                         while (_task.Status != TaskStatus.Canceled
                             && _task.Status != TaskStatus.Faulted
                             && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-
+                        
+                        //Console.WriteLine($"marketbase1:{_task.Status.ToString()}");
+                        //this.Log($"marketbase2:{_task.Status.ToString()}");
                         if (_task.Status != TaskStatus.RanToCompletion || this.webSocket == null || this.webSocket.State != WebSocketState.Open)
                         {
                             this.Clear();
@@ -387,7 +389,7 @@ namespace Lion.SDK.Bitcoin.Markets
         protected abstract JToken HttpCallResult(JToken _token);
         public abstract void SubscribeTicker(string _pair);
         public abstract void SubscribeDepth(string _pair, params object[] _values);
-        public abstract void SubscribeDepth(JToken _token);
+        public abstract void SubscribeDepth(JToken _token, params object[] _values);
         protected abstract void ReceivedTicker(string _symbol, JToken _token);
         protected abstract void ReceivedDepth(string _symbol, string _type, JToken _token);
         public abstract Ticker GetTicker(string _pair);

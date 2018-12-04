@@ -182,11 +182,11 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
             foreach (string _pair in _token)
             {
-                string _id = $"market.{_pair}.depth.step0";
+                string _id = $"market.{_pair}.depth.{_values[0]}";
 
                 JObject _json = new JObject();
                 _json["sub"] = _id;

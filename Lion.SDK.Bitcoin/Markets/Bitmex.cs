@@ -83,6 +83,7 @@ namespace Lion.SDK.Bitcoin.Markets
             switch (_table)
             {
                 case "orderBookL2": this.ReceivedDepth("", _action, _list); break;
+                case "orderBookL2_25": this.ReceivedDepth("", _action, _list); break;
                 case "margin": this.ReceivedMergin(_action, _list); break;
                 case "instrument": this.ReceiveInstrument(_action, _list); break;
                 case "order": this.ReceiveOrder(_action, _list); break;
@@ -112,14 +113,28 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            //this.Log("SubscribeDepth1 - " + _token.ToString());
+            foreach (string _pair in _token)
+            {
+                JObject _json = new JObject();
+                _json.Add("op", "subscribe");
+                _json.Add("args", new JArray($"orderBookL2_25:{_pair}"));
+
+                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+
+                this.Send(_json);
+                //this.Log("SubscribeDepth2 - " + _json.ToString());
+            }
         }
         #endregion
 
         #region ReceivedDepth
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
+            //this.Log("ReceivedDepth - " + _token.ToString());
             JArray _list = (JArray)_token;
 
             if (_type == "partial")
@@ -218,7 +233,7 @@ namespace Lion.SDK.Bitcoin.Markets
                     string _id = _item["id"].Value<string>();
 
                     BookItem _bookItem = this.Books[_symbol, _side].Delete(_id);
-                    if (_bookItem == null)
+                    if (_bookItem != null)
                     {
                         this.OnBookDelete(_bookItem);
                     }

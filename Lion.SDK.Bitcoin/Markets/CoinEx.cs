@@ -73,7 +73,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send("depth.subscribe", new JArray(_pair, _values[0], _values[1]));
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
         }
         #endregion

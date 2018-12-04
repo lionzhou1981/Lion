@@ -107,7 +107,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["codes"] = new JArray() { _pair };
             this.SocketCommand.Add(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
             JArray _arr = new JArray();
             foreach (string _pair in _token)

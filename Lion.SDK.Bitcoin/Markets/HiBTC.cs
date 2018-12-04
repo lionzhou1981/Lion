@@ -97,8 +97,21 @@ namespace Lion.SDK.Bitcoin.Markets
             _json["prec"] = _values.Length > 1 ? (int)_values[1] : 0;
             this.Send(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            foreach (string _pair in _token)
+            {
+                if (this.Books[_pair, MarketSide.Bid] == null) { this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid); }
+                if (this.Books[_pair, MarketSide.Ask] == null) { this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask); }
+
+                JObject _json = new JObject();
+                _json["event"] = "subscribe";
+                _json["channel"] = "depth";
+                _json["pair"] = _pair;
+                _json["depth"] = (int)_values[0];
+                _json["prec"] = _values.Length > 1 ? (int)_values[1] : 0;
+                this.Send(_json);
+            }
         }
         #endregion
 
@@ -201,8 +214,8 @@ namespace Lion.SDK.Bitcoin.Markets
                         }
                     }
                 }
-                if (this.Books[_pair, MarketSide.Ask].Count <= 0 || this.Books[_pair, MarketSide.Bid].Count <= 0) { return; }
-                if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
+                //if (this.Books[_pair, MarketSide.Ask].Count <= 0 || this.Books[_pair, MarketSide.Bid].Count <= 0) { return; }
+                //if (this.Books[_pair, MarketSide.Ask].Min(c => c.Value.Price) <= this.Books[_pair, MarketSide.Bid].Max(c => c.Value.Price)) { base.Clear(); return; }
                 #endregion
             }
         }

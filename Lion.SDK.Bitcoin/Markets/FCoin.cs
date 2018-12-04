@@ -68,7 +68,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             this.Send(_json);
         }
-        public override void SubscribeDepth(JToken _token)
+        public override void SubscribeDepth(JToken _token, params object[] _values)
         {
         }
         #endregion
