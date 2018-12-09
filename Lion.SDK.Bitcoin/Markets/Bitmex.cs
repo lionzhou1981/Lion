@@ -490,7 +490,6 @@ namespace Lion.SDK.Bitcoin.Markets
             {
                 _sign += _url + _nonce + _json.ToString(Newtonsoft.Json.Formatting.None);
             }
-            Console.WriteLine(_sign);
             _sign = SHA.EncodeHMACSHA256ToHex(_sign, base.Secret).ToLower();
 
             _http.Headers.Add("accept", "application/json");
@@ -675,6 +674,17 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region GetPositions
+        public JArray GetPositions()
+        {
+            string _url = "/api/v1/position";
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "GET", _url, true);
+            if (_token == null) { return null; }
+
+            return (JArray)_token;
+        }
+        #endregion
+
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
@@ -721,7 +731,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderDetail
-        public override OrderItem OrderDetail( string _id, params string[] _values)
+        public override OrderItem OrderDetail(string _id, params string[] _values)
         {
             return null;
         }
