@@ -122,9 +122,10 @@ namespace Lion.SDK.Bitcoin.Markets
                         while (_task.Status != TaskStatus.Canceled
                             && _task.Status != TaskStatus.Faulted
                             && _task.Status != TaskStatus.RanToCompletion) { Thread.Sleep(1000); }
-                        
-                        //Console.WriteLine($"marketbase1:{_task.Status.ToString()}");
-                        //this.Log($"marketbase2:{_task.Status.ToString()}");
+
+                        Console.WriteLine($"marketbase1:{this.WebSocket}");
+                        Console.WriteLine($"marketbase1:{_task.Status.ToString()}");
+                        Console.WriteLine($"marketbase1:{this.webSocket.State.ToString()}");
                         if (_task.Status != TaskStatus.RanToCompletion || this.webSocket == null || this.webSocket.State != WebSocketState.Open)
                         {
                             this.Clear();
