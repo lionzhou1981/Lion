@@ -19,6 +19,8 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             base.Name = "Cross";
             base.WebSocket = "wss://api.crossexchange.io/wsv1";
+            //base.WebSocket = "wss://api.xex-pre.com/wsv1";
+            //base.WebSocket = "wss://api.xex-dev.com/wsv1";
             base.HttpUrl = "https://api.crossexchange.io";
             base.OnReceivedEvent += Cross_OnReceivedEvent;
         }
