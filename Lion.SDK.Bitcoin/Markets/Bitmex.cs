@@ -713,8 +713,24 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
 
-            return null;
-            //return _token["orderID"]?.Value<string>();
+            JObject _json = (JObject)_token;
+
+            if (_json.ContainsKey("orderID"))
+            {
+                OrderItem _order = new OrderItem();
+                _order.Id = _token["orderID"]?.Value<string>();
+                _order.Amount = _token["orderQty"].Value<decimal>();
+                _order.Price = _token["price"].Value<decimal>();
+                _order.Pair = _pair;
+                _order.Side = _side;
+
+                return _order;
+            }
+            else
+            {
+                Console.WriteLine(_json.ToString(Newtonsoft.Json.Formatting.None));
+                return null;
+            }
         }
         #endregion
 
