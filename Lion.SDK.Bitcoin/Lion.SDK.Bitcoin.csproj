@@ -12,4 +12,7 @@
     <ProjectReference Include="..\Lion\Lion.csproj" />
     <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Coins\Eos.cs" />
+  </ItemGroup>
 </Project>

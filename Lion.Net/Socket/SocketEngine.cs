@@ -50,7 +50,7 @@ namespace Lion.Net.Sockets
     /// <summary>
     /// Socket接入处理事件句柄
     /// </summary>
-    /// <param name="_e">SocketAsyncEventArgs 对象</param>
+    /// <param name="_socket">Socket 对象</param>
     /// <returns>是否接受此Socket的连接</returns>
     public delegate bool OnSocketAcceptEventHandler(Socket _socket);
     #endregion
@@ -90,7 +90,7 @@ namespace Lion.Net.Sockets
     /// <summary>
     /// 接收到数据事件句柄
     /// </summary>
-    /// <param name="_socketSession">SocketSession 对象</param>
+    /// <param name="_socket">SocketSession 对象</param>
     /// <param name="_receivedByteArray">接受到的字符串数组</param>
     public delegate void OnReceiveEventHandler(object _socket, byte[] _receivedByteArray);
     #endregion
@@ -455,18 +455,15 @@ namespace Lion.Net.Sockets
         /// </summary>
         private void BeginAccept()
         {
-            SocketSession _socketSession = this.Sessions.Pop();
-            if (_shutingdown)
+            while (!this._shutingdown)
             {
-                if (_socketSession != null)
-                    _socketSession.Disconnect();
-                return;
-            }
-            if (_socketSession != null)
-            {
+                SocketSession _socketSession = this.Sessions.Pop();
+                if (_socketSession == null) { Thread.Sleep(100); continue; }
+
                 #region Session池可用
                 _socketSession.Handshaked = false;
                 _socketSession.Status = SocketSessionStatus.Accepting;
+
                 try
                 {
                     try
@@ -503,15 +500,9 @@ namespace Lion.Net.Sockets
                     this.OnException(_ex);
                 }
                 #endregion
-            }
-            else
-            {
-                #region Session池不可用
-                Thread.Sleep(10);
-                this.BeginAccept();
-                #endregion
-            }
 
+                return;
+            }
         }
         #endregion
 
@@ -519,7 +510,7 @@ namespace Lion.Net.Sockets
         /// <summary>
         /// 接受到连入处理
         /// </summary>
-        /// <param name="_e">异步Socket对象</param>
+        /// <param name="_socketAsyncEventArgs">异步Socket对象</param>
         private void EndAccept(SocketAsyncEventArgs _socketAsyncEventArgs)
         {
             SocketSession _socketSession = (SocketSession)_socketAsyncEventArgs.UserToken;

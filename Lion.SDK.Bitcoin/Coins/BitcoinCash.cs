@@ -316,7 +316,7 @@ namespace Lion.SDK.Bitcoin.Coins
             if (Bitcoin.IsAddress(_address, out _version)) { return true; }
 
             bool _mainnet = false;
-            if (_prefix == "bitcoincash:" || _prefix == "") { _mainnet = true; } else if (_prefix == "bchtest:") { _mainnet = false; } else { throw new Exception("Unexpected colon character."); }
+            if (_prefix == "bitcoincash" || _prefix == "") { _mainnet = true; } else if (_prefix == "bchtest") { _mainnet = false; } else { throw new Exception("Unexpected colon character."); }
 
             byte[] _decoded = new byte[42];
             for (int i = 0; i < _decoded.Length; i++)
