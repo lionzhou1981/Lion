@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
@@ -15,6 +16,7 @@ namespace Lion.SDK.Bitcoin.Markets
         long LastUpdateId = 0;
         WebClientPlus WebClient = new WebClientPlus(10000);
         string SnapshotUrl = "https://www.binance.com/api/v1/depth";
+        private List<string> ListPair;
 
         #region Binance
         public Binance(string _key, string _secret) : base(_key, _secret)
@@ -23,6 +25,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.WebSocket = $"wss://stream.binance.com:9443/stream?streams=";
             base.HttpUrl = "https://api.binance.com";
             base.OnReceivedEvent += Binance_OnReceivedEvent;
+
+            ListPair = new List<string>();
         }
         #endregion
 
@@ -114,6 +118,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            foreach (string _pair in _token)
+            {
+                this.ListPair.Add(_pair);
+            }
         }
         #endregion
 
@@ -394,8 +402,6 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add(_pair.ToUpper());
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "BUY" : "SELL");
-            _values.Add("quantity");
-            _values.Add(_amount);
             _values.Add("type");
             switch (_type)
             {
@@ -403,11 +409,18 @@ namespace Lion.SDK.Bitcoin.Markets
                     _values.Add("LIMIT");
                     _values.Add("price");
                     _values.Add(_price.ToString());
+                    _values.Add("timeInForce");
+                    _values.Add("GTC");
                     break;
                 case OrderType.Market:
                     _values.Add("MARKET");
                     break;
             }
+            _values.Add("quantity");
+            _values.Add(_amount);
+            _values.Add("timestamp");
+            long _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow);
+            _values.Add(_timestamp.ToString() + DateTime.UtcNow.Millisecond.ToString());
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null || _token.ToString().Trim() == "{}") { return null; }
@@ -449,6 +462,72 @@ namespace Lion.SDK.Bitcoin.Markets
             //_order.FilledPrice = _token[6].Value<decimal>();
 
             return _order;
+        }
+        #endregion
+
+        #region Start
+        public override void Start()
+        {
+            this.Running = true;
+
+            foreach (string _pair in this.ListPair)
+            {
+                Thread _thread = new Thread(new ParameterizedThreadStart(this.BooksRunner));
+                this.Threads.Add($"GetBooks_{_pair}", _thread);
+                _thread.Start(_pair);
+            }
+        }
+        #endregion
+
+        #region BooksRunner
+        private void BooksRunner(object _object)
+        {
+            string _pair = _object.ToString();
+            string _url = $"/api/v1/depth?symbol={_pair}&limit=10";
+
+            this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+            this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+
+            string _result = "";
+            while (this.Running)
+            {
+                Thread.Sleep(1000);
+
+                try
+                {
+                    WebClientPlus _client = new WebClientPlus(5000);
+                    _result = _client.DownloadString($"{base.HttpUrl}{_url}");
+                    _client.Dispose();
+
+                    JObject _json = JObject.Parse(_result);
+
+                    BookItems _asks = new BookItems(MarketSide.Ask);
+                    BookItems _bids = new BookItems(MarketSide.Bid);
+
+                    this.Books.Timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow);
+
+                    foreach (var _item in _json["asks"])
+                    {
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        _asks.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+                    foreach (var _item in _json["bids"])
+                    {
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        _bids.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+
+                    this.Books[_pair, MarketSide.Ask] = _asks;
+                    this.Books[_pair, MarketSide.Bid] = _bids;
+                }
+                catch (Exception _ex)
+                {
+                    this.OnLog($"GetBooks Error:{_result}");
+                    this.OnLog($"GetBooks Error:{_ex.ToString()}");
+                }
+            }
         }
         #endregion
 

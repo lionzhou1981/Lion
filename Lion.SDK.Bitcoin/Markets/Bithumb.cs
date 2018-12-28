@@ -24,7 +24,6 @@ namespace Lion.SDK.Bitcoin.Markets
             base.OnReceivedEvent += Bithumb_OnReceivedEvent;
 
             ListPair = new List<string>();
-
         }
 
         private void Bithumb_OnReceivedEvent(JToken _token)
