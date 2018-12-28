@@ -13,6 +13,7 @@ namespace Lion.SDK.Bitcoin.Markets
     {
         private List<string> ListPair;
 
+        #region Bittrex
         public Bittrex(string _key, string _secret) : base(_key, _secret)
         {
             base.Name = "Bittrex";
@@ -26,7 +27,9 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetBalances
         public override Balances GetBalances(params object[] _pairs)
         {
             try
@@ -71,27 +74,37 @@ namespace Lion.SDK.Bitcoin.Markets
                 return null;
             }
         }
+        #endregion
 
+        #region
         public override Books GetDepths(string _pair, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetKLines
         public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetTicker
         public override Ticker GetTicker(string _pair)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetTrades
         public override Trade[] GetTrades(string _pair, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0)
         {
             string _urlSide = _side == MarketSide.Ask ? "/selllimit" : "/buylimit";
@@ -116,17 +129,23 @@ namespace Lion.SDK.Bitcoin.Markets
             _item.Id = _token["uuid"].Value<string>();
             return _item;
         }
+        #endregion
 
+        #region OrderDetail
         public override OrderItem OrderDetail(string _orderId, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region SubscribeDepth
         public override void SubscribeDepth(string _pair, params object[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region SubscribeDepth
         public override void SubscribeDepth(JToken _token, params object[] _values)
         {
             foreach (string _pair in _token)
@@ -134,12 +153,16 @@ namespace Lion.SDK.Bitcoin.Markets
                 this.ListPair.Add(_pair);
             }
         }
+        #endregion
 
+        #region SubscribeTicker
         public override void SubscribeTicker(string _pair)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
         {
             string _query = "";
@@ -161,7 +184,9 @@ namespace Lion.SDK.Bitcoin.Markets
 
             return _keyValues;
         }
+        #endregion
 
+        #region HttpCallResult
         protected override JToken HttpCallResult(JToken _token)
         {
             try
@@ -175,16 +200,21 @@ namespace Lion.SDK.Bitcoin.Markets
                 return null;
             }
         }
+        #endregion
 
+        #region ReceivedDepth
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region ReceivedTicker
         protected override void ReceivedTicker(string _symbol, JToken _token)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
         #region Start
         public override void Start()
@@ -267,6 +297,7 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region ByteToString
         private string ByteToString(byte[] rgbyBuff)
         {
             string sHexStr = "";
@@ -276,5 +307,6 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             return (sHexStr);
         }
+        #endregion
     }
 }

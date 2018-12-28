@@ -32,6 +32,7 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region GetBalances
         public override Balances GetBalances(params object[] _pairs)
         {
             string _url = "/info/balance";
@@ -49,27 +50,37 @@ namespace Lion.SDK.Bitcoin.Markets
             }
             return this.Balances;
         }
+        #endregion
 
+        #region GetDepths
         public override Books GetDepths(string _pair, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetKLines
         public override KLine[] GetKLines(string _pair, KLineType _type, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetTicker
         public override Ticker GetTicker(string _pair)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region GetTrades
         public override Trade[] GetTrades(string _pair, params string[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0)
         {
             try
@@ -118,11 +129,14 @@ namespace Lion.SDK.Bitcoin.Markets
                 return null;
             }
         }
+        #endregion
 
+        #region SubscribeDepth
         public override void SubscribeDepth(string _pair, params object[] _values)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
         #region SubscribeDepth
         public override void SubscribeDepth(JToken _token, params object[] _values)
@@ -134,10 +148,12 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region SubscribeTicker
         public override void SubscribeTicker(string _pair)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
         #region HttpCallAuth
         protected override object[] HttpCallAuth(HttpClient _http, string _method, ref string _url, object[] _keyValues)
@@ -172,6 +188,7 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region HttpCallResult
         protected override JToken HttpCallResult(JToken _token)
         {
             try
@@ -185,16 +202,21 @@ namespace Lion.SDK.Bitcoin.Markets
                 return null;
             }
         }
+        #endregion
 
+        #region ReceivedDepth
         protected override void ReceivedDepth(string _symbol, string _type, JToken _token)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
+        #region ReceivedTicker
         protected override void ReceivedTicker(string _symbol, JToken _token)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
         #region OrderDetail
         public override OrderItem OrderDetail(string _id, params string[] _values)
@@ -296,6 +318,7 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         #endregion
 
+        #region ByteToString
         private string ByteToString(byte[] rgbyBuff)
         {
             string sHexStr = "";
@@ -311,5 +334,6 @@ namespace Lion.SDK.Bitcoin.Markets
 
             return (rgbyBuff);
         }
+        #endregion
     }
 }
