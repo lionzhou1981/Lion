@@ -134,7 +134,42 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderDetail
         public override OrderItem OrderDetail(string _orderId, params string[] _values)
         {
-            throw new NotImplementedException();
+            string _url = "/v1.1/account/getorder";
+
+            IList<object> _list = new List<object>();
+            _list.Add("apikey");
+            _list.Add(this.Key);
+            _list.Add("nonce");
+            _list.Add(DateTimePlus.DateTime2JSTime(DateTime.UtcNow));
+            _list.Add("uuid");
+            _list.Add(_orderId);
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "Get", _url, true, _list.ToArray());
+            if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
+
+            OrderItem _order = new OrderItem();
+            _order.Id = _token["OrderUuid"].Value<string>();
+            _order.Pair = _token["Exchange"].Value<string>();
+            _order.Side = _token["Type"].Value<string>().ToUpper().Split('_')[1] == "BUY" ? MarketSide.Bid : MarketSide.Ask;
+            _order.Amount = _token["Quantity"].Value<decimal>();
+            _order.Price = _token["Price"].Value<decimal>();
+            decimal _quantityRemaining = _token["QuantityRemaining"].Value<decimal>();
+            if (_quantityRemaining >= _order.Amount)
+            {
+                _order.Status = OrderStatus.New;
+            }
+            else if (_quantityRemaining <= 0M)
+            {
+                _order.Status = OrderStatus.Filled;
+            }
+            else
+            {
+                _order.Status = OrderStatus.Filling;
+                _order.FilledAmount = _order.Amount - _quantityRemaining;
+            }
+            //_order.FilledPrice = _token[6].Value<decimal>();
+
+            return _order;
         }
         #endregion
 
