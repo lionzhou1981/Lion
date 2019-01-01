@@ -482,7 +482,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add("side");
             _values.Add(_side == MarketSide.Bid ? "buy" : "sell");
             _values.Add("type");
-            _values.Add(_type == OrderType.Market ? "market" : "limit");
+            _values.Add(_type == OrderType.Market ? "exchange market" : "exchange limit");
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
             if (_token == null) { return null; }
@@ -499,7 +499,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region OrderDetail
-        public override OrderItem OrderDetail( string _id, params string[] _values)
+        public override OrderItem OrderDetail(string _id, params string[] _values)
         {
             return null;
         }
