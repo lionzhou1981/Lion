@@ -1,31 +1,24 @@
-﻿using System;
-using Lion;
-using Lion.Encrypt;
-using Lion.Net;
+﻿using Lion.Net;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
-    //LTC
-    public class Litecoin
+    //EOS
+    public class Eosio
     {
-        public static bool IsAddress(string _address, out byte? _version)
-        {
-            if (_address.ToLower().StartsWith("bc") || _address.ToLower().StartsWith("tb")) { _version = null; return false; }
-
-            return Bitcoin.IsAddress(_address, out _version);
-        }
-
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://api.blockcypher.com/v1/ltc/main";
+                string _url = "https://api.eospark.com/api?module=block&action=get_latest_block&apikey=a9564ebc3289b7a14551baf8ad5ec60a";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 JObject _json = JObject.Parse(_result);
-                return _json["height"].Value<string>();
+                return _json["data"]["block_num"].Value<string>();
             }
             catch (Exception)
             {

@@ -1,9 +1,12 @@
 using System;
 using Lion;
 using Lion.Encrypt;
+using Lion.Net;
+using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
+    //BTC
     public class Bitcoin
     {
         #region IsAddress
@@ -65,6 +68,24 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 _version = null;
                 return false;
+            }
+        }
+        #endregion
+
+        #region GetCurrentHeight
+        public static string GetCurrentHeight()
+        {
+            try
+            {
+                string _url = "https://api.blockcypher.com/v1/btc/main";
+                WebClientPlus _webClient = new WebClientPlus(10000);
+                string _result = _webClient.DownloadString(_url);
+                JObject _json = JObject.Parse(_result);
+                return _json["height"].Value<string>();
+            }
+            catch (Exception)
+            {
+                return "";
             }
         }
         #endregion

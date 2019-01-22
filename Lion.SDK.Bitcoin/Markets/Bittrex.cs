@@ -122,7 +122,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add("rate");
             _values.Add(_price.ToString());
 
-            JToken _token = base.HttpCall(HttpCallMethod.Get, "Get", _url, true, _values.ToArray());
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, _values.ToArray());
             if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
 
             OrderItem _item = new OrderItem();
@@ -144,7 +144,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _list.Add("uuid");
             _list.Add(_orderId);
 
-            JToken _token = base.HttpCall(HttpCallMethod.Get, "Get", _url, true, _list.ToArray());
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, _list.ToArray());
             if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
 
             OrderItem _order = new OrderItem();
@@ -152,7 +152,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _order.Pair = _token["Exchange"].Value<string>();
             _order.Side = _token["Type"].Value<string>().ToUpper().Split('_')[1] == "BUY" ? MarketSide.Bid : MarketSide.Ask;
             _order.Amount = _token["Quantity"].Value<decimal>();
-            _order.Price = _token["Price"].Value<decimal>();
+            _order.Price = _token["Limit"].Value<decimal>();
+
             decimal _quantityRemaining = _token["QuantityRemaining"].Value<decimal>();
             if (_quantityRemaining >= _order.Amount)
             {
@@ -165,9 +166,10 @@ namespace Lion.SDK.Bitcoin.Markets
             else
             {
                 _order.Status = OrderStatus.Filling;
-                _order.FilledAmount = _order.Amount - _quantityRemaining;
             }
-            //_order.FilledPrice = _token[6].Value<decimal>();
+            _order.FilledAmount = _order.Amount - _quantityRemaining;
+            _order.FilledPrice = _token["PricePerUnit"].Value<decimal>();
+            _order.FilledVolume = _order.FilledAmount * _order.FilledPrice;
 
             return _order;
         }

@@ -4,9 +4,12 @@ using System.Numerics;
 using System.Security.Cryptography;
 using Lion;
 using Lion.Encrypt;
+using Lion.Net;
+using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
+    //BCH
     public class BitcoinCash
     {
         #region Var
@@ -343,6 +346,24 @@ namespace Lion.SDK.Bitcoin.Coins
 
             _version = _decoded[0];
             return true;
+        }
+        #endregion
+
+        #region GetCurrentHeight
+        public static string GetCurrentHeight()
+        {
+            try
+            {
+                string _url = "https://api.blockchair.com/bitcoin-cash/stats";
+                WebClientPlus _webClient = new WebClientPlus(10000);
+                string _result = _webClient.DownloadString(_url);
+                JObject _json = JObject.Parse(_result);
+                return _json["data"]["blocks"].Value<string>();
+            }
+            catch (Exception)
+            {
+                return "";
+            }
         }
         #endregion
     }

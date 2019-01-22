@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Lion.Net;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -6,6 +8,7 @@ using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
+    //XRP
     public class Ripple
     {
         const string Alphabet = "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
@@ -159,6 +162,23 @@ namespace Lion.SDK.Bitcoin.Coins
             return hash.ComputeHash(hash.ComputeHash((buffer)));
         }
 
- 
+        #region GetCurrentHeight
+        public static string GetCurrentHeight()
+        {
+            try
+            {
+                string _url = "https://data.ripple.com/v2/health/importer?verbose=true";
+                WebClientPlus _webClient = new WebClientPlus(10000);
+                string _result = _webClient.DownloadString(_url);
+                JObject _json = JObject.Parse(_result);
+                return _json["last_validated_ledger"].Value<string>();
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+        #endregion
+
     }
 }

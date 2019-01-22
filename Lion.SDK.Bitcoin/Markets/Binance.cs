@@ -419,7 +419,7 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add("quantity");
             _values.Add(_amount);
             _values.Add("timestamp");
-            long _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow);
+            long _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1));
             _values.Add(_timestamp.ToString() + DateTime.UtcNow.Millisecond.ToString());
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, _values.ToArray());
@@ -441,7 +441,18 @@ namespace Lion.SDK.Bitcoin.Markets
         public override OrderItem OrderDetail(string _id, params string[] _values)
         {
             string _url = "/api/v3/order";
-            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "symbol", _values[0], "orderId", _id);
+
+            IList<object> _list = new List<object>();
+            _list.Add("symbol");
+            string _pair = _values[0].Replace("_", "").ToUpper();
+            _list.Add(_pair);
+            _list.Add("orderId");
+            _list.Add(_id);
+            _list.Add("timestamp");
+            long _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1));
+            _list.Add(_timestamp.ToString() + DateTime.UtcNow.Millisecond.ToString());
+
+            JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "symbol", _pair, "orderId", _id, "timestamp", _timestamp.ToString() + DateTime.UtcNow.Millisecond.ToString());
             if (_token == null) { return null; }
 
             OrderItem _order = new OrderItem();
@@ -459,7 +470,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 case "CANCELED": _order.Status = OrderStatus.Canceled; break;
             }
             _order.FilledAmount = _token["executedQty"].Value<decimal>();
-            //_order.FilledPrice = _token[6].Value<decimal>();
+            _order.FilledVolume = _token["cummulativeQuoteQty"].Value<decimal>();
 
             return _order;
         }
