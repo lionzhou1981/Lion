@@ -30,7 +30,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #endregion
 
         #region GetBalances
-        public override Balances GetBalances(params object[] _pairs)
+        public override Balances GetBalances(params object[] _symbols)
         {
             try
             {
@@ -55,13 +55,13 @@ namespace Lion.SDK.Bitcoin.Markets
                         Lock = _item["Pending"].Value<decimal>()
                     };
                 }
-                foreach (string _pair in _pairs)
+                foreach (string _symbol in _symbols)
                 {
-                    if (!_balances.ContainsKey(_pair.ToUpper()))
+                    if (!_balances.ContainsKey(_symbol.ToUpper()))
                     {
-                        _balances[_pair.ToUpper()] = new BalanceItem()
+                        _balances[_symbol.ToUpper()] = new BalanceItem()
                         {
-                            Symbol = _pair.ToUpper(),
+                            Symbol = _symbol.ToUpper(),
                             Free = 0M,
                             Lock = 0M
                         };
