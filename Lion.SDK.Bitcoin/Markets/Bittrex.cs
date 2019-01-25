@@ -42,7 +42,7 @@ namespace Lion.SDK.Bitcoin.Markets
                 _values.Add("nonce");
                 _values.Add(DateTimePlus.DateTime2JSTime(DateTime.UtcNow));
 
-                JToken _token = base.HttpCall(HttpCallMethod.Get, "Get", _url, true, _values.ToArray());
+                JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, _values.ToArray());
                 if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
 
                 Balances _balances = new Balances();

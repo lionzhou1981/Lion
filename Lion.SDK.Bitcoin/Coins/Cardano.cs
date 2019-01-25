@@ -18,7 +18,10 @@ namespace Lion.SDK.Bitcoin.Coins
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 JObject _json = JObject.Parse(_result);
-                return _json["Right"][1][0]["cbeSlot"].Value<string>();
+                string _cbeEpoch = _json["Right"][1][0]["cbeEpoch"].Value<string>();
+                string _cbeSlot = _json["Right"][1][0]["cbeSlot"].Value<string>();
+
+                return $"{_cbeEpoch}{_cbeSlot.PadLeft(6, '0')}";
             }
             catch (Exception)
             {
