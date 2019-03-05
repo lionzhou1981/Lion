@@ -14,6 +14,7 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class CoinEx : MarketBase
     {
+        private List<string> ListPair;
         private long commandId = 1;
 
         #region CoinEx
@@ -23,6 +24,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.WebSocket = "wss://socket.coinex.com/";
             base.HttpUrl = "https://api.coinex.com";
             base.OnReceivedEvent += CoinEx_OnReceivedEvent;
+
+            this.ListPair = new List<string>();
         }
         #endregion
 
@@ -75,6 +78,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            foreach (string _pair in _token)
+            {
+                this.ListPair.Add(_pair);
+            }
         }
         #endregion
 
@@ -524,6 +531,87 @@ namespace Lion.SDK.Bitcoin.Markets
         public override OrderItem OrderDetail( string _id, params string[] _values)
         {
             return null;
+        }
+        #endregion
+
+        #region Start
+        public override void Start()
+        {
+            this.Running = true;
+
+            foreach (string _pair in this.ListPair)
+            {
+                Thread _thread = new Thread(new ParameterizedThreadStart(this.BooksRunner));
+                this.Threads.Add($"GetBooks_{_pair}", _thread);
+                _thread.Start(_pair);
+            }
+        }
+        #endregion
+
+        #region BooksRunner
+        private void BooksRunner(object _object)
+        {
+            string _pair = _object.ToString();
+            string _url = $"/v1/market/depth?market={_pair}&limit=10&merge=0";
+
+            this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+            this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+
+            string _result = "";
+            while (this.Running)
+            {
+                Thread.Sleep(1000);
+
+                try
+                {
+                    WebClientPlus _client = new WebClientPlus(10000);
+                    _result = _client.DownloadString($"{this.HttpUrl}{_url}");
+                    _client.Dispose();
+
+                    JObject _json = JObject.Parse(_result);
+
+                    BookItems _asks = new BookItems(MarketSide.Ask);
+                    BookItems _bids = new BookItems(MarketSide.Bid);
+
+                    this.Books.Timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow);
+
+                    foreach (var _item in _json["data"]["asks"])
+                    {
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        _asks.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+                    foreach (var _item in _json["data"]["bids"])
+                    {
+                        decimal _price = _item[0].Value<decimal>();
+                        decimal _amount = _item[1].Value<decimal>();
+                        _bids.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+
+                    BookItems _asksLimit = new BookItems(MarketSide.Ask);
+                    BookItems _bidsLimit = new BookItems(MarketSide.Bid);
+                    foreach (var _item in _asks.OrderBy(b => b.Value.Price).Take(10))
+                    {
+                        decimal _price = _item.Value.Price;
+                        decimal _amount = _item.Value.Amount;
+                        _asksLimit.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+                    foreach (var _item in _bids.OrderByDescending(b => b.Value.Price).Take(10))
+                    {
+                        decimal _price = _item.Value.Price;
+                        decimal _amount = _item.Value.Amount;
+                        _bidsLimit.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+
+                    this.Books[_pair, MarketSide.Ask] = _asksLimit;
+                    this.Books[_pair, MarketSide.Bid] = _bidsLimit;
+                }
+                catch (Exception _ex)
+                {
+                    this.OnLog($"GetBooks Error:{_result}");
+                    this.OnLog($"GetBooks Error:{_ex.ToString()}");
+                }
+            }
         }
         #endregion
     }
