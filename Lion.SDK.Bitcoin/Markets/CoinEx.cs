@@ -631,14 +631,14 @@ namespace Lion.SDK.Bitcoin.Markets
 
                     foreach (var _item in _json["data"]["asks"])
                     {
-                        decimal _price = _item[0].Value<decimal>();
-                        decimal _amount = _item[1].Value<decimal>();
+                        decimal _price = decimal.Parse(_item[0].Value<string>(), System.Globalization.NumberStyles.Float);
+                        decimal _amount = decimal.Parse(_item[1].Value<string>(), System.Globalization.NumberStyles.Float);
                         _asks.Insert(_price.ToString(), Math.Abs(_price), _amount);
                     }
                     foreach (var _item in _json["data"]["bids"])
                     {
-                        decimal _price = _item[0].Value<decimal>();
-                        decimal _amount = _item[1].Value<decimal>();
+                        decimal _price = decimal.Parse(_item[0].Value<string>(), System.Globalization.NumberStyles.Float);
+                        decimal _amount = decimal.Parse(_item[1].Value<string>(), System.Globalization.NumberStyles.Float);
                         _bids.Insert(_price.ToString(), Math.Abs(_price), _amount);
                     }
 
