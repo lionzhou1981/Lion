@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
+    //QTUM
     public class Quantum
     {
         #region GetCurrentHeight

@@ -152,7 +152,7 @@ namespace Lion.SDK.Bitcoin.Markets
             JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
             if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
             JObject _json = (JObject)_token;
-            if (_json.ContainsKey("code") && _json.ContainsKey("message")) { return null; }
+            if (_json.ContainsKey("error_code") && _json.ContainsKey("error_message")) { return null; }
 
             OrderItem _item = new OrderItem();
             _item.Id = _token["order_id"].Value<string>();
