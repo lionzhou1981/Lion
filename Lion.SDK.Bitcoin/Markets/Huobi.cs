@@ -371,6 +371,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.High24H = _token["tick"]["high"].Value<decimal>();
             _ticker.Low24H = _token["tick"]["low"].Value<decimal>();
             _ticker.Volume24H = _token["tick"]["vol"].Value<decimal>();
+            _ticker.AskAmount= _token["tick"]["ask"][1].Value<decimal>();
+            _ticker.BidAmount= _token["tick"]["bid"][1].Value<decimal>();
 
             return _ticker;
         }

@@ -49,7 +49,7 @@ namespace Lion.SDK.Bitcoin.Markets
         public override Balances GetBalances(params object[] _symbols)
         {
             string _url = "/api/v3/account";
-            string _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
+            string _timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow.AddSeconds(-1)).ToString() + DateTime.UtcNow.Millisecond.ToString();
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, "timestamp", _timestamp);
             if (_token == null) { return null; }
 
