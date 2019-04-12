@@ -587,7 +587,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderDetail
         public override OrderItem OrderDetail( string _orderId, params string[] _values)
         {
-            string _url = $"/v1/order/orders/{_orderId}";
+            string _url = $"/v1/order/orders/{_orderId}/matchresults";
             JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "order_id", _orderId);
             if (_token == null) { return null; }
 
