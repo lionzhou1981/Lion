@@ -51,8 +51,8 @@ namespace Lion.SDK.Bitcoin.Markets
                     _balances[_item["Currency"].ToString()] = new BalanceItem()
                     {
                         Symbol = _item["Currency"].ToString(),
-                        Free = _item["Available"].Value<decimal>(),
-                        Lock = _item["Pending"].Value<decimal>()
+                        Free = _item["Available"].ToString() == "" ? 0 : _item["Available"].Value<decimal>(),
+                        Lock = _item["Pending"].ToString() == "" ? 0 : _item["Pending"].Value<decimal>()
                     };
                 }
                 foreach (string _symbol in _symbols)

@@ -397,7 +397,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetBalances
         public override Balances GetBalances(params object[] _pairs)
         {
-            string _url = "GET/v1/api/auth/wallet";
+            string _url = "/GET/v1/api/auth/wallet";
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_token == null) { return null; }
 
@@ -423,7 +423,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            string _url = "POST/v1/api/placeOrder";
+            string _url = "/POST/v1/api/placeOrder";
 
             IList<string> _values = new List<string>();
             _values.Add("pair");
@@ -469,7 +469,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCancel
         public OrderItem OrderCancel(string _pair, string _orderId)
         {
-            string _url = "POST/v1/api/cancelOrder";
+            string _url = "/POST/v1/api/cancelOrder";
 
             //JToken _token = base.HttpCall(HttpCallMethod.Json, "DELETE", _url, true, "orderID", _orderId);
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true, "order_id", _orderId, "pair", _pair);

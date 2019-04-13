@@ -14,6 +14,7 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class CoinEx : MarketBase
     {
+        private List<string> ListPair;
         private long commandId = 1;
 
         #region CoinEx
@@ -23,6 +24,8 @@ namespace Lion.SDK.Bitcoin.Markets
             base.WebSocket = "wss://socket.coinex.com/";
             base.HttpUrl = "https://api.coinex.com";
             base.OnReceivedEvent += CoinEx_OnReceivedEvent;
+
+            this.ListPair = new List<string>();
         }
         #endregion
 
@@ -75,6 +78,10 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            foreach (string _pair in _token)
+            {
+                this.ListPair.Add(_pair);
+            }
         }
         #endregion
 
@@ -323,7 +330,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetTicker
         public override Ticker GetTicker(string _pair)
         {
-            string _url = $"/v1/market/ticker?market={_pair}";
+            string _url = $"/v1/market/ticker?market={_pair.ToUpper()}";
 
             JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, false);
             if (_token == null) { return null; }
@@ -483,14 +490,14 @@ namespace Lion.SDK.Bitcoin.Markets
             if (_token == null) { return null; }
 
             Balances _balances = new Balances();
-            foreach (JToken _item in _token.Value<JArray>())
+            foreach (JToken _item in _token)
             {
                 JProperty _property = (JProperty)_item;
                 _balances[_property.Name] = new BalanceItem()
                 {
                     Symbol = _property.Name,
-                    Free = _item[_property.Name]["available"].Value<decimal>(),
-                    Lock = _item[_property.Name]["frozen"].Value<decimal>()
+                    Free = _property.Value["available"].Value<decimal>(),
+                    Lock = _property.Value["frozen"].Value<decimal>()
                 };
             }
             return _balances;
@@ -516,14 +523,184 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderCreate
         public override OrderItem OrderCreate(string _pair, MarketSide _side, OrderType _type, decimal _amount, decimal _price = 0M)
         {
-            return null;
+            string _url = "/v1/order";
+            _url += _type == OrderType.Market ? "/market" : "/limit";
+
+            IList<object> _values = new List<object>();
+            _values.Add("amount");
+            _values.Add(_amount.ToString());
+            _values.Add("type");
+            _values.Add(_side == MarketSide.Ask ? "sell" : "buy");
+            _values.Add("market");
+            _values.Add(_pair.ToUpper());
+            if (_type == OrderType.Limit)
+            {
+                _values.Add("price");
+                _values.Add(_price.ToString());
+            }
+
+            JToken _token = base.HttpCall(HttpCallMethod.Json, "POST", _url, true, _values.ToArray());
+            if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
+
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["order_id"].Value<string>();
+            _item.Pair = _token["pair"].Value<string>();
+            _item.Side = _token["side"].Value<string>() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["start_amount"].Value<decimal>();
+            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["ordered_at"].Value<string>().Remove(10)));
+            return _item;
         }
         #endregion
 
         #region OrderDetail
-        public override OrderItem OrderDetail( string _id, params string[] _values)
+        public override OrderItem OrderDetail(string _id, params string[] _values)
         {
-            return null;
+            string _url = "/v1/order/status";
+
+            IList<object> _value = new List<object>();
+            _value.Add("id");
+            _value.Add(_id);
+            _value.Add("market");
+            _value.Add(_values[0].ToUpper());
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "GET", _url, true, _value.ToArray());
+            if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
+
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["id"].Value<string>();
+            _item.Pair = _token["market"].Value<string>();
+            _item.Side = _token["type"].Value<string>() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["amount"].Value<decimal>();
+            _item.FilledAmount = _token["deal_amount"].Value<decimal>();
+            _item.FilledPrice = _token["avg_price"].Value<decimal>();
+            _item.FilledVolume = _token["deal_money"].Value<decimal>();
+            string _status = _token["status"].Value<string>();
+            switch (_status)
+            {
+                case "not_deal": _item.Status = OrderStatus.New; break;
+                case "part_deal": _item.Status = OrderStatus.Filling; break;
+                case "done": _item.Status = OrderStatus.Filled; break;
+            }
+            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["create_time"].Value<string>().Remove(10)));
+            return _item;
+        }
+        #endregion
+
+        #region Start
+        public override void Start()
+        {
+            this.Running = true;
+
+            foreach (string _pair in this.ListPair)
+            {
+                Thread _thread = new Thread(new ParameterizedThreadStart(this.BooksRunner));
+                this.Threads.Add($"GetBooks_{_pair}", _thread);
+                _thread.Start(_pair);
+            }
+        }
+        #endregion
+
+        #region BooksRunner
+        private void BooksRunner(object _object)
+        {
+            string _pair = _object.ToString();
+            string _url = $"/v1/market/depth?market={_pair}&limit=10&merge=0";
+
+            this.Books[_pair, MarketSide.Ask] = new BookItems(MarketSide.Ask);
+            this.Books[_pair, MarketSide.Bid] = new BookItems(MarketSide.Bid);
+
+            string _result = "";
+            while (this.Running)
+            {
+                Thread.Sleep(1000);
+
+                try
+                {
+                    WebClientPlus _client = new WebClientPlus(10000);
+                    _result = _client.DownloadString($"{this.HttpUrl}{_url}");
+                    _client.Dispose();
+
+                    JObject _json = JObject.Parse(_result);
+
+                    BookItems _asks = new BookItems(MarketSide.Ask);
+                    BookItems _bids = new BookItems(MarketSide.Bid);
+
+                    this.Books.Timestamp = DateTimePlus.DateTime2JSTime(DateTime.UtcNow);
+
+                    foreach (var _item in _json["data"]["asks"])
+                    {
+                        decimal _price = decimal.Parse(_item[0].Value<string>(), System.Globalization.NumberStyles.Float);
+                        decimal _amount = decimal.Parse(_item[1].Value<string>(), System.Globalization.NumberStyles.Float);
+                        _asks.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+                    foreach (var _item in _json["data"]["bids"])
+                    {
+                        decimal _price = decimal.Parse(_item[0].Value<string>(), System.Globalization.NumberStyles.Float);
+                        decimal _amount = decimal.Parse(_item[1].Value<string>(), System.Globalization.NumberStyles.Float);
+                        _bids.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+
+                    BookItems _asksLimit = new BookItems(MarketSide.Ask);
+                    BookItems _bidsLimit = new BookItems(MarketSide.Bid);
+                    foreach (var _item in _asks.OrderBy(b => b.Value.Price).Take(10))
+                    {
+                        decimal _price = _item.Value.Price;
+                        decimal _amount = _item.Value.Amount;
+                        _asksLimit.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+                    foreach (var _item in _bids.OrderByDescending(b => b.Value.Price).Take(10))
+                    {
+                        decimal _price = _item.Value.Price;
+                        decimal _amount = _item.Value.Amount;
+                        _bidsLimit.Insert(_price.ToString(), Math.Abs(_price), _amount);
+                    }
+
+                    this.Books[_pair, MarketSide.Ask] = _asksLimit;
+                    this.Books[_pair, MarketSide.Bid] = _bidsLimit;
+                }
+                catch (Exception _ex)
+                {
+                    this.OnLog($"GetBooks Error:{_result}");
+                    this.OnLog($"GetBooks Error:{_ex.ToString()}");
+                }
+            }
+        }
+        #endregion
+
+        #region OrderCancel
+        public OrderItem OrderCancel(string _pair, string _orderId)
+        {
+            string _url = "/v1/order/pending";
+
+            IList<object> _value = new List<object>();
+            _value.Add("id");
+            _value.Add(_orderId);
+            _value.Add("market");
+            _value.Add(_pair.ToUpper());
+
+            JToken _token = base.HttpCall(HttpCallMethod.Get, "DELETE", _url, true, _value.ToArray());
+            if (_token == null || _token.ToString(Newtonsoft.Json.Formatting.None).Trim() == "{}") { return null; }
+
+            OrderItem _item = new OrderItem();
+            _item.Id = _token["id"].Value<string>();
+            _item.Pair = _token["market"].Value<string>();
+            _item.Side = _token["type"].Value<string>() == "sell" ? MarketSide.Ask : MarketSide.Bid;
+            _item.Price = _token["price"].Value<decimal>();
+            _item.Amount = _token["amount"].Value<decimal>();
+            _item.FilledAmount = _token["deal_amount"].Value<decimal>();
+            _item.FilledPrice = _token["avg_price"].Value<decimal>();
+            _item.FilledVolume = _token["deal_money"].Value<decimal>();
+            string _status = _token["status"].Value<string>();
+            switch (_status)
+            {
+                case "not_deal": _item.Status = OrderStatus.New; break;
+                case "part_deal": _item.Status = OrderStatus.Filling; break;
+                case "done": _item.Status = OrderStatus.Filled; break;
+            }
+            _item.CreateTime = DateTimePlus.JSTime2DateTime(long.Parse(_token["create_time"].Value<string>().Remove(10)));
+            return _item;
         }
         #endregion
     }

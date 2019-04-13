@@ -184,9 +184,17 @@ namespace Lion.SDK.Bitcoin.Markets
         }
         public override void SubscribeDepth(JToken _token, params object[] _values)
         {
+            string _id = "";
             foreach (string _pair in _token)
             {
-                string _id = $"market.{_pair}.depth.{_values[0]}";
+                if (_pair.ToLower() == "trxbtc" || _pair.ToLower() == "bttbtc")
+                {
+                    _id = $"market.{_pair}.depth.step2";
+                }
+                else
+                {
+                    _id = $"market.{_pair}.depth.{_values[0]}";
+                }
 
                 JObject _json = new JObject();
                 _json["sub"] = _id;
@@ -363,6 +371,8 @@ namespace Lion.SDK.Bitcoin.Markets
             _ticker.High24H = _token["tick"]["high"].Value<decimal>();
             _ticker.Low24H = _token["tick"]["low"].Value<decimal>();
             _ticker.Volume24H = _token["tick"]["vol"].Value<decimal>();
+            _ticker.AskAmount= _token["tick"]["ask"][1].Value<decimal>();
+            _ticker.BidAmount= _token["tick"]["bid"][1].Value<decimal>();
 
             return _ticker;
         }
@@ -577,7 +587,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderDetail
         public override OrderItem OrderDetail( string _orderId, params string[] _values)
         {
-            string _url = $"/v1/order/orders/{_orderId}";
+            string _url = $"/v1/order/orders/{_orderId}/matchresults";
             JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true, "order_id", _orderId);
             if (_token == null) { return null; }
 
