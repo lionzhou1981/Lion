@@ -54,11 +54,13 @@ namespace Lion.SDK.Bitcoin.Coins
         {
             try
             {
-                string _url = "https://moneroblocks.info/api/get_stats";
+                //string _url = "https://xmr.tokenview.com/api/blocks/xmr/1/1";
+                string _url = "https://monerohash.com/api/stats?_=" + DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 JObject _json = JObject.Parse(_result);
-                return _json["height"].Value<string>();
+                //return _json["data"][0]["block_no"].Value<string>();
+                return _json["network"]["height"].Value<string>();
             }
             catch (Exception)
             {
