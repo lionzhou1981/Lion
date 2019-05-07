@@ -17,6 +17,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://mona.chainsight.info/api/blocks";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 JArray _jArray = JArray.Parse(_json["blocks"].ToString());
                 return _jArray[0]["height"].ToString();

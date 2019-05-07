@@ -15,9 +15,11 @@ namespace Lion.SDK.Bitcoin.Coins
             try
             {
                 //string _url = "https://api.eospark.com/api?module=block&action=get_latest_block&apikey=a9564ebc3289b7a14551baf8ad5ec60a";
-                string _url = "https://eospark.com/api/v2/chain/baseinfo";
+                //string _url = "https://eospark.com/api/v2/chain/baseinfo";
+                string _url = "https://eospark.com/api/v2/overview/high_refresh";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 return _json["data"]["head_block_num"].Value<string>();
             }

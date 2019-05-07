@@ -17,6 +17,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://api.blockchair.com/bitcoin-sv/stats";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 return _json["data"]["blocks"].Value<string>();
             }

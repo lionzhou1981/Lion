@@ -24,6 +24,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://api.blockcypher.com/v1/ltc/main";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 return _json["height"].Value<string>();
             }

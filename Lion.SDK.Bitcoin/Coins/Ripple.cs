@@ -171,6 +171,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://data.ripple.com/v2/ledgers/";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 //return _json["last_validated_ledger"].Value<string>();
                 return _json["ledger"]["ledger_index"].Value<string>();

@@ -17,6 +17,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://api.zcha.in/v2/mainnet/blocks?sort=height&direction=descending&limit=1&offset=0";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JArray _jArray = JArray.Parse(_result);
                 return _jArray[0]["height"].Value<string>();
             }

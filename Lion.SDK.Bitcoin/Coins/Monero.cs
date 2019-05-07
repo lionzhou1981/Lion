@@ -58,6 +58,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://monerohash.com/api/stats?_=" + DateTimePlus.DateTime2JSTime(DateTime.UtcNow).ToString() + DateTime.UtcNow.Millisecond.ToString();
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 //return _json["data"][0]["block_no"].Value<string>();
                 return _json["network"]["height"].Value<string>();

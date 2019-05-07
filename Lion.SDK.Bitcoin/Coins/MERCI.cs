@@ -6,15 +6,15 @@ using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
-    //NEO
-    public class NEO
+    //MERCI
+    public class MERCI
     {
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://api.neoscan.io/api/main_net/v1/get_height";
+                string _url = "https://apiinfo.mercibq.com/merciinfo-api/info";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
@@ -27,5 +27,6 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
+
     }
 }

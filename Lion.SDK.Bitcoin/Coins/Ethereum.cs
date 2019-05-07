@@ -34,6 +34,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=YourApiKeyToken";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 _result = _json["result"].Value<string>();
                 int _height = Convert.ToInt32(_result, 16);

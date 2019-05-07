@@ -35,6 +35,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _url = "https://apilist.tronscan.org/api/system/status";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 return _json["database"]["block"].Value<string>();
             }
