@@ -6,27 +6,9 @@ using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
-    //LSK
-    public class Lisk
+    //BAT
+    public class BasicAttentionToken
     {
-        #region GetCurrentHeight
-        public static string GetCurrentHeight()
-        {
-            try
-            {
-                string _url = "https://explorer.lisk.io/api/getBlockStatus";
-                WebClientPlus _webClient = new WebClientPlus(10000);
-                string _result = _webClient.DownloadString(_url);
-                JObject _json = JObject.Parse(_result);
-                return _json["height"].Value<string>();
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
-        #endregion
-
         #region CheckTxidBalance
         public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
         {
@@ -36,19 +18,32 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                string _url = $"https://explorer.lisk.io/api/getAccount?address={_address}";
+                string _url = $"http://api.ethplorer.io/getAddressInfo/{_address}?apiKey=freekey";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
+                JArray _jArray = JArray.Parse(_json["tokens"].ToString());
+                JToken _jToken = null;
+                foreach (var _item in _jArray)
+                {
+                    string _name = _item["tokenInfo"]["symbol"].Value<string>().Trim();
+                    if (_name.ToLower() != "bat") { continue; }
+                    _jToken = _item;
+                    break;
+                }
+                if (_jToken == null)
+                {
+                    return _error;
+                }
 
                 //balance
                 _error = "balance";
-                string _value = _json["balance"] + "";
+                string _value = _jToken["balance"] + "";
                 _outBalance = Common.Change2Decimal(_value);
                 if (!_outBalance.ToString().Contains("."))
                 {
-                    _outBalance = _outBalance / 100000000M;
+                    _outBalance = _outBalance / 1000000000000000000M;
                 }
                 if (_outBalance < _balance)
                 {
