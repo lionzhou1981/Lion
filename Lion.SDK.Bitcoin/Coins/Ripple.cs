@@ -1,10 +1,12 @@
-﻿using Lion.Net;
+﻿using HtmlAgilityPack;
+using Lion.Net;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
@@ -52,7 +54,7 @@ namespace Lion.SDK.Bitcoin.Coins
             return _mIndexes;
         }
 
-        static byte[] Decode(string input,int[] _mindexes)
+        static byte[] Decode(string input, int[] _mindexes)
         {
             if (input.Length == 0)
             {
@@ -183,6 +185,7 @@ namespace Lion.SDK.Bitcoin.Coins
         }
         #endregion
 
+        
         #region CheckTxidBalance
         public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
         {
@@ -192,20 +195,93 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                string _url = $"https://data.ripple.com/v2/accounts/{_address}/stats/value?limit=1&descending=true";
+                string _url = $"https://data.ripple.com/v2/accounts/{_address}/balances";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                JToken _jToken = _json["rows"][0];
+                JArray _jArray = JArray.Parse(_json["balances"].ToString());
+                JToken _jToken = null;
+                foreach (var _item in _jArray)
+                {
+                    string _currency = _item["currency"].Value<string>();
+                    if (_currency.ToLower() != "xrp") { continue; }
+                    _jToken = _item;
+                    break;
+                }
+                if (_jToken == null)
+                {
+                    return _error;
+                }
 
                 //balance
                 _error = "balance";
-                string _value = _jToken["account_value"] + "";
+                string _value = _jToken["value"].Value<string>();
+                //_outBalance = Common.Change2Decimal(_value);
+                _outBalance = decimal.Parse(_value);
+                //if (!_outBalance.ToString().Contains("."))
+                //{
+                //    //_outBalance = _outBalance / 1000000000000000000M;
+                //    _outBalance = _outBalance / 1000000M;
+                //}
+                if (_outBalance < _balance)
+                {
+                    return _error;
+                }
+
+                return "";
+            }
+            catch (Exception _ex)
+            {
+                Console.WriteLine(_ex.Message);
+                return _error;
+            }
+        }
+        #endregion
+        
+        /*
+        #region CheckTxidBalance
+        public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
+        {
+            _outBalance = 0M;
+            string _error = "";
+            try
+            {
+                //get info
+                _error = "get info";
+                //string _url = $"https://data.ripple.com/v2/accounts/{_address}/stats/value?limit=1&descending=true";
+                string _url = $"https://data.ripple.com/v2/accounts/{_address}/transactions?&limit=1&descending=true";
+                WebClientPlus _webClient = new WebClientPlus(10000);
+                string _result = _webClient.DownloadString(_url);
+                _webClient.Dispose();
+                JObject _json = JObject.Parse(_result);
+                JArray _jArray = JArray.Parse(_json["transactions"][0]["meta"]["AffectedNodes"].ToString());
+                JToken _jToken = null;
+                foreach (var _item in _jArray)
+                {
+                    if (_item.ToString().Contains("CreatedNode"))
+                    {
+                        _jToken = _item["CreatedNode"]["NewFields"];
+                        break;
+                    }
+                    string _account = _item["ModifiedNode"]["FinalFields"]["Account"].Value<string>().Trim();
+                    if (_account != _address) { continue; }
+                    _jToken = _item["ModifiedNode"]["FinalFields"];
+                    break;
+                }
+                if (_jToken == null)
+                {
+                    return _error;
+                }
+
+                //balance
+                _error = "balance";
+                string _value = _jToken["Balance"] + "";
                 _outBalance = Common.Change2Decimal(_value);
                 if (!_outBalance.ToString().Contains("."))
                 {
-                    _outBalance = _outBalance / 1000000000000000000M;
+                    //_outBalance = _outBalance / 1000000000000000000M;
+                    _outBalance = _outBalance / 1000000M;
                 }
                 if (_outBalance < _balance)
                 {
@@ -220,6 +296,6 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
-
+        */
     }
 }

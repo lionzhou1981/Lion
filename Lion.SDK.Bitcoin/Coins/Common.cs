@@ -30,12 +30,20 @@ namespace Lion.SDK.Bitcoin.Coins
         #endregion
 
         #region CheckRate
-        public static decimal CheckRate(decimal _value, decimal _standard, string _format = "0.00")
+        public static decimal CheckRate(decimal _value, decimal _standard, string _format = "0.0000")
         {
             decimal _rate = (_standard - _value) / _standard;
             _rate = Math.Abs(_rate);
             _rate = decimal.Parse(_rate.ToString(_format));
             return _rate;
+        }
+        public static string ChangePercentage(decimal _value, string _format = "0.00")
+        {
+            decimal _percentage = 0M;
+
+            _percentage = _value * 100M;
+            _percentage = decimal.Parse(_percentage.ToString(_format));
+            return $"{_percentage}%";
         }
         #endregion
     }

@@ -39,7 +39,8 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                string _url = $"https://eospark.com/api/v2/account/{_address}/info";
+                //string _url = $"https://eospark.com/api/v2/account/{_address}/info";
+                string _url = $"https://api.eospark.com/api?module=account&action=get_account_balance&apikey=b16c6fa55f862b8f8b0f98aed2062b59&account={_address}";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
@@ -47,13 +48,15 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 //balance
                 _error = "balance";
-                string _value = _json["data"]["resource_info"]["core_liquid_balance"] + "";
-                _value = _value.ToLower().Replace("eos", "").Trim();
-                _outBalance = Common.Change2Decimal(_value);
-                if (!_outBalance.ToString().Contains("."))
-                {
-                    _outBalance = _outBalance / 100000000M;
-                }
+                //string _value = _json["data"]["resource_info"]["core_liquid_balance"] + "";
+                string _value = _json["data"]["balance"] + "";
+                //_value = _value.ToLower().Replace("eos", "").Trim();
+                //_outBalance = Common.Change2Decimal(_value);
+                _outBalance = decimal.Parse(_value);
+                //if (!_outBalance.ToString().Contains("."))
+                //{
+                //    _outBalance = _outBalance / 100000000M;
+                //}
                 if (_outBalance < _balance)
                 {
                     return _error;

@@ -477,21 +477,21 @@ namespace Lion.SDK.Bitcoin.Markets
 
             OrderItem _order = new OrderItem();
             _order.Id = _token["orderid"].Value<string>();
-            _order.Pair = _token["detail"][1].Value<string>();
-            _order.Side = _token["detail"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
-            _order.Amount = _token["detail"][4].Value<decimal>();
-            _order.Price = _token["detail"][5].Value<decimal>();
-            string _status = _token["detail"][9].Value<string>();
-            switch (_status)
-            {
-                case "1": _order.Status = OrderStatus.New; break;
-                case "2": _order.Status = OrderStatus.Filling; break;
-                case "3": _order.Status = OrderStatus.Filled; break;
-                case "4": _order.Status = OrderStatus.Canceled; break;
-            }
+            //_order.Pair = _token["detail"][1].Value<string>();
+            //_order.Side = _token["detail"][5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+            //_order.Amount = _token["detail"][4].Value<decimal>();
+            //_order.Price = _token["detail"][5].Value<decimal>();
+            //string _status = _token["detail"][9].Value<string>();
+            //switch (_status)
+            //{
+            //    case "1": _order.Status = OrderStatus.New; break;
+            //    case "2": _order.Status = OrderStatus.Filling; break;
+            //    case "3": _order.Status = OrderStatus.Filled; break;
+            //    case "4": _order.Status = OrderStatus.Canceled; break;
+            //}
 
-            _order.FilledAmount = _token["detail"][3].Value<decimal>();
-            _order.FilledPrice = _token["detail"][6].Value<decimal>();
+            //_order.FilledAmount = _token["detail"][3].Value<decimal>();
+            //_order.FilledPrice = _token["detail"][6].Value<decimal>();
 
             return _order;
         }

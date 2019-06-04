@@ -58,7 +58,8 @@ namespace Lion.SDK.Bitcoin.Coins
                 //get info
                 _error = "get info";
                 //string _url = $"http://api.ethplorer.io/getAddressInfo/0x32Be343B94f860124dC4fEe278FDCBD38C102D88?apiKey=freekey";
-                string _url = $"https://api.blockcypher.com/v1/eth/main/addrs/{_address}/balance";
+                //string _url = $"https://api.blockcypher.com/v1/eth/main/addrs/{_address}/balance";
+                string _url = $"https://api.etherscan.io/api?module=account&action=balance&address={_address}&tag=latest&apikey=YourApiKeyToken";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
@@ -66,7 +67,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 //balance
                 _error = "balance";
-                string _value = _json["balance"] + "";
+                string _value = _json["result"] + "";
                 _outBalance = decimal.Parse(_value);
                 if (!_value.Contains("."))
                 {
