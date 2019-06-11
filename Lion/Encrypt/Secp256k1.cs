@@ -8,6 +8,7 @@ namespace Lion.Encrypt
 {
     public class Secp256k1
     {
+        #region ECP椭圆曲线
         class ECPoint
         {
             public BigInteger x;
@@ -156,7 +157,9 @@ namespace Lion.Encrypt
             }
             return ret;
         }
+        #endregion
 
+        #region Entry
         public Tuple<bool, string, int> PrivateKeyToPublicKey(string _privatekey)
         {
             try
@@ -174,7 +177,9 @@ namespace Lion.Encrypt
                 return new Tuple<bool, string, int>(false, _ex.StackTrace + "|" + _ex.Message, 0);
             }
         }
+        #endregion
 
+        #region Converter
         /// <summary>
         /// 将字节数组输出为字符串
         /// </summary>
@@ -197,5 +202,6 @@ namespace Lion.Encrypt
                 returnBytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
             return returnBytes;
         }
+        #endregion
     }
 }
