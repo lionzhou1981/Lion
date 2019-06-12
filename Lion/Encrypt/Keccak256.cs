@@ -25,10 +25,15 @@ namespace Lion.Encrypt
             return result;
         }
 
-        public string ComputeHash(string _data)
+        public string ComputeHashByString(string _data)
         {
             var _hashed = Compute(System.Text.UTF8Encoding.UTF8.GetBytes(_data));
             return ConvertBytesToHexString(_hashed).Replace("-","").ToLower();
+        }
+        public string ComputeHashByHex(string _data)
+        {
+            var _hashed = Compute(Lion.Encrypt.Secp256k1.StringToToHexByte(_data));
+            return HexPlus.ByteArrayToHexString(_hashed).Replace("-", "").ToLower();
         }
         #endregion
 

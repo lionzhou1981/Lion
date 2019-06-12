@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Lion.SDK.Bitcoin.Coins
@@ -86,6 +87,21 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
+
+
+        public static Tuple<bool, string, string, string> GenerateAddress(string _existsPrivateKey = "")
+        {
+            var _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
+            var _secpHashed = new Lion.Encrypt.Secp256k1().PrivateKeyToPublicKey(_privateKey);
+            if (!_secpHashed.Item1)
+                return new Tuple<bool, string, string, string>(false, _secpHashed.Item2, "", "");
+            string _publicKey = _secpHashed.Item2;
+            string _correctPublicKey = _publicKey.Substring(2);//remove 04 start;
+            var _keccakHasher = new Lion.Encrypt.Keccak256();
+            var _hexAddress = _keccakHasher.ComputeHashByHex(_correctPublicKey);
+            var _address = "0x" + _hexAddress.Substring(_hexAddress.Length - 40);
+            return new Tuple<bool, string, string, string>(true, _privateKey, _correctPublicKey, _address);
+        }
 
     }
 }

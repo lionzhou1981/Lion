@@ -212,44 +212,23 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
-        int RandomSeed
-        {
-            get
-            {
-                byte[] _byteArray = new byte[4];
-                System.Security.Cryptography.RNGCryptoServiceProvider _rng = new System.Security.Cryptography.RNGCryptoServiceProvider();
-                _rng.GetBytes(_byteArray);
-                int _value = BitConverter.ToInt32(_byteArray, 0);
-                return _value <= 0 ? -_value : _value;
-            }
-        }
+ 
 
-        string GeneratePrivateKey()
-        {
-            List<string> _privateKeys = new List<string>();
-            while (_privateKeys.Count < 64)
-            {
-                var _random = new Random(RandomSeed);
-                _privateKeys.Add(_random.Next(0, 16).ToString("X"));
-            }
-            return string.Join("", _privateKeys);
-        }
-
-        public Tuple<bool, string, string, string> GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
+        public static Tuple<bool, string, string, string> GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
         {
             var _netVersion = _mainNet ? "00" : "ef";
-            var _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? GeneratePrivateKey() : _existsPrivateKey;
+            var _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
             var _secpHashed = new Lion.Encrypt.Secp256k1().PrivateKeyToPublicKey(_privateKey);
             if (!_secpHashed.Item1)
                 return new Tuple<bool, string, string, string>(false, _secpHashed.Item2, "", "");
             string _publicKey = _secpHashed.Item2;
 
             HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
-            var _sha1 = _shahasher.ComputeHash(Lion.Encrypt.Secp256k1.StringToToHexByte(_publicKey));
+            var _sha1 = _shahasher.ComputeHash(Lion.HexPlus.HexStringToByteArray(_publicKey));
             var _ripemd = new Lion.Encrypt.RIPEMD160Managed();
             var _ripemdHashed = BitConverter.ToString(_ripemd.ComputeHash(_sha1)).Replace("-", "");
             var _versioned = _netVersion + _ripemdHashed;
-            var _sha2 = _shahasher.ComputeHash(Lion.Encrypt.Secp256k1.StringToToHexByte(_versioned));
+            var _sha2 = _shahasher.ComputeHash(Lion.HexPlus.HexStringToByteArray(_versioned));
             var _sha3 = _shahasher.ComputeHash(_sha2);
             var _verifyCode = BitConverter.ToString(_sha3).Replace("-", "").Substring(0, 8);
             var _address = Lion.Encrypt.Base58.Encode(_versioned + _verifyCode);
