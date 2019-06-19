@@ -19,8 +19,8 @@ namespace Lion.SDK.Bitcoin.Markets
         public Art(string _key, string _secret) : base(_key, _secret)
         {
             base.Name = "Art";
-            base.WebSocket = "wss://api.collectionpark.com/wsv1";
-            base.HttpUrl = "http://api.collectionpark.com";
+            base.WebSocket = "wss://api.artradex.io/wsv1";
+            base.HttpUrl = "http://api.artradex.io";
             base.OnReceivedEvent += Art_OnReceivedEvent;
         }
         #endregion
@@ -256,5 +256,41 @@ namespace Lion.SDK.Bitcoin.Markets
             return _order;
         }
         #endregion
+
+        #region GetOrders
+        public Orders GetOrders()
+        {
+            string _url = "/POST/rest/art/auth/orders";
+
+            JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true);
+            if (_token == null) { return null; }
+
+            Orders _orders = new Orders();
+            foreach (var _item in _token)
+            {
+                OrderItem _order = new OrderItem();
+                _order.Id = _item[0].Value<string>();
+                _order.Pair = _item[1].Value<string>();
+                _order.Side = _item[5].Value<decimal>() > 0 ? MarketSide.Bid : MarketSide.Ask;
+                _order.Amount = _item[4].Value<decimal>();
+                _order.Price = _item[5].Value<decimal>();
+                string _status = _item[9].Value<string>();
+                switch (_status)
+                {
+                    case "1": _order.Status = OrderStatus.New; break;
+                    case "2": _order.Status = OrderStatus.Filling; break;
+                    case "3": _order.Status = OrderStatus.Filled; break;
+                    case "4": _order.Status = OrderStatus.Canceled; break;
+                }
+
+                _order.FilledAmount = _item[3].Value<decimal>();
+                _order.FilledPrice = _item[6].Value<decimal>();
+                _orders.TryAdd(_order.Id, _order);
+            }
+
+            return _orders;
+        }
+        #endregion
+
     }
 }
