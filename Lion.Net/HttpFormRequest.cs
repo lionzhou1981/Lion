@@ -10,7 +10,7 @@ namespace Lion.Net
 {
     public static class HttpFormRequest
     {
-        static bool PostFormData(string url, Dictionary<string, string> _headers, Dictionary<string, string> _formDicts, out string _result, CredentialCache _credentialCache = null, int _timeOut = 60 * 1000)
+        public static bool PostFormData(string url, Dictionary<string, string> _headers, Dictionary<string, string> _formDicts, out string _result, CredentialCache _credentialCache = null, int _timeOut = 60 * 1000)
         {
             _result = "";
             try
