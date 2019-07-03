@@ -203,5 +203,65 @@ namespace Lion
             return _binary;
         }
         #endregion
+
+        #region GeneratePixelImage
+        public static Image GeneratePixelImage(int _imageSize = 240, int _tileSize = 20, int _margin = 20, bool _mirrorX = true, bool _mirrorY = false, bool _border = true, string _borderColor = "#000000", Image _backGround = null)
+        {
+
+            var _ranks = (_imageSize - _margin * 2) / _tileSize;
+            var _image = new System.Drawing.Bitmap(_imageSize, _imageSize);
+            using (Graphics _g = Graphics.FromImage(_image))
+            {
+                if (_backGround != null)
+                {
+                    _g.DrawImage(_backGround, 0, 0, _imageSize, _imageSize);
+                }
+                if (_border)
+                {
+                    Color _bdColor = ColorTranslator.FromHtml(_borderColor);
+                    var _pen = new Pen(_bdColor, 1);
+                    for (var x = 0; x <= _tileSize * _ranks; x += _tileSize)
+                    {
+                        _g.DrawLine(_pen, x + _margin, _margin, x + _margin, _tileSize * _ranks + _margin);
+                    }
+                    for (var y = 0; y <= _tileSize * _ranks; y += _tileSize)
+                    {
+                        _g.DrawLine(_pen, _margin, y + _margin, _tileSize * _ranks + _margin, y + _margin);
+                    }
+                }
+                List<Tuple<int, int>> _boxes = new List<Tuple<int, int>>();
+                var _randomRegionX = _mirrorX ? _ranks / 2 + 1 : _ranks;
+                var _randomRegionY = _mirrorY ? _ranks / 2 + 1 : _ranks;
+                var _tileCountLimit = _mirrorX && _mirrorY ? (_ranks * _ranks) / 4 : !_mirrorX && !_mirrorY ? _ranks * _ranks : (_ranks * _ranks) / 2;
+                var _count = new Random(RandomPlus.RandomSeed).Next(5, _tileCountLimit);
+                while (_boxes.Count() < _count)
+                {
+                    int _x = new Random(RandomPlus.RandomSeed).Next(0, _randomRegionX);
+                    int _y = new Random(RandomPlus.RandomSeed).Next(0, _randomRegionY);
+                    if (_boxes.Count(t => t.Item1 == _x && t.Item2 == _y) <= 0)
+                        _boxes.Add(new Tuple<int, int>(_x, _y));
+                }
+                var _colorG = new Random(RandomPlus.RandomSeed).Next(0, 200);
+                var _colorR = new Random(RandomPlus.RandomSeed).Next(0, 200);
+                var _colorB = new Random(RandomPlus.RandomSeed).Next(0, 200);
+                Color _color = Color.FromArgb(255, _colorR, _colorG, _colorB);
+                Brush _brush = new Pen(_color).Brush;
+
+                for (var i = 0; i < _boxes.Count; i++)
+                {
+                    var _boxDraw = _boxes[i];
+                    _g.FillRectangle(_brush, _boxDraw.Item1 * _tileSize + _margin, _boxDraw.Item2 * _tileSize + _margin, _tileSize, _tileSize);
+                    if (_mirrorX)
+                        _g.FillRectangle(_brush, (int)((_ranks - _boxDraw.Item1 - 1) * _tileSize + _margin), _boxDraw.Item2 * _tileSize + _margin, _tileSize, _tileSize);
+                    if (_mirrorY)
+                        _g.FillRectangle(_brush, _boxDraw.Item1 * _tileSize + _margin, (int)((_ranks - _boxDraw.Item2 - 1) * _tileSize + _margin), _tileSize, _tileSize);
+                    if (_mirrorX && _mirrorY)
+                        _g.FillRectangle(_brush, (int)((_ranks - _boxDraw.Item1 - 1) * _tileSize + _margin), (int)((_ranks - _boxDraw.Item2 - 1) * _tileSize + _margin), _tileSize, _tileSize);
+                }
+                _g.Save();
+            }
+            return _image;
+        }
+        #endregion
     }
 }
