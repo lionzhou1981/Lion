@@ -8,16 +8,16 @@ using System.Text;
 
 namespace Lion
 {
-    public class BitmapManager
+    public static class BitmapPlus
     {
         #region Crop
         public static byte[] Crop(byte[] _source, int _source_x, int _source_y, int _source_w, int _source_h, int _target_w, int _target_h, ImageCodecInfo _codecInfo, EncoderParameters _paraments)
         {
-            return BitmapManager.Crop(new MemoryStream(_source), _source_x, _source_y, _source_w, _source_h, _target_w, _target_h, _codecInfo, _paraments);
+            return BitmapPlus.Crop(new MemoryStream(_source), _source_x, _source_y, _source_w, _source_h, _target_w, _target_h, _codecInfo, _paraments);
         }
         public static byte[] Crop(Stream _stream, int _source_x, int _source_y, int _source_w, int _source_h, int _target_w, int _target_h, ImageCodecInfo _codecInfo, EncoderParameters _paraments)
         {
-            Bitmap _source_bitmap = (Bitmap)Bitmap.FromStream(_stream);
+            Bitmap _source_bitmap = (Bitmap)Image.FromStream(_stream);
             Bitmap _target_bitmap = new Bitmap(_target_w, _target_h);
 
             Graphics _graphics = Graphics.FromImage(_target_bitmap);
@@ -39,11 +39,11 @@ namespace Lion
         #region Resize
         public static byte[] Resize(byte[] _source, int _target_width, int _target_height, ImageCodecInfo _codecInfo, EncoderParameters _paraments)
         {
-            return BitmapManager.Resize(new MemoryStream(_source), _target_width, _target_height, _codecInfo, _paraments);
+            return BitmapPlus.Resize(new MemoryStream(_source), _target_width, _target_height, _codecInfo, _paraments);
         }
         public static byte[] Resize(Stream _stream, int _target_width, int _target_height, ImageCodecInfo _codecInfo, EncoderParameters _paraments)
         {
-            Bitmap _source_bitmap = (Bitmap)Bitmap.FromStream(_stream);
+            Bitmap _source_bitmap = (Bitmap)Image.FromStream(_stream);
 
             int _target_x = 0;
             int _target_y = 0;

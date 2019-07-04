@@ -16,4 +16,7 @@
   <ItemGroup>
     <Compile Remove="Coins\Eos.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Explorers\" />
+  </ItemGroup>
 </Project>

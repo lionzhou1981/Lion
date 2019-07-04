@@ -159,48 +159,19 @@ namespace Lion.Encrypt
         }
         #endregion
 
-        #region Entry
-        public Tuple<bool, string, int> PrivateKeyToPublicKey(string _privatekey)
+        #region PrivateKeyToPublicKey
+        public string PrivateKeyToPublicKey(string _privateKey, out int _zeros)
         {
-            try
-            {
-                if (_privatekey.Length != 64)
-                    return new Tuple<bool, string, int>(false, "PrivateKey Length not 64(32bit)", 0);
-                var _pubKey = Multiplication(BigInteger.Parse(_privatekey, NumberStyles.HexNumber));
-                var _xPos = BytesToHexString(_pubKey.x.ToByteArray()).ToLower();
-                var _yPos = BytesToHexString(_pubKey.y.ToByteArray()).ToLower();
-                var _zeros = (_xPos.StartsWith("00") ? 1 : 0) + (_yPos.StartsWith("00") ? 1 : 0);
-                return new Tuple<bool, string, int>(true, string.Join("", "04", _xPos.TrimStart('0'), _yPos.TrimStart('0')), _zeros);
-            }
-            catch (Exception _ex)
-            {
-                return new Tuple<bool, string, int>(false, _ex.StackTrace + "|" + _ex.Message, 0);
-            }
-        }
-        #endregion
+            _zeros = 0;
 
-        #region Converter
-        /// <summary>
-        /// 将字节数组输出为字符串
-        /// </summary>
-        public static string BytesToHexString(byte[] bytes)
-        {
-            StringBuilder builder = new StringBuilder();
-            for (int i = bytes.Length - 1; i >= 0; i--)
-            {
-                builder.Append(bytes[i].ToString("X2"));
-            }
-            return builder.ToString();
-        }
-        public static byte[] StringToToHexByte(string hexString)
-        {
-            hexString = hexString.Replace(" ", "");
-            if ((hexString.Length % 2) != 0)
-                hexString += " ";
-            byte[] returnBytes = new byte[hexString.Length / 2];
-            for (int i = 0; i < returnBytes.Length; i++)
-                returnBytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
-            return returnBytes;
+            if (_privateKey.Length != 64) { throw new Exception("Private key length must be 64."); }
+
+            ECPoint _pubKey = Multiplication(BigInteger.Parse(_privateKey, NumberStyles.HexNumber));
+            string _xPos = HexPlus.ByteArrayToHexString(_pubKey.x.ToByteArray());
+            string _yPos = HexPlus.ByteArrayToHexString(_pubKey.y.ToByteArray());
+            _zeros = (_xPos.StartsWith("00") ? 1 : 0) + (_yPos.StartsWith("00") ? 1 : 0);
+            return string.Join("", "04", _xPos.TrimStart('0'), _yPos.TrimStart('0'));
+
         }
         #endregion
     }

@@ -6,7 +6,6 @@ namespace Lion.Encrypt
 {
     public class Keccak256
     {
-        static int BUFFER_SIZE = 64 * 1024;
         ulong[] m_state = new ulong[25];
         ulong m_processed_bytes;
         byte[] Data_Buffer;
@@ -27,12 +26,12 @@ namespace Lion.Encrypt
 
         public string ComputeHashByString(string _data)
         {
-            var _hashed = Compute(System.Text.UTF8Encoding.UTF8.GetBytes(_data));
-            return ConvertBytesToHexString(_hashed).Replace("-","").ToLower();
+            var _hashed = Compute(Encoding.UTF8.GetBytes(_data));
+            return ConvertBytesToHexString(_hashed).Replace("-", "").ToLower();
         }
         public string ComputeHashByHex(string _data)
         {
-            var _hashed = Compute(Lion.Encrypt.Secp256k1.StringToToHexByte(_data));
+            var _hashed = Compute(HexPlus.HexStringToByteArray(_data));
             return HexPlus.ByteArrayToHexString(_hashed).Replace("-", "").ToLower();
         }
         #endregion

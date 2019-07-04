@@ -8,7 +8,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
-    //BTC
     public class Bitcoin
     {
         #region IsAddress
@@ -212,28 +211,29 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
- 
 
-        public static Tuple<bool, string, string, string> GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
+        public static Address GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
         {
-            var _netVersion = _mainNet ? "00" : "ef";
-            var _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            var _secpHashed = new Lion.Encrypt.Secp256k1().PrivateKeyToPublicKey(_privateKey);
-            if (!_secpHashed.Item1)
-                return new Tuple<bool, string, string, string>(false, _secpHashed.Item2, "", "");
-            string _publicKey = _secpHashed.Item2;
+            string _netVersion = _mainNet ? "00" : "ef";
+            string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
+            string _publicKey = new Secp256k1().PrivateKeyToPublicKey(_privateKey, out int _zeros);
 
             HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
-            var _sha1 = _shahasher.ComputeHash(Lion.HexPlus.HexStringToByteArray(_publicKey));
-            var _ripemd = new Lion.Encrypt.RIPEMD160Managed();
+            var _sha1 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_publicKey));
+            var _ripemd = new RIPEMD160Managed();
             var _ripemdHashed = BitConverter.ToString(_ripemd.ComputeHash(_sha1)).Replace("-", "");
             var _versioned = _netVersion + _ripemdHashed;
-            var _sha2 = _shahasher.ComputeHash(Lion.HexPlus.HexStringToByteArray(_versioned));
+            var _sha2 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_versioned));
             var _sha3 = _shahasher.ComputeHash(_sha2);
             var _verifyCode = BitConverter.ToString(_sha3).Replace("-", "").Substring(0, 8);
-            var _address = Lion.Encrypt.Base58.Encode(_versioned + _verifyCode);
-            _address = (_secpHashed.Item3 > 1 ? "11" : "1") + _address;
-            return new Tuple<bool, string, string, string>(true, _privateKey, _publicKey, _address);
+
+            Address _address = new Address();
+            _address.Text = Base58.Encode(_versioned + _verifyCode);
+            _address.PublicKey = _publicKey;
+            _address.PrivateKey = _privateKey;
+            _address.Text = (_zeros > 1 ? "11" : "1") + _address.Text;
+
+            return _address;
         }
     }
 }

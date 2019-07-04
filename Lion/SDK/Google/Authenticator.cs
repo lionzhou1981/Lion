@@ -4,9 +4,9 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Lion.SDK
+namespace Lion.SDK.Google
 {
-    public class GoogleAuthenticator
+    public class Authenticator
     {
         private const int PIN_LENGTH = 6;
         private const int INTERVAL_LENGTH = 30;
@@ -18,7 +18,7 @@ namespace Lion.SDK
 
         public static byte[] GenerateRandomBytes()
         {
-            byte[] _byteArray=new byte[10];
+            byte[] _byteArray = new byte[10];
             RNGCryptoServiceProvider _rnd = new RNGCryptoServiceProvider();
             _rnd.GetBytes(_byteArray);
             return _byteArray;
@@ -26,14 +26,14 @@ namespace Lion.SDK
 
         public static string GenerateRandomString(byte[] _randomByteArray)
         {
-            return GoogleAuthenticator.Base32Encode(_randomByteArray);
+            return Authenticator.Base32Encode(_randomByteArray);
         }
 
         public static long GetCurrentInterval()
         {
             TimeSpan _timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             long _currentTimeSeconds = (long)Math.Floor(_timeSpan.TotalSeconds);
-            long _currentInterval = _currentTimeSeconds / GoogleAuthenticator.INTERVAL_LENGTH;
+            long _currentInterval = _currentTimeSeconds / Authenticator.INTERVAL_LENGTH;
             return _currentInterval;
         }
 
@@ -55,8 +55,8 @@ namespace Lion.SDK
             Array.Reverse(_fourBytes);
             int _finalInt = BitConverter.ToInt32(_fourBytes, 0);
             int _truncatedHash = _finalInt & 0x7FFFFFFF;
-            int _pinValue = _truncatedHash % (int)Math.Pow(10, GoogleAuthenticator.PIN_LENGTH); 
-            return _pinValue.ToString().PadLeft(GoogleAuthenticator.PIN_LENGTH, '0');
+            int _pinValue = _truncatedHash % (int)Math.Pow(10, Authenticator.PIN_LENGTH);
+            return _pinValue.ToString().PadLeft(Authenticator.PIN_LENGTH, '0');
         }
 
         private static string UrlEncode(string _value)
@@ -65,7 +65,7 @@ namespace Lion.SDK
 
             foreach (char _symbol in _value)
             {
-                if (GoogleAuthenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
+                if (Authenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
                 {
                     _result.Append(_symbol);
                 }
@@ -78,9 +78,9 @@ namespace Lion.SDK
             return _result.ToString();
         }
 
-        public static string GenerateImageUrl(int _width, int _height, string _code, string _randomString,string _issuer)
+        public static string GenerateImageUrl(int _width, int _height, string _code, string _randomString, string _issuer)
         {
-            string _chl = GoogleAuthenticator.UrlEncode(String.Format("otpauth://totp/{0}?secret={1}&issuer={2}", _code, _randomString, _issuer));
+            string _chl = Authenticator.UrlEncode(String.Format("otpauth://totp/{0}?secret={1}&issuer={2}", _code, _randomString, _issuer));
             string _url = "http://chart.apis.google.com/chart?cht=qr&chs=" + _width + "x" + _height + "&chl=" + _chl;
             return _url;
         }

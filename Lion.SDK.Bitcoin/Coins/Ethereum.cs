@@ -1,10 +1,11 @@
-﻿using Lion.Net;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using Lion.Encrypt;
+using Lion.Net;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
@@ -88,20 +89,18 @@ namespace Lion.SDK.Bitcoin.Coins
         }
         #endregion
 
-
-        public static Tuple<bool, string, string, string> GenerateAddress(string _existsPrivateKey = "")
+        public static Address GenerateAddress(string _existsPrivateKey = "")
         {
-            var _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            var _secpHashed = new Lion.Encrypt.Secp256k1().PrivateKeyToPublicKey(_privateKey);
-            if (!_secpHashed.Item1)
-                return new Tuple<bool, string, string, string>(false, _secpHashed.Item2, "", "");
-            string _publicKey = _secpHashed.Item2;
-            string _correctPublicKey = _publicKey.Substring(2);//remove 04 start;
-            var _keccakHasher = new Lion.Encrypt.Keccak256();
-            var _hexAddress = _keccakHasher.ComputeHashByHex(_correctPublicKey);
-            var _address = "0x" + _hexAddress.Substring(_hexAddress.Length - 40);
-            return new Tuple<bool, string, string, string>(true, _privateKey, _correctPublicKey, _address);
-        }
+            Address _address = new Address();
+            _address.PrivateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
 
+            _address.PublicKey = new Secp256k1().PrivateKeyToPublicKey(_address.PrivateKey, out int _zeros);
+            _address.PublicKey = _address.PublicKey.Substring(2);//remove 04 start;
+            var _keccakHasher = new Keccak256();
+            var _hexAddress = _keccakHasher.ComputeHashByHex(_address.PublicKey);
+            _address.Text = "0x" + _hexAddress.Substring(_hexAddress.Length - 40);
+
+            return _address;
+        }
     }
 }
