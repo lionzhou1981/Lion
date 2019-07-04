@@ -15,4 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Lion\Lion.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="HttpClient.cs" />
+  </ItemGroup>
 </Project>
