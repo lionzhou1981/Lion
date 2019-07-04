@@ -246,7 +246,7 @@ namespace Lion.Net
                 _result = _e.Message + "|" + _e.StackTrace;
                 return false;
             }
-            #endregion
         }
+        #endregion
     }
 }

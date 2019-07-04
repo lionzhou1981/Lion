@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion", "Lion\Lion.csproj", "{8531A0EF-E0EB-4BC7-A42F-0B6F6F464C13}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{E50F3E2A-ABC5-409C-95AD-F6A372EBCDD8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Net", "Lion.Net\Lion.Net.csproj", "{E50F3E2A-ABC5-409C-95AD-F6A372EBCDD8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK.Bitcoin", "Lion.SDK.Bitcoin\Lion.SDK.Bitcoin.csproj", "{BC434E3C-1194-4FD7-87C4-6A2F1CBAD35C}"
 EndProject
