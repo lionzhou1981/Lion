@@ -19,7 +19,7 @@ namespace Lion.SDK.Mailgun
         public string ApiKey { get => apiKey; set => apiKey = value; }
         public string Domain { get => domain; set => domain = value; }
 
-        public bool Send(string _subject, string _from, string _to, string _content)
+        public bool Send(string _subject, string _from, string _to, string _nickName, string _content)
         {
             ServicePointManager.Expect100Continue = false;
             CredentialCache _credentialCache = new CredentialCache();

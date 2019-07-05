@@ -231,7 +231,7 @@ namespace Lion.Net
 
                 var _response = (HttpWebResponse)_request.GetResponse();
                 Stream _responseStream = _response.GetResponseStream();
-                if (_response.ContentEncoding.ToLower().Contains("gzip"))
+                if (_response.ContentEncoding != null && _response.ContentEncoding.ToLower().Contains("gzip"))
                     _responseStream = new GZipStream(_responseStream, CompressionMode.Decompress);
 
                 StreamReader reader = new StreamReader(_responseStream, Encoding.UTF8);
