@@ -29,7 +29,7 @@ namespace Lion.SDK.Mailgun
             Dictionary<string, string> _formdata = new Dictionary<string, string>();
             _formdata.Add("domain", Domain);
             _formdata.Add("from", _from);
-            _formdata.Add("to", _to);
+            _formdata.Add("to", $"{_nickName} <{_to}>");
             _formdata.Add("subject", _subject);
             _formdata.Add("text", _content);
             string _result = "";
