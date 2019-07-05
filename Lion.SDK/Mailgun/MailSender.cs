@@ -19,8 +19,9 @@ namespace Lion.SDK.Mailgun
         public string ApiKey { get => apiKey; set => apiKey = value; }
         public string Domain { get => domain; set => domain = value; }
 
-        public bool Send(string _subject, string _from, string _to, string _nickName, string _content)
+        public bool Send(string _subject, string _from, string _to, string _nickName, string _content, bool _ishtml, out string _result)
         {
+            _result = "";
             ServicePointManager.Expect100Continue = false;
             CredentialCache _credentialCache = new CredentialCache();
             _credentialCache.Add(new Uri("https://api.mailgun.net/v3"), "Basic", new NetworkCredential("api", ApiKey));
@@ -31,8 +32,10 @@ namespace Lion.SDK.Mailgun
             _formdata.Add("from", _from);
             _formdata.Add("to", $"{_nickName} <{_to}>");
             _formdata.Add("subject", _subject);
-            _formdata.Add("text", _content);
-            string _result = "";
+            if (!_ishtml)
+                _formdata.Add("text", _content);
+            else
+                _formdata.Add("html", _content);
             if (Lion.Net.HttpClient.PostAsFormData("https://api.mailgun.net/v3/mail.isdice.com/messages", _headers, _formdata, out _result, _credentialCache, 120 * 1000))
             {
                 return !string.IsNullOrWhiteSpace(JObject.Parse(_result)["id"].ToString());
