@@ -6,7 +6,7 @@ using System.Linq;
 using System.IO;
 using System.Text;
 
-namespace Lion
+namespace Lion.Drawing
 {
     public static class BitmapPlus
     {
@@ -213,9 +213,9 @@ namespace Lion
             using (Graphics _g = Graphics.FromImage(_image))
             {
                 if (_backGround != null)
-                {
-                    _g.DrawImage(_backGround, 0, 0, _imageSize, _imageSize);
-                }
+                    _g.DrawImage(_backGround, 0, 0, _imageSize, _imageSize);                
+                else
+                    _g.FillRectangle(new SolidBrush(Color.White),0,0,_imageSize,_imageSize);
                 if (_border)
                 {
                     Color _bdColor = ColorTranslator.FromHtml(_borderColor);

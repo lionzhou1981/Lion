@@ -15,7 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Data.MySqlClient", "Li
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK", "Lion.SDK\Lion.SDK.csproj", "{A3C11BC0-BF63-4224-B63F-710342491BC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{EB3F6CB2-2CE2-4CE1-8636-391EB6669BE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{EB3F6CB2-2CE2-4CE1-8636-391EB6669BE9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lion.Drawing", "Lion.Drawing\Lion.Drawing.csproj", "{EC4923F9-F2D0-480F-811A-949DB63AFC19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{EB3F6CB2-2CE2-4CE1-8636-391EB6669BE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB3F6CB2-2CE2-4CE1-8636-391EB6669BE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB3F6CB2-2CE2-4CE1-8636-391EB6669BE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
