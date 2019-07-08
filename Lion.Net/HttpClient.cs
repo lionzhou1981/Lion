@@ -197,6 +197,8 @@ namespace Lion.Net
                 _request.Timeout = _timeOut;
                 if (_credentialCache != null)
                     _request.Credentials = _credentialCache;
+                else
+                    _request.UseDefaultCredentials = true;
                 _headers.ToList().ForEach(t =>
                 {
                     if (t.Key == "Host")
