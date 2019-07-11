@@ -197,6 +197,8 @@ namespace Lion.Net
                 _request.Timeout = _timeOut;
                 if (_credentialCache != null)
                     _request.Credentials = _credentialCache;
+                else
+                    _request.UseDefaultCredentials = true;
                 _headers.ToList().ForEach(t =>
                 {
                     if (t.Key == "Host")
@@ -231,7 +233,7 @@ namespace Lion.Net
 
                 var _response = (HttpWebResponse)_request.GetResponse();
                 Stream _responseStream = _response.GetResponseStream();
-                if (_response.ContentEncoding.ToLower().Contains("gzip"))
+                if (_response.ContentEncoding != null && _response.ContentEncoding.ToLower().Contains("gzip"))
                     _responseStream = new GZipStream(_responseStream, CompressionMode.Decompress);
 
                 StreamReader reader = new StreamReader(_responseStream, Encoding.UTF8);
