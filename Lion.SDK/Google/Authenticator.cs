@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Lion;
+using Lion.Encrypt;
 
 namespace Lion.SDK.Google
 {
@@ -16,33 +18,30 @@ namespace Lion.SDK.Google
         private const int OUT_BYTE_SIZE = 5;
         private static char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".ToCharArray();
 
-        public static byte[] GenerateRandomBytes()
+        public static string GenerateKey(int _length = 10)
         {
-            byte[] _byteArray = new byte[10];
+            byte[] _byteArray = new byte[_length];
             RNGCryptoServiceProvider _rnd = new RNGCryptoServiceProvider();
             _rnd.GetBytes(_byteArray);
-            return _byteArray;
+
+            return Base32.Encode(_byteArray);
         }
 
-        public static string GenerateRandomString(byte[] _randomByteArray)
+        public static string CalculateCode(string _key, long _tick = -1)
         {
-            return Authenticator.Base32Encode(_randomByteArray);
-        }
+            if (_tick == -1)
+            {
+                TimeSpan _timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                long _currentTimeSeconds = (long)Math.Floor(_timeSpan.TotalSeconds);
+                _tick = _currentTimeSeconds / Authenticator.INTERVAL_LENGTH;
+            }
 
-        public static long GetCurrentInterval()
-        {
-            TimeSpan _timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            long _currentTimeSeconds = (long)Math.Floor(_timeSpan.TotalSeconds);
-            long _currentInterval = _currentTimeSeconds / Authenticator.INTERVAL_LENGTH;
-            return _currentInterval;
-        }
+            byte[] _keyByteArray = HexPlus.HexStringToByteArray(_key);
 
-        public static string GenerateResponseCode(long _challenge, byte[] _randomByteArray)
-        {
-            HMACSHA1 _myHmac = new HMACSHA1(_randomByteArray);
+            HMACSHA1 _myHmac = new HMACSHA1(_keyByteArray);
             _myHmac.Initialize();
 
-            byte[] _value = BitConverter.GetBytes(_challenge);
+            byte[] _value = BitConverter.GetBytes(_tick);
             Array.Reverse(_value);
             _myHmac.ComputeHash(_value);
             byte[] _hash = _myHmac.Hash;
@@ -59,11 +58,13 @@ namespace Lion.SDK.Google
             return _pinValue.ToString().PadLeft(Authenticator.PIN_LENGTH, '0');
         }
 
-        private static string UrlEncode(string _value)
+        public static string MakeQRCode(string _key, string _title, string _issuer)
         {
-            StringBuilder _result = new StringBuilder();
+            // http://chart.apis.google.com/chart?cht=qr&chs=200x200&chl=xxxx
+            string _url = $"otpauth://totp/{_title}?secret={_key}&issuer={_issuer}";
 
-            foreach (char _symbol in _value)
+            StringBuilder _result = new StringBuilder();
+            foreach (char _symbol in _url)
             {
                 if (Authenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
                 {
@@ -74,52 +75,7 @@ namespace Lion.SDK.Google
                     _result.Append('%' + String.Format("{0:X2}", (int)_symbol));
                 }
             }
-
             return _result.ToString();
-        }
-
-        public static string GenerateImageUrl(int _width, int _height, string _code, string _randomString, string _issuer)
-        {
-            string _chl = Authenticator.UrlEncode(String.Format("otpauth://totp/{0}?secret={1}&issuer={2}", _code, _randomString, _issuer));
-            string _url = "http://chart.apis.google.com/chart?cht=qr&chs=" + _width + "x" + _height + "&chl=" + _chl;
-            return _url;
-        }
-
-        public static string Base32Encode(byte[] data)
-        {
-            int i = 0, index = 0, digit = 0;
-            int current_byte, next_byte;
-            StringBuilder result = new StringBuilder((data.Length + 7) * IN_BYTE_SIZE / OUT_BYTE_SIZE);
-
-            while (i < data.Length)
-            {
-                current_byte = (data[i] >= 0) ? data[i] : (data[i] + 256); // Unsign
-
-                /* Is the current digit going to span a byte boundary? */
-                if (index > (IN_BYTE_SIZE - OUT_BYTE_SIZE))
-                {
-                    if ((i + 1) < data.Length)
-                        next_byte = (data[i + 1] >= 0) ? data[i + 1] : (data[i + 1] + 256);
-                    else
-                        next_byte = 0;
-
-                    digit = current_byte & (0xFF >> index);
-                    index = (index + OUT_BYTE_SIZE) % IN_BYTE_SIZE;
-                    digit <<= index;
-                    digit |= next_byte >> (IN_BYTE_SIZE - index);
-                    i++;
-                }
-                else
-                {
-                    digit = (current_byte >> (IN_BYTE_SIZE - (index + OUT_BYTE_SIZE))) & 0x1F;
-                    index = (index + OUT_BYTE_SIZE) % IN_BYTE_SIZE;
-                    if (index == 0)
-                        i++;
-                }
-                result.Append(alphabet[digit]);
-            }
-
-            return result.ToString();
         }
     }
 }

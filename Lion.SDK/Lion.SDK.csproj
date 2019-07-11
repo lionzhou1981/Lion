@@ -5,6 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Lion\Lion.csproj" />
+    <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Google\" />
   </ItemGroup>
 </Project>
