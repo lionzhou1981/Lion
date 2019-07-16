@@ -320,7 +320,7 @@ namespace Lion.Drawing.QRCode
 
             public override string ToString()
             {
-                return (!this.url.StartsWith("http") ? "http://" + this.url : this.url);
+                return this.url;
             }
         }
 

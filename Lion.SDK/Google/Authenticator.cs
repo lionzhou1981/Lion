@@ -61,10 +61,14 @@ namespace Lion.SDK.Google
         public static string MakeQRCode(string _key, string _title, string _issuer)
         {
             // http://chart.apis.google.com/chart?cht=qr&chs=200x200&chl=xxxx
-            string _url = $"otpauth://totp/{_title}?secret={_key}&issuer={_issuer}";
 
+            return $"otpauth://totp/{FormatParam(_title)}?secret={FormatParam(_key)}&issuer={FormatParam(_issuer)}";
+        }
+
+        private static string FormatParam(string _param)
+        {
             StringBuilder _result = new StringBuilder();
-            foreach (char _symbol in _url)
+            foreach (char _symbol in _param)
             {
                 if (Authenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
                 {

@@ -35,26 +35,37 @@ namespace Lion.Drawing
             Utf8 = 26
         }
 
-        public static string GenerateToBase64String(string _txt, int _size = 20)
+        public static string GenerateToBase64String(string _txt, int _size = 20, bool _isurl = false)
         {
-            Image _img = Generate(_txt,_size);
-            byte[] _bytes = new byte[0]{};
-            using(MemoryStream _ms = new MemoryStream())
+            Image _img = Generate(_txt, _size, _isurl);
+            byte[] _bytes = new byte[0] { };
+            using (MemoryStream _ms = new MemoryStream())
             {
-                _img.Save(_ms,System.Drawing.Imaging.ImageFormat.Jpeg);
+                _img.Save(_ms, System.Drawing.Imaging.ImageFormat.Jpeg);
                 _bytes = _ms.ToArray();
             }
             return Convert.ToBase64String(_bytes);
         }
-        public static Bitmap Generate(string _txt, int _size = 20)
+        public static Bitmap Generate(string _txt, int _size = 20, bool _isurl = false)
         {
-            return Generate(_txt, _size, Color.Black, Color.White, ECCLevel.L, true);
+            return Generate(_txt, _size, Color.Black, Color.White, ECCLevel.L, _isurl, false, false, EciMode.Utf8, -1, null);
         }
-        public static Bitmap Generate(string _txt, int _size, Color darkColor, Color lightColor, ECCLevel eccLevel, bool forceUtf8 = false, bool utf8BOM = false, EciMode eciMode = EciMode.Default, int requestedVersion = -1, Bitmap icon = null, int iconSizePercent = 15, int iconBorderWidth = 6, bool drawQuietZones = true)
+        public static Bitmap Generate(string _txt, int _size, Color darkColor, Color lightColor, ECCLevel eccLevel, bool _isurl = false, bool forceUtf8 = false, bool utf8BOM = false, EciMode eciMode = EciMode.Default, int requestedVersion = -1, Bitmap icon = null, int iconSizePercent = 15, int iconBorderWidth = 6, bool drawQuietZones = true)
         {
-            using (var _data = CreateQrCode(_txt, eccLevel, forceUtf8, utf8BOM, eciMode, requestedVersion))
+            if (!_isurl)
             {
-                return GetGraphic(_data, _size, darkColor, lightColor, icon, iconSizePercent, iconBorderWidth, drawQuietZones);
+                using (var _data = CreateQrCode(_txt, eccLevel, forceUtf8, utf8BOM, eciMode, requestedVersion))
+                {
+                    return GetGraphic(_data, _size, darkColor, lightColor, icon, iconSizePercent, iconBorderWidth, drawQuietZones);
+                }
+            }
+            else
+            {
+                string _url = new PayloadGenerator.Url(_txt).ToString();
+                using (var _data = CreateQrCode(_url, ECCLevel.Q))
+                {
+                    return GetGraphic(_data, _size, darkColor, lightColor, icon, iconSizePercent, iconBorderWidth, drawQuietZones);
+                }
             }
         }
 
