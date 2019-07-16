@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.IO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,6 +35,17 @@ namespace Lion.Drawing
             Utf8 = 26
         }
 
+        public static string GenerateToBase64String(string _txt, int _size = 20)
+        {
+            Image _img = Generate(_txt,_size);
+            byte[] _bytes = new byte[0]{};
+            using(MemoryStream _ms = new MemoryStream())
+            {
+                _img.Save(_ms,System.Drawing.Imaging.ImageFormat.Jpeg);
+                _bytes = _ms.ToArray();
+            }
+            return Convert.ToBase64String(_bytes);
+        }
         public static Bitmap Generate(string _txt, int _size = 20)
         {
             return Generate(_txt, _size, Color.Black, Color.White, ECCLevel.L, true);
