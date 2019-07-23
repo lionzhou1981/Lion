@@ -23,28 +23,56 @@ namespace Lion.SDK.Bitcoin.Nodes
         #region GetBlockCount
         public int GetBlockCount()
         {
-            return 0;
+            JObject _postData = new JObject();
+            _postData["method"] = "getblockcount";
+            _postData["params"] = new JArray();
+            _postData["id"] = "1";
+            JObject _result = Request(_postData);
+            if (!_result.ContainsKey("result"))
+                return 0;
+            return _result["result"].Value<int>();
         }
         #endregion
 
         #region GetBlockHash
-        public string GetBlockHash()
+        public string GetBlockHash(int _blockNumber)
         {
-            return "";
+            JObject _postData = new JObject();
+            _postData["method"] = "getblockhash";
+            _postData["params"] = new JArray() { _blockNumber };
+            _postData["id"] = "1";
+            JObject _result = Request(_postData);
+            if (!_result.ContainsKey("result"))
+                return "";
+            return _result["result"].Value<string>();
         }
         #endregion
 
         #region GetBlock
-        public JObject GetBlock()
+        public JObject GetBlock(string _hash)
         {
-            return null;
+            JObject _postData = new JObject();
+            _postData["method"] = "getblock";
+            _postData["params"] = new JArray() { _hash };
+            _postData["id"] = "1";
+            JObject _result = Request(_postData);
+            if (!_result.ContainsKey("result"))
+                return null;
+            return _result["result"].Value<JObject>();
         }
         #endregion
 
         #region GetRawTransaction
-        public JObject GetRawTransaction()
+        public JObject GetRawTransaction(string _hash)
         {
-            return null;
+             JObject _postData = new JObject();
+            _postData["method"] = "getrawtransaction";
+            _postData["params"] = new JArray() { _hash };
+            _postData["id"] = "1";
+            JObject _result = Request(_postData);
+            if (!_result.ContainsKey("result"))
+                return null;
+            return _result["result"].Value<JObject>();
         }
         #endregion
 
