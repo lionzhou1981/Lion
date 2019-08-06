@@ -79,14 +79,21 @@ namespace Lion.SDK.Bitcoin.Nodes
         #region EstimateSmartFee
         public decimal EstimateSmartFee(int _block = 10)
         {
-            return 0M;
+            JObject _postData = new JObject();
+            _postData["method"] = "estimatesmartfee";
+            _postData["params"] = new JArray() { _block };
+            _postData["id"] = "1";
+            JObject _result = Request(_postData);
+            if (!_result.ContainsKey("result"))
+                return 0M;
+            return _result["result"]["feerate"].Value<decimal>();
         }
         #endregion
 
         #region CreateRawTransaction
         public string CreateRawTransaction(JArray _in, JArray _out)
         {
-            return "";
+           return "";
         }
         #endregion
 

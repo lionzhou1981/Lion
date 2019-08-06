@@ -266,3 +266,7 @@ __pycache__/
 /Lion.SDK.Bitcoin/Properties/PublishProfiles
 .DS_Store
 .DS_Store
+.vscode/tasks.json
+.vscode/launch.json
+test/Program.cs
+test/test.csproj

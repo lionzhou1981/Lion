@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
+using System.Linq;
 
 namespace Lion.Encrypt
 {
@@ -160,17 +161,21 @@ namespace Lion.Encrypt
         #endregion
 
         #region PrivateKeyToPublicKey
-        public string PrivateKeyToPublicKey(string _privateKey, out int _zeros)
+        public string PrivateKeyToPublicKey(string _privateKey, out int _zeros, bool _compressKey = false)
         {
             _zeros = 0;
 
             if (_privateKey.Length != 64) { throw new Exception("Private key length must be 64."); }
 
             ECPoint _pubKey = Multiplication(BigInteger.Parse(_privateKey, NumberStyles.HexNumber));
-            string _xPos = HexPlus.ByteArrayToHexString(_pubKey.x.ToByteArray());
-            string _yPos = HexPlus.ByteArrayToHexString(_pubKey.y.ToByteArray());
+            var _x = _pubKey.x.ToByteArray().ToList();
+            _x.Reverse();
+            var _y = _pubKey.y.ToByteArray().ToList();
+            _y.Reverse();
+            string _xPos = HexPlus.ByteArrayToHexString(_x.ToArray());
+            string _yPos = HexPlus.ByteArrayToHexString(_y.ToArray());
             _zeros = (_xPos.StartsWith("00") ? 1 : 0) + (_yPos.StartsWith("00") ? 1 : 0);
-            return string.Join("", "04", _xPos.TrimStart('0'), _yPos.TrimStart('0'));
+            return string.Join("", "04", _xPos.StartsWith("00") ? _xPos.TrimStart('0') : _xPos, _yPos.StartsWith("00") ? _yPos.TrimStart('0') : _yPos);
 
         }
         #endregion
