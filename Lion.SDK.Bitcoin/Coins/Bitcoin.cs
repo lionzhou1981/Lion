@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using Lion;
 using Lion.Encrypt;
 using Lion.Net;
 using Newtonsoft.Json.Linq;
-using System.Linq;
 
 namespace Lion.SDK.Bitcoin.Coins
 {
@@ -234,9 +234,8 @@ namespace Lion.SDK.Bitcoin.Coins
 
         public static Address GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
         {
-            string _netVersion = _mainNet ? "00" : "ef";
+            string _netVersion = _mainNet ? "00" : "6f";
             string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            Console.WriteLine(_privateKey);
             string _publicKey = new Secp256k1().PrivateKeyToPublicKey(_privateKey, out int _zeros);
             HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
             var _sha1 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_publicKey));
@@ -250,7 +249,7 @@ namespace Lion.SDK.Bitcoin.Coins
             _address.Text = Base58.Encode(Lion.HexPlus.HexStringToByteArray(_versioned + _verifyCode));
             _address.PublicKey = _publicKey;
             _address.PrivateKey = _privateKey;
-            _address.Text = (_address.Text.StartsWith("1") ? "" : "1") + _address.Text;
+            _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
             return _address;
         }
     }
