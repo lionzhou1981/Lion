@@ -36,7 +36,7 @@ namespace Lion.SDK.Mailgun
                 _formdata.Add("text", _content);
             else
                 _formdata.Add("html", _content);
-            if (Lion.Net.HttpClient.PostAsFormData("https://api.mailgun.net/v3/mail.isdice.com/messages", _headers, _formdata, out _result, _credentialCache, 120 * 1000))
+            if (Lion.Net.HttpClient.PostAsFormData($"https://api.mailgun.net/v3/{Domain}/messages", _headers, _formdata, out _result, _credentialCache, 120 * 1000))
             {
                 return !string.IsNullOrWhiteSpace(JObject.Parse(_result)["id"].ToString());
             }
