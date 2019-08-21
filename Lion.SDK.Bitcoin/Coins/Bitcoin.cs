@@ -225,9 +225,9 @@ namespace Lion.SDK.Bitcoin.Coins
         /// </summary>
         /// <param name="_uncompressKey"></param>
         /// <returns></returns>
-        public static string CompressPrivateKey(string _uncompressKey)
+        public static string CompressPrivateKey(string _uncompressKey,bool _mainnet)
         {
-            string _orgKey = string.Join("", "80", _uncompressKey, "01");
+            string _orgKey = string.Join("", (!_mainnet ? "ef":"80"), _uncompressKey);
             string _addmin = HexPlus.ByteArrayToHexString(Lion.Encrypt.SHA.EncodeSHA256(Lion.Encrypt.SHA.EncodeSHA256(Lion.HexPlus.HexStringToByteArray(_orgKey))).Take(4).ToArray());
             return Base58.Encode(_orgKey + _addmin);
         }

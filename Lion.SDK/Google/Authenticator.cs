@@ -36,7 +36,7 @@ namespace Lion.SDK.Google
                 _tick = _currentTimeSeconds / Authenticator.INTERVAL_LENGTH;
             }
 
-            byte[] _keyByteArray = HexPlus.HexStringToByteArray(_key);
+            byte[] _keyByteArray = Base32.Decode(_key);
 
             HMACSHA1 _myHmac = new HMACSHA1(_keyByteArray);
             _myHmac.Initialize();
