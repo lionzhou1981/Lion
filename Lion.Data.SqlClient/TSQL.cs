@@ -13,98 +13,98 @@ namespace Lion.Data.SqlClient
         #region public
         #region Fields
         /// <summary>
-        /// TSQLÓï¾äÖĞFieldµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Fieldçš„é›†åˆ
         /// </summary>
         public FieldCollection Fields { get; set; }
         #endregion
 
         #region Groups
         /// <summary>
-        /// TSQLÓï¾äÖĞ¾ÛºÏµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­èšåˆçš„é›†åˆ
         /// </summary>
         public GroupCollection Groups { get; set; }
         #endregion
 
         #region Havings
         /// <summary>
-        /// TSQLÓï¾äÖĞHavingµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Havingçš„é›†åˆ
         /// </summary>
         public WhereCollection Havings { get; set; }
         #endregion
 
         #region IsWith
         /// <summary>
-        /// TSQLÓï¾äÊÇ·ñÊ¹ÓÃWithÓï¾ä
+        /// TSQLè¯­å¥æ˜¯å¦ä½¿ç”¨Withè¯­å¥
         /// </summary>
         public bool IsWith { get; set; }
         #endregion
 
         #region Orders
         /// <summary>
-        /// TSQLÓï¾äÖĞÅÅĞòµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­æ’åºçš„é›†åˆ
         /// </summary>
         public OrderCollection Orders { get; set; }
         #endregion
 
         #region Outputs
         /// <summary>
-        /// TSQLÓï¾äÖĞOutputµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Outputçš„é›†åˆ
         /// </summary>
         public OutputCollection Outputs { get; set; }
         #endregion
 
         #region Parameters
         /// <summary>
-        /// TSQLÓï¾äÖĞ²ÎÊıµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­å‚æ•°çš„é›†åˆ
         /// </summary>
         public IList<Parameter> Parameters { get; set; }
         #endregion
 
         #region Procedures
         /// <summary>
-        /// ´æ´¢¹ı³ÌµÄÃû³Æ£¬ÔÚTypeÎªProceduresÊ±ÓĞÓÃ
+        /// å­˜å‚¨è¿‡ç¨‹çš„åç§°ï¼Œåœ¨Typeä¸ºProceduresæ—¶æœ‰ç”¨
         /// </summary>
         public string Procedures { get; set; }
         #endregion
 
         #region Tables
         /// <summary>
-        /// TSQLÓï¾äÖĞTableµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Tableçš„é›†åˆ
         /// </summary>
         public TableCollection Tables { get; set; }
         #endregion
 
         #region Top
         /// <summary>
-        /// TSQLÓï¾äÖĞTopÊı×ÖµÄ¼¯ºÏ£¬0ÎªËùÓĞ
+        /// TSQLè¯­å¥ä¸­Topæ•°å­—çš„é›†åˆï¼Œ0ä¸ºæ‰€æœ‰
         /// </summary>
         public int Top { get; set; }
         #endregion
 
         #region Type
         /// <summary>
-        /// TSQL Óï¾äµÄÀàĞÍ
+        /// TSQL è¯­å¥çš„ç±»å‹
         /// </summary>
         public TSQLType Type { get; set; }
         #endregion
 
         #region Wheres
         /// <summary>
-        /// TSQLÓï¾äÖĞÌõ¼şµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­æ¡ä»¶çš„é›†åˆ
         /// </summary>
         public WhereCollection Wheres { get; set; }
         #endregion
 
         #region WithOrders
         /// <summary>
-        /// TSQLÓï¾äÖĞWithµÄÅÅĞò¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Withçš„æ’åºé›†åˆ
         /// </summary>
         public OrderCollection WithOrders { get; set; }
         #endregion
 
         #region WithWheres
         /// <summary>
-        /// TSQLÓï¾äÖĞWithµÄÌõ¼ş¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Withçš„æ¡ä»¶é›†åˆ
         /// </summary>
         public WhereCollection WithWheres { get; set; }
         #endregion
@@ -112,10 +112,10 @@ namespace Lion.Data.SqlClient
 
         #region Structure
         /// <summary>
-        /// TSQL(TSQLType) ¹¹Ôìº¯Êı
+        /// TSQL(TSQLType) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_type">SqlÃüÁîÀàĞÍ</param>
-        /// <param name="_tableName">TableÃû³Æ(Ñ¡Ìî)</param>
+        /// <param name="_type">Sqlå‘½ä»¤ç±»å‹</param>
+        /// <param name="_tableName">Tableåç§°(é€‰å¡«)</param>
         public TSQL(TSQLType _type, string _tableName = "")
         {
             this.Type = _type;
@@ -138,9 +138,9 @@ namespace Lion.Data.SqlClient
 
         #region ToSqlCommand
         /// <summary>
-        /// ¹¹¼şSqlCommand¶ÔÏó
+        /// æ„ä»¶SqlCommandå¯¹è±¡
         /// </summary>
-        /// <returns>SqlCommand¶ÔÏó</returns>
+        /// <returns>SqlCommandå¯¹è±¡</returns>
         public SqlCommand ToSqlCommand()
         {
             SqlCommand _return = new SqlCommand();
@@ -439,7 +439,7 @@ namespace Lion.Data.SqlClient
                 }
                 if (_orderBy.OrderType == OrderType.Value)
                 {
-                    // ÒÔºóĞèÒª¸Ä³É²ÎÊıµÄ
+                    // ä»¥åéœ€è¦æ”¹æˆå‚æ•°çš„
                     _return += "" + _orderBy.FieldName;
                 }
                 else

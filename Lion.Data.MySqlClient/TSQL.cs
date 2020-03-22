@@ -14,84 +14,84 @@ namespace Lion.Data.MySqlClient
         #region public
         #region Fields
         /// <summary>
-        /// TSQLÓï¾äÖĞFieldµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Fieldçš„é›†åˆ
         /// </summary>
         public FieldCollection Fields { get; set; }
         #endregion
 
         #region Groups
         /// <summary>
-        /// TSQLÓï¾äÖĞ¾ÛºÏµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­èšåˆçš„é›†åˆ
         /// </summary>
         public GroupCollection Groups { get; set; }
         #endregion
 
         #region Havings
         /// <summary>
-        /// TSQLÓï¾äÖĞHavingµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Havingçš„é›†åˆ
         /// </summary>
         public WhereCollection Havings { get; set; }
         #endregion
 
         #region Orders
         /// <summary>
-        /// TSQLÓï¾äÖĞÅÅĞòµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­æ’åºçš„é›†åˆ
         /// </summary>
         public OrderCollection Orders { get; set; }
         #endregion
 
         #region Outputs
         /// <summary>
-        /// TSQLÓï¾äÖĞOutputµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Outputçš„é›†åˆ
         /// </summary>
         public OutputCollection Outputs { get; set; }
         #endregion
 
         #region Parameters
         /// <summary>
-        /// TSQLÓï¾äÖĞ²ÎÊıµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­å‚æ•°çš„é›†åˆ
         /// </summary>
         public IList<Parameter> Parameters { get; set; }
         #endregion
 
         #region Procedures
         /// <summary>
-        /// ´æ´¢¹ı³ÌµÄÃû³Æ£¬ÔÚTypeÎªProceduresÊ±ÓĞÓÃ
+        /// å­˜å‚¨è¿‡ç¨‹çš„åç§°ï¼Œåœ¨Typeä¸ºProceduresæ—¶æœ‰ç”¨
         /// </summary>
         public string Procedures { get; set; }
         #endregion
 
         #region Tables
         /// <summary>
-        /// TSQLÓï¾äÖĞTableµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­Tableçš„é›†åˆ
         /// </summary>
         public TableCollection Tables { get; set; }
         #endregion
 
         #region Limit
         /// <summary>
-        /// TSQLÓï¾äÖĞLIMITÊı×ÖµÄ¼¯ºÏ£¬0ÎªËùÓĞ
+        /// TSQLè¯­å¥ä¸­LIMITæ•°å­—çš„é›†åˆï¼Œ0ä¸ºæ‰€æœ‰
         /// </summary>
         public int Limit { get; set; }
         #endregion
 
         #region Offset
         /// <summary>
-        /// TSQLÓï¾äÖĞOFFSETÊı×ÖµÄ¼¯ºÏ£¬0ÎªËùÓĞ
+        /// TSQLè¯­å¥ä¸­OFFSETæ•°å­—çš„é›†åˆï¼Œ0ä¸ºæ‰€æœ‰
         /// </summary>
         public int Offset { get; set; }
         #endregion
 
         #region Type
         /// <summary>
-        /// TSQL Óï¾äµÄÀàĞÍ
+        /// TSQL è¯­å¥çš„ç±»å‹
         /// </summary>
         public TSQLType Type { get; set; }
         #endregion
 
         #region Wheres
         /// <summary>
-        /// TSQLÓï¾äÖĞÌõ¼şµÄ¼¯ºÏ
+        /// TSQLè¯­å¥ä¸­æ¡ä»¶çš„é›†åˆ
         /// </summary>
         public WhereCollection Wheres { get; set; }
         #endregion
@@ -99,10 +99,10 @@ namespace Lion.Data.MySqlClient
 
         #region Structure
         /// <summary>
-        /// TSQL(TSQLType) ¹¹Ôìº¯Êı
+        /// TSQL(TSQLType) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_type">SqlÃüÁîÀàĞÍ</param>
-        /// <param name="_tableName">TableÃû³Æ(Ñ¡Ìî)</param>
+        /// <param name="_type">Sqlå‘½ä»¤ç±»å‹</param>
+        /// <param name="_tableName">Tableåç§°(é€‰å¡«)</param>
         public TSQL(TSQLType _type, string _tableName = "")
         {
             this.Type = _type;
@@ -123,9 +123,9 @@ namespace Lion.Data.MySqlClient
 
         #region ToSqlCommand
         /// <summary>
-        /// ¹¹¼şMySqlCommand¶ÔÏó
+        /// æ„ä»¶MySqlCommandå¯¹è±¡
         /// </summary>
-        /// <returns>MySqlCommand¶ÔÏó</returns>
+        /// <returns>MySqlCommandå¯¹è±¡</returns>
         public MySqlCommand ToSqlCommand()
         {
             MySqlCommand _return = new MySqlCommand();
@@ -199,15 +199,15 @@ namespace Lion.Data.MySqlClient
                                 _return += GetSqlTableNameString(_table) + " ON " + GetSqlWhere(_table.Conditions, ref _sqlCommand);
                                 break;
                             case TableRelation.FullOuter:
-                                throw new Exception("Ôİ²»Ö§³ÖFULL JOIN£¡");
-                               // _return += " LEFT OUTER JOIN ";
-                               // _return += GetSqlTableNameString(_table) + " ON " + GetSqlWhere(_table.Conditions, ref _sqlCommand);
-                               //_return += " UNION ";
-                               // _return +=  "SELECT ";
-                               // _return +=  (this.Fields.Count > 0 ? GetSqlSelectField(this) : "*") + " FROM " + GetSqlTableNameString(_tsql.Tables[0]);
-                               // _return += " RIGHT OUTER JOIN ";
-                               // _return += GetSqlTableNameString(_table) + " ON " + GetSqlWhere(_table.Conditions, ref _sqlCommand);
-                               //break;
+                                throw new Exception("æš‚ä¸æ”¯æŒFULL JOINï¼");
+                            // _return += " LEFT OUTER JOIN ";
+                            // _return += GetSqlTableNameString(_table) + " ON " + GetSqlWhere(_table.Conditions, ref _sqlCommand);
+                            //_return += " UNION ";
+                            // _return +=  "SELECT ";
+                            // _return +=  (this.Fields.Count > 0 ? GetSqlSelectField(this) : "*") + " FROM " + GetSqlTableNameString(_tsql.Tables[0]);
+                            // _return += " RIGHT OUTER JOIN ";
+                            // _return += GetSqlTableNameString(_table) + " ON " + GetSqlWhere(_table.Conditions, ref _sqlCommand);
+                            //break;
                             case TableRelation.Cross:
                                 _return += " CROSS JOIN ";
                                 _return += GetSqlTableNameString(_table);
@@ -332,9 +332,9 @@ namespace Lion.Data.MySqlClient
                 switch (_tsql.Outputs[i].Type)
                 {
                     case OutputType.Inserted: _output += " SELECT @@IDENTITY;"; break;
-                    case OutputType.Deleted:throw new Exception("É¾³ı²»ĞèÒªÌí¼ÓOutPut²ÎÊı");// _output += " OUTPUT DELETED."; break;
+                    case OutputType.Deleted: throw new Exception("åˆ é™¤ä¸éœ€è¦æ·»åŠ OutPutå‚æ•°");// _output += " OUTPUT DELETED."; break;
                 }
-            //    _output += "`" + _tsql.Outputs[i].Name + "`";
+                //    _output += "`" + _tsql.Outputs[i].Name + "`";
             }
             return _output;
         }
@@ -418,7 +418,7 @@ namespace Lion.Data.MySqlClient
                 }
                 if (_orderBy.OrderType == OrderType.Value)
                 {
-                    // ÒÔºóĞèÒª¸Ä³É²ÎÊıµÄ
+                    // ä»¥åéœ€è¦æ”¹æˆå‚æ•°çš„
                     _return += "" + _orderBy.FieldName;
                 }
                 else
@@ -494,7 +494,7 @@ namespace Lion.Data.MySqlClient
                         _field3 = "`" + _field1.Replace(".", "`.`") + "`";
                         if (_expressionRelation == ExpressionRelation.Like)
                         {
-                            MySqlParameter _sqlParameter = new MySqlParameter(_field2,MySqlDbType.Text);
+                            MySqlParameter _sqlParameter = new MySqlParameter(_field2, MySqlDbType.Text);
                             _sqlParameter.Value = _fieldObject2;
                             _sqlCommand.Parameters.Add(_sqlParameter);
                         }
