@@ -61,7 +61,7 @@ namespace Lion.Encrypt
 
             string _payload = _sb.ToString();
             uint _messageType = Convert.ToUInt32(_payload.Substring(0, 6), 2);
-            Console.WriteLine($"{_messageType} - {_payload.Length}");
+            //Console.WriteLine($"{_messageType} - {_payload.Length}");
 
             JObject _result = new JObject();
             switch (_messageType)
