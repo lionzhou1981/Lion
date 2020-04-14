@@ -23,7 +23,6 @@ namespace Lion.Encrypt
             for (int i = 0; i < _messages.Length; i++)
             {
                 string _message = _messages[i];
-                //Console.WriteLine(_message);
                 if (_message[0] != '!')
                 {
                     throw new Exception("Wrong message head.");
@@ -42,10 +41,6 @@ namespace Lion.Encrypt
                 }
 
                 string[] _items = _line.Split(',');
-                //if (_items[0] != "!AIVDM" && _items[0] != "!AIVDO")
-                //{
-                //    throw new Exception("Unrecognised message type.");
-                //}
 
                 _content += _items[5];
                 _contentKey = Convert.ToInt32(_items[6]);
@@ -66,7 +61,7 @@ namespace Lion.Encrypt
 
             string _payload = _sb.ToString();
             uint _messageType = Convert.ToUInt32(_payload.Substring(0, 6), 2);
-            //Console.WriteLine($"{_messageType} - {_payload.Length}");
+            Console.WriteLine($"{_messageType} - {_payload.Length}");
 
             JObject _result = new JObject();
             switch (_messageType)
@@ -121,7 +116,7 @@ namespace Lion.Encrypt
             _result["second"] = Convert.ToUInt32(_payload.Substring(137, 6), 2);
             _result["maneuver"] = Convert.ToUInt32(_payload.Substring(143, 2), 2);
             _result["raim"] = _payload.Substring(148, 1);
-            _result["radio"] = _payload.Substring(149, 19);
+            _result["radio"] = _payload.Substring(149);
 
             return _result;
         }
@@ -203,20 +198,23 @@ namespace Lion.Encrypt
             _result["type"] = _type;
             _result["repeat"] = Convert.ToUInt32(_payload.Substring(6, 2), 2);
             _result["mmsi"] = Convert.ToUInt32(_payload.Substring(8, 30), 2);
-            _result["mmsi1"] = Convert.ToUInt32(_payload.Substring(40, 30), 2);
-            _result["mmsiseq1"] = Convert.ToUInt32(_payload.Substring(70, 2), 2);
 
-            if (_payload.Length >= 103)
+            if (_payload.Length >= 72)
+            {
+                _result["mmsi1"] = Convert.ToUInt32(_payload.Substring(40, 30), 2);
+                _result["mmsiseq1"] = Convert.ToUInt32(_payload.Substring(70, 2), 2);
+            }
+            if (_payload.Length >= 104)
             {
                 _result["mmsi2"] = Convert.ToUInt32(_payload.Substring(72, 30), 2);
                 _result["mmsiseq2"] = Convert.ToUInt32(_payload.Substring(102, 2), 2);
             }
-            if (_payload.Length >= 135)
+            if (_payload.Length >= 136)
             {
                 _result["mmsi3"] = Convert.ToUInt32(_payload.Substring(104, 30), 2);
                 _result["mmsiseq3"] = Convert.ToUInt32(_payload.Substring(134, 2), 2);
             }
-            if (_payload.Length >= 167)
+            if (_payload.Length >= 168)
             {
                 _result["mmsi4"] = Convert.ToUInt32(_payload.Substring(136, 30), 2);
                 _result["mmsiseq4"] = Convert.ToUInt32(_payload.Substring(166, 2), 2);
@@ -399,8 +397,7 @@ namespace Lion.Encrypt
             _result["msg22"] = _payload.Substring(145, 1);
             _result["assigned"] = _payload.Substring(146, 1);
             _result["raim"] = _payload.Substring(147, 1);
-            _result["radio"] = _payload.Substring(148, 20);
-
+            _result["radio"] = _payload.Substring(148);
             return _result;
         }
         #endregion
@@ -582,6 +579,8 @@ namespace Lion.Encrypt
         #region Message_25
         private static JObject Message_25(uint _type, string _payload)
         {
+            if (_payload.Length < 76) { return null; }
+
             JObject _result = new JObject();
             _result["type"] = _type;
             _result["repeat"] = Convert.ToUInt32(_payload.Substring(6, 2), 2);
@@ -598,6 +597,8 @@ namespace Lion.Encrypt
         #region Message_26
         private static JObject Message_26(uint _type, string _payload)
         {
+            if (_payload.Length < 76) { return null; }
+
             JObject _result = new JObject();
             _result["type"] = _type;
             _result["repeat"] = Convert.ToUInt32(_payload.Substring(6, 2), 2);
