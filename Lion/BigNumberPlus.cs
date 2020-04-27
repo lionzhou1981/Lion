@@ -18,7 +18,7 @@ namespace Lion
         }
         #endregion
 
-         #region BigValueToDecimal
+        #region BigValueToDecimal
         public static string ETHToDecimal(string _hex, int _fractionPoint = 18)
         {
             _hex = "0" + (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex.Substring(2) : _hex);
@@ -127,4 +127,6 @@ namespace Lion
         }
         #endregion
     }
+
+
 }
