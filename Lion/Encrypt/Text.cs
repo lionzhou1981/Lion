@@ -10,9 +10,9 @@ namespace Lion.Encrypt
     {
         public static string Words = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-        public static string Encode(BigInteger _number, int _pattern)
+        public static string Encode(BigInteger _number, int _pattern, string _words="")
         {
-            IList<char> _list1 = Text.Words.ToList();
+            IList<char> _list1 = _words == "" ? Text.Words.ToList() : _words.ToList();
             IList<char> _list2 = new List<char>();
 
             int _index = 0;
@@ -37,9 +37,9 @@ namespace Lion.Encrypt
             return _text;
         }
 
-        public static BigInteger Decode(string _text,int _pattern)
+        public static BigInteger Decode(string _text,int _pattern, string _words="")
         {
-            IList<char> _list1 = Text.Words.ToList();
+            IList<char> _list1 = _words == "" ? Text.Words.ToList() : _words.ToList();
             IList<char> _list2 = new List<char>();
 
             int _index = 0;
