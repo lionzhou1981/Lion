@@ -14,7 +14,7 @@ namespace Lion.SDK.Bitcoin.Markets
     {
         private List<string> ListPair;
         private string UrlPublic = "https://public.bitbank.cc";
-        private string UrlPrivate = "https://api.bitbank.cc";
+        //private string UrlPrivate = "https://api.bitbank.cc";
 
         #region Bitbank
         public Bitbank(string _key, string _secret) : base(_key, _secret)

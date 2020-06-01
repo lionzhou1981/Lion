@@ -10,7 +10,7 @@ namespace Lion.SDK.Bitcoin.Coins
     public class BitTorrent
     {
         #region CheckTxidBalance
-        public static string CheckTxidBalance(string _address, decimal _balance,out decimal _outBalance)
+        public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
         {
             _outBalance = 0M;
             string _error = "";
@@ -52,7 +52,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 return "";
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return _error;
             }

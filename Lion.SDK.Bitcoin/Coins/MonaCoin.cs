@@ -22,7 +22,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 JArray _jArray = JArray.Parse(_json["blocks"].ToString());
                 return _jArray[0]["height"].ToString();
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return "";
             }
@@ -88,7 +88,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 return "";
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return _error;
             }

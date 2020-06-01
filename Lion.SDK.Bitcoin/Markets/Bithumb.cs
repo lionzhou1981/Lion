@@ -11,9 +11,8 @@ namespace Lion.SDK.Bitcoin.Markets
 {
     public class Bithumb : MarketBase
     {
-        private string BooksLimit;
+        private string BooksLimit = "";
         private List<string> ListPair;
-        private Balances Balances = new Balances();
 
         #region Bithumb
         public Bithumb(string _key, string _secret) : base(_key, _secret)

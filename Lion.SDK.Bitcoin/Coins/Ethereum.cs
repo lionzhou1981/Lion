@@ -42,7 +42,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 int _height = Convert.ToInt32(_result, 16);
                 return _height.ToString();
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return "";
             }
@@ -82,7 +82,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 return "";
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return _error;
             }

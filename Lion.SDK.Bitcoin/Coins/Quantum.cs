@@ -87,7 +87,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 return "";
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return _error;
             }

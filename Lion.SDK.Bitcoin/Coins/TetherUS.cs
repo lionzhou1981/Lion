@@ -23,7 +23,7 @@ namespace Lion.SDK.Bitcoin.Coins
                 string _postData = $"addr={_address}";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 _webClient.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
-                string _result = _webClient.UploadString(_url,_postData);
+                string _result = _webClient.UploadString(_url, _postData);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
                 JArray _jArray = JArray.Parse(_json[_address]["balance"].ToString());
@@ -55,7 +55,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 return "";
             }
-            catch (Exception _ex)
+            catch (Exception)
             {
                 return _error;
             }
