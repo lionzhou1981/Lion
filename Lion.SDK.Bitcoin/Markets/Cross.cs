@@ -19,7 +19,7 @@ namespace Lion.SDK.Bitcoin.Markets
         {
             base.Name = "Cross";
             base.WebSocket = $"{(_ssl ? "wss" : "ws")}://{_host}/wsv1";
-            base.HttpUrl = $"{((_ssl ? "https" : "http"))}://{_host}/";
+            base.HttpUrl = $"{(_ssl ? "https" : "http")}://{_host}";
             base.OnReceivedEvent += Cross_OnReceivedEvent;
         }
         #endregion
@@ -499,7 +499,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region OrderDetail
         public override OrderItem OrderDetail(string _id, params string[] _values)
         {
-            string _url = "GET/v1/api/orderdetail";
+            string _url = "/GET/v1/api/orderdetail";
             JToken _token = this.HttpCall(HttpCallMethod.Get, "GET", _url, true,
                                           "order_id", _id
                                          );
@@ -530,7 +530,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetMiningStatus
         public MiningStatus GetMiningStatus()
         {
-            string _url = "GET/v1/api/mineLimit";
+            string _url = "/GET/v1/api/mineLimit";
             JToken _json = this.HttpCall(HttpCallMethod.Get, "GET", _url, true);
             if (_json == null) { return null; }
 
@@ -547,7 +547,7 @@ namespace Lion.SDK.Bitcoin.Markets
         #region GetOrders
         public Orders GetOrders()
         {
-            string _url = "POST/v1/api/auth/orders";
+            string _url = "/POST/v1/api/auth/orders";
 
             JToken _token = base.HttpCall(HttpCallMethod.Form, "POST", _url, true);
             if (_token == null) { return null; }

@@ -4,6 +4,14 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <NoWarn></NoWarn>
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath></OutputPath>
+    <OutputPath>bin\Release\netstandard2.1</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lion\Lion.csproj" />
     <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />

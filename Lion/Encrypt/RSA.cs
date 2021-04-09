@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Linq;
 using System.IO;
 
-namespace  Lion.Encrypt
+namespace Lion.Encrypt
 {
     public class RSA
     {
