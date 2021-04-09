@@ -15,11 +15,11 @@ namespace Lion.SDK.Bitcoin.Markets
     public class Cross : MarketBase
     {
         #region Cross
-        public Cross(string _key, string _secret) : base(_key, _secret)
+        public Cross(string _key, string _secret, string _host = "api.crossexchange.io", bool _ssl = true) : base(_key, _secret)
         {
             base.Name = "Cross";
-            base.WebSocket = "wss://api.crossexchange.io/wsv1";
-            base.HttpUrl = "https://api.crossexchange.io";
+            base.WebSocket = $"{(_ssl ? "wss" : "ws")}://{_host}/wsv1";
+            base.HttpUrl = $"{((_ssl ? "https" : "http"))}://{_host}/";
             base.OnReceivedEvent += Cross_OnReceivedEvent;
         }
         #endregion
@@ -282,6 +282,7 @@ namespace Lion.SDK.Bitcoin.Markets
 
             Ticker _ticker = new Ticker();
             _ticker.Pair = _pair;
+            _ticker.DateTime = DateTime.UtcNow;
             _ticker.LastPrice = _token["last"].Value<decimal>();
             _ticker.BidPrice = _token["buy"].Value<decimal>();
             _ticker.AskPrice = _token["sell"].Value<decimal>();
@@ -430,8 +431,6 @@ namespace Lion.SDK.Bitcoin.Markets
             _values.Add(_pair);
             _values.Add("isbid");
             _values.Add(_side == MarketSide.Bid ? "true" : "false");
-            //_values.Add("orderQty");
-            //_values.Add(_amount.ToString().Split('.')[0]);
             _values.Add("order_type");
             switch (_type)
             {

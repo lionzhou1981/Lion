@@ -78,6 +78,8 @@ namespace Lion.Net
         public string GetResponseString(System.Text.Encoding _encoding)
         {
             string _return = "";
+            if (this.Response == null) { return _return; }
+
             StreamReader _reader = new StreamReader(this.Response.GetResponseStream(), _encoding);
             _return = _reader.ReadToEnd();
             _reader.Close();
@@ -158,7 +160,7 @@ namespace Lion.Net
             {
                 this.Response = (HttpWebResponse)_ex.Response;
             }
-            return this.Response.StatusCode;
+            return this.Response==null? HttpStatusCode.BadRequest: this.Response.StatusCode;
         }
         #endregion
 
