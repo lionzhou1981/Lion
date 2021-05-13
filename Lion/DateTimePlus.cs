@@ -18,6 +18,15 @@ namespace Lion
         {
             return (long)(_time - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds;
         }
+        public static DateTime UnixTime2DateTime(long _value)
+        {
+            return DateTime.Parse("1970-1-1 0:0:0.0").AddMilliseconds(_value);
+        }
+
+        public static long DateTime2UnixTime(DateTime _time)
+        {
+            return (long)(_time - new DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds;
+        }
 
         private static string[] chinese_tg = { "甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸" };
         private static string[] chinese_dz = { "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥" };
