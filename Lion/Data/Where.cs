@@ -12,56 +12,56 @@ namespace Lion.Data
         #region public
         #region WhereRelation
         /// <summary>
-        /// ÓëÇ°Ìõ¼şµÄ¹ØÏµ
+        /// ä¸å‰æ¡ä»¶çš„å…³ç³»
         /// </summary>
         public WhereRelation WhereRelation { get; set; }
         #endregion
 
         #region Wheres
         /// <summary>
-        /// ×ÓÌõ¼şµÄÄÚÈİ
+        /// å­æ¡ä»¶çš„å†…å®¹
         /// </summary>
         public WhereCollection Wheres { get; set; }
         #endregion
 
         #region ExpressionMode
         /// <summary>
-        /// ±í´ïÊ½Ä£Ê½
+        /// è¡¨è¾¾å¼æ¨¡å¼
         /// </summary>
         public ExpressionMode ExpressionMode { get; set; }
         #endregion
 
         #region ExpressionRelation
         /// <summary>
-        /// Óë±í´ïÊÇµÄ¹ØÏµ
+        /// ä¸è¡¨è¾¾æ˜¯çš„å…³ç³»
         /// </summary>
         public ExpressionRelation ExpressionRelation { get; set; }
         #endregion
 
         #region Field1
         /// <summary>
-        /// Ìõ¼ş×Ö¶Î1
+        /// æ¡ä»¶å­—æ®µ1
         /// </summary>
         public object Field1 { get; set; }
         #endregion
 
         #region Field2
         /// <summary>
-        /// Ìõ¼ş×Ö¶Î2
+        /// æ¡ä»¶å­—æ®µ2
         /// </summary>
         public object Field2 { get; set; }
         #endregion
 
         #region Field3
         /// <summary>
-        /// Ìõ¼ş×Ö¶Î3
+        /// æ¡ä»¶å­—æ®µ3
         /// </summary>
         public object Field3 { get; set; }
         #endregion
 
         #region HasSubWhere
         /// <summary>
-        /// ÊÇ·ñÓĞ×ÓÌõ¼ş Ä¬ÈÏÎªÃ»ÓĞ×ÓÌõ¼ş
+        /// æ˜¯å¦æœ‰å­æ¡ä»¶ é»˜è®¤ä¸ºæ²¡æœ‰å­æ¡ä»¶
         /// </summary>
         public bool HasSubWhere { get; private set; }
         #endregion
@@ -70,14 +70,14 @@ namespace Lion.Data
         #region Structure
         #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object,object)
         /// <summary>
-        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object,object) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object,object) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
-        /// <param name="_expressionMode">±í´ïÊ½Ä£Ê½</param>
-        /// <param name="_expressionRelation">±í´ïÊ½¹ØÏµ</param>
-        /// <param name="_field1">×Ö¶Î1µÄÄÚÈİ</param>
-        /// <param name="_field2">×Ö¶Î2µÄÄÚÈİ</param>
-        /// <param name="_field3">×Ö¶Î3µÄÄÚÈİ</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
+        /// <param name="_expressionMode">è¡¨è¾¾å¼æ¨¡å¼</param>
+        /// <param name="_expressionRelation">è¡¨è¾¾å¼å…³ç³»</param>
+        /// <param name="_field1">å­—æ®µ1çš„å†…å®¹</param>
+        /// <param name="_field2">å­—æ®µ2çš„å†…å®¹</param>
+        /// <param name="_field3">å­—æ®µ3çš„å†…å®¹</param>
         public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2, object _field3)
         {
             this.WhereRelation = _whereRelation;
@@ -93,13 +93,13 @@ namespace Lion.Data
 
         #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object)
         /// <summary>
-        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object,object) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
-        /// <param name="_expressionMode">±í´ïÊ½Ä£Ê½</param>
-        /// <param name="_expressionRelation">±í´ïÊ½¹ØÏµ</param>
-        /// <param name="_field1">×Ö¶Î1µÄÄÚÈİ</param>
-        /// <param name="_field2">×Ö¶Î2µÄÄÚÈİ</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
+        /// <param name="_expressionMode">è¡¨è¾¾å¼æ¨¡å¼</param>
+        /// <param name="_expressionRelation">è¡¨è¾¾å¼å…³ç³»</param>
+        /// <param name="_field1">å­—æ®µ1çš„å†…å®¹</param>
+        /// <param name="_field2">å­—æ®µ2çš„å†…å®¹</param>
         public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1, object _field2)
         {
             this.WhereRelation = _whereRelation;
@@ -115,12 +115,12 @@ namespace Lion.Data
 
         #region Where(WhereRelation,ExpressionMode,ExpressionRelation,object)
         /// <summary>
-        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation,ExpressionMode,ExpressionRelation,object) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
-        /// <param name="_expressionMode">±í´ïÊ½Ä£Ê½</param>
-        /// <param name="_expressionRelation">±í´ïÊ½¹ØÏµ</param>
-        /// <param name="_field1">×Ö¶Î1µÄÄÚÈİ</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
+        /// <param name="_expressionMode">è¡¨è¾¾å¼æ¨¡å¼</param>
+        /// <param name="_expressionRelation">è¡¨è¾¾å¼å…³ç³»</param>
+        /// <param name="_field1">å­—æ®µ1çš„å†…å®¹</param>
         public Where(WhereRelation _whereRelation, ExpressionMode _expressionMode, ExpressionRelation _expressionRelation, object _field1)
         {
             this.WhereRelation = _whereRelation;
@@ -136,10 +136,10 @@ namespace Lion.Data
 
         #region Where(WhereRelation,bool)
         /// <summary>
-        /// Where(WhereRelation,bool) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation,bool) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
-        /// <param name="_hasSubCondition">ÊÇ·ñÓĞ×ÓÌõ¼ş</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
+        /// <param name="_hasSubCondition">æ˜¯å¦æœ‰å­æ¡ä»¶</param>
         public Where(WhereRelation _whereRelation, bool _hasSubCondition)
         {
             this.WhereRelation = _whereRelation;
@@ -150,10 +150,10 @@ namespace Lion.Data
 
         #region Where(WhereRelation,string)
         /// <summary>
-        /// Where(WhereRelation) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
-        /// <param name="_whereString">Ìõ¼şÓï¾ä</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
+        /// <param name="_whereString">æ¡ä»¶è¯­å¥</param>
         public Where(WhereRelation _whereRelation, string _whereString)
         {
             this.WhereRelation = _whereRelation;
@@ -166,9 +166,9 @@ namespace Lion.Data
 
         #region Where(WhereRelation)
         /// <summary>
-        /// Where(WhereRelation) ¹¹Ôìº¯Êı
+        /// Where(WhereRelation) æ„é€ å‡½æ•°
         /// </summary>
-        /// <param name="_whereRelation">ÓëÇ°Ìõ¼ş¹ØÏµ</param>
+        /// <param name="_whereRelation">ä¸å‰æ¡ä»¶å…³ç³»</param>
         public Where(WhereRelation _whereRelation)
         {
             this.WhereRelation = _whereRelation;
@@ -189,15 +189,15 @@ namespace Lion.Data
     public class WhereCollection : List<Where>
     {
         /// <summary>
-        /// Ìí¼ÓÒ»¸öÓëÇ°Ò»¸öÌõ¼şÊÇAnd¹ØÏµµÄÌõ¼ş
+        /// æ·»åŠ ä¸€ä¸ªä¸å‰ä¸€ä¸ªæ¡ä»¶æ˜¯Andå…³ç³»çš„æ¡ä»¶
         /// </summary>
-        /// <param name="_values">Èç¹ûÊÇ×Ö¶ÎÇëÓÃ[]ÖĞÀ¨»¡°üÀ¨£¬·ñÔòÊÓÎª±í´ïÊ½</param>
+        /// <param name="_values">å¦‚æœæ˜¯å­—æ®µè¯·ç”¨[]ä¸­æ‹¬å¼§åŒ…æ‹¬ï¼Œå¦åˆ™è§†ä¸ºè¡¨è¾¾å¼</param>
         /// <example>
-        /// Èç¹ûÊÇ×Ö¶ÎÇëÓÃ[]ÖĞÀ¨»¡°üÀ¨£¬·ñÔòÊÓÎª±í´ïÊ½
-        /// 1 ×Ô¶¨ÒåÌõ¼ş(string) or ÊÇ·ñÓĞ×ÔÌõ¼ş(bool) or Ìõ¼ş¶ÔÏó(Condition)
-        /// 2 µ¥Ò»×Ö¶ÎÌõ¼ş NULL,NOTNULL
-        /// 3 Á½¸ö×Ö¶ÎÌõ¼ş =,&lt;&gt;,&gt;,&gt;=,&lt;,&lt;=,LIKE,NOTLIKE
-        /// O Èı¸öÒÔÉÏ×Ö¶ÎÌõ¼ş BETWEEN,IN,NOTIN
+        /// å¦‚æœæ˜¯å­—æ®µè¯·ç”¨[]ä¸­æ‹¬å¼§åŒ…æ‹¬ï¼Œå¦åˆ™è§†ä¸ºè¡¨è¾¾å¼
+        /// 1 è‡ªå®šä¹‰æ¡ä»¶(string) or æ˜¯å¦æœ‰è‡ªæ¡ä»¶(bool) or æ¡ä»¶å¯¹è±¡(Condition)
+        /// 2 å•ä¸€å­—æ®µæ¡ä»¶ NULL,NOTNULL
+        /// 3 ä¸¤ä¸ªå­—æ®µæ¡ä»¶ =,&lt;&gt;,&gt;,&gt;=,&lt;,&lt;=,LIKE,NOTLIKE
+        /// O ä¸‰ä¸ªä»¥ä¸Šå­—æ®µæ¡ä»¶ BETWEEN,IN,NOTIN
         /// </example>
         public void And(params object[] _values) => this.Add(WhereRelation.And, _values);
 
@@ -218,7 +218,7 @@ namespace Lion.Data
             switch (_values.Length)
             {
                 case 1:
-                    #region 1 ×Ô¶¨ÒåÌõ¼ş(string) or ÊÇ·ñÓĞ×ÔÌõ¼ş(bool) or Ìõ¼ş¶ÔÏó(Condition)
+                    #region 1 è‡ªå®šä¹‰æ¡ä»¶(string) or æ˜¯å¦æœ‰è‡ªæ¡ä»¶(bool) or æ¡ä»¶å¯¹è±¡(Condition)
                     {
                         if (_values[0].GetType() == typeof(Where))
                         {
@@ -236,7 +236,7 @@ namespace Lion.Data
                     }
                     #endregion
                 case 2:
-                    #region 2 µ¥Ò»×Ö¶ÎÌõ¼ş NULL,NOTNULL
+                    #region 2 å•ä¸€å­—æ®µæ¡ä»¶ NULL,NOTNULL
                     {
                         switch (_values[1].ToString())
                         {
@@ -247,7 +247,7 @@ namespace Lion.Data
                     }
                     #endregion
                 case 3:
-                    #region 3 Á½¸ö×Ö¶ÎÌõ¼ş =,<>,>,>=,<,<=,LIKE,NOTLIKE,IN,NOTIN
+                    #region 3 ä¸¤ä¸ªå­—æ®µæ¡ä»¶ =,<>,>,>=,<,<=,LIKE,NOTLIKE,IN,NOTIN
                     {
                         ExpressionMode _mode = _fields[2] ? ExpressionMode.FieldVsField : ExpressionMode.FieldVsValue;
                         switch (_values[1].ToString())
@@ -303,7 +303,7 @@ namespace Lion.Data
                     }
                     #endregion
                 default:
-                    #region Èı¸öÒÔÉÏ×Ö¶ÎÌõ¼ş BETWEEN,NOTBETWEEN,IN,NOTIN
+                    #region ä¸‰ä¸ªä»¥ä¸Šå­—æ®µæ¡ä»¶ BETWEEN,NOTBETWEEN,IN,NOTIN
                     {
                         if ((_values[1].ToString() == "BETWEEN" || _values[1].ToString() == "NOTBETWEEN") && _fields.Length == 4)
                         {
