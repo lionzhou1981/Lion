@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using Lion;
 using Lion.Encrypt;
@@ -216,7 +217,8 @@ namespace Lion.SDK.Bitcoin.Coins
         public static string PrivKey2PubKey(string _privateKey, bool _mainNet = true)
         {
             int _zeros = 0;
-            return new Secp256k1().PrivateKeyToPublicKey(_privateKey, out _zeros);
+            return "";
+            //return new Secp256k1().PrivateKeyToPublicKey(_privateKey, out _zeros);
         }
 
         /// <summary>
@@ -232,22 +234,30 @@ namespace Lion.SDK.Bitcoin.Coins
             return Base58.Encode(_orgKey + _addmin);
         }
 
-        public static Address GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
+        public static Address GenerateAddress(out string _uncompressKey, string _existsPrivateKey = "", bool _mainNet = true)
         {
             string _netVersion = _mainNet ? "00" : "6f";
             string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            string _publicKey = new Secp256k1().PrivateKeyToPublicKey(_privateKey, out int _zeros);
-            HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
-            var _sha1 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_publicKey));
+            _uncompressKey = _privateKey;
+            BigInteger _bigPrivateKey = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
+            var _publicKey = Secp256k1.PrivateKeyToPublicKey(_bigPrivateKey);
+            SHA256Managed sha256 = new SHA256Managed();
             var _ripemd = new RIPEMD160Managed();
-            var _ripemdHashed = BitConverter.ToString(_ripemd.ComputeHash(_sha1)).Replace("-", "");
-            var _versioned = _netVersion + _ripemdHashed;
-            var _sha2 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_versioned));
-            var _sha3 = _shahasher.ComputeHash(_sha2);
-            var _verifyCode = BitConverter.ToString(_sha3).Replace("-", "").Substring(0, 8);
+            var _ripemdHashed = _ripemd.ComputeHash(sha256.ComputeHash(_publicKey));
+            var _addedVersion = new byte[_ripemdHashed.Length + 1];
+            if (!_mainNet)
+                _addedVersion[0] = 0x6f;
+            Buffer.BlockCopy(_ripemdHashed, 0, _addedVersion, 1, _ripemdHashed.Length);
+            var _doubleSha = sha256.ComputeHash(sha256.ComputeHash(_addedVersion));
+            Array.Resize(ref _doubleSha, 4);
+
+            byte[] _result = new byte[_addedVersion.Length + _doubleSha.Length];
+            Buffer.BlockCopy(_addedVersion, 0, _result, 0, _addedVersion.Length);
+            Buffer.BlockCopy(_doubleSha, 0, _result, _addedVersion.Length, _doubleSha.Length);
+
             Address _address = new Address();
-            _address.Text = Base58.Encode(Lion.HexPlus.HexStringToByteArray(_versioned + _verifyCode));
-            _address.PublicKey = _publicKey;
+            _address.Text = Base58.Encode(_result);
+            _address.PublicKey = Lion.HexPlus.ByteArrayToHexString(_publicKey);
             _address.PrivateKey = CompressPrivateKey(_privateKey, _mainNet);
             _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
             return _address;
