@@ -15,7 +15,7 @@ namespace Lion.SDK.Bitcoin.Coins
         #region GenerateAddress
         public static Address GenerateAddress(string _privateKey = "", bool _mainNet = true)
         {
-            _privateKey = _privateKey == "" ? RandomPlus.GenerateHexKey(64) : _privateKey;
+            _privateKey = _privateKey == "" ? RandomPlus.RandomHex(64) : _privateKey;
 
             BigInteger _privateInt = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
             byte[] _publicKey = Secp256k1.PrivateKeyToPublicKey(_privateInt);

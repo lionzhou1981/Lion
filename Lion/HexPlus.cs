@@ -3,9 +3,6 @@ using System.Linq;
 
 namespace Lion
 {
-    /// <summary>
-    /// A class deal with Hex
-    /// </summary>
     public class HexPlus
     {
         #region HexToInt32 

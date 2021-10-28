@@ -6,6 +6,7 @@ namespace Lion
 {
     public class RandomPlus
     {
+        #region RandomSeed
         public static int RandomSeed
         {
             get
@@ -19,16 +20,16 @@ namespace Lion
                 return _value <= 0 ? -_value : _value;
             }
         }
+        #endregion
 
-        public static string GenerateHexKey(int _length = 64)
+        #region RandomHex
+        public static string RandomHex(int _length = 64)
         {
-            List<string> _privateKeys = new List<string>();
-            while (_privateKeys.Count < _length)
-            {
-                var _random = new Random(RandomSeed);
-                _privateKeys.Add(_random.Next(0, 16).ToString("X"));
-            }
-            return string.Join("", _privateKeys).ToLower();
+            Random _random = new Random(RandomSeed);
+            List<string> _hexs = new List<string>();
+            while (_hexs.Count < _length) { _hexs.Add(_random.Next(0, 16).ToString("X")); }
+            return string.Join("", _hexs).ToLower();
         }
+        #endregion
     }
 }
