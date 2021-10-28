@@ -13,30 +13,34 @@ namespace Lion.SDK.Bitcoin.Coins
     public class Bitcoin
     {
         #region GenerateAddress
-        public static Address GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
+        public static Address GenerateAddress(string _privateKey = "", bool _mainNet = true)
         {
-            string _netVersion = _mainNet ? "00" : "6f";
-            string _privateKey = _existsPrivateKey == "" ? RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            string _publicKey = new Secp256k1().PrivateKeyToPublicKey(_privateKey, out int _zeros);
+            _privateKey = _privateKey == "" ? RandomPlus.GenerateHexKey(64) : _privateKey;
 
-            HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
-            byte[] _sha1 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_publicKey));
+            BigInteger _privateInt = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
+            byte[] _publicKey = Secp256k1.PrivateKeyToPublicKey(_privateInt);
 
+            SHA256Managed _sha256 = new SHA256Managed();
             RIPEMD160Managed _ripemd = new RIPEMD160Managed();
-            string _ripemdHashed = BitConverter.ToString(_ripemd.ComputeHash(_sha1)).Replace("-", "");
+            byte[] _ripemdHashed = _ripemd.ComputeHash(_sha256.ComputeHash(_publicKey));
+            byte[] _addedVersion = new byte[_ripemdHashed.Length + 1];
+            _addedVersion[0] = (byte)(_mainNet ? 0x00 : 0x6f);
+            Array.Copy(_ripemdHashed, 0, _addedVersion, 1, _ripemdHashed.Length);
 
-            string _versioned = _netVersion + _ripemdHashed;
-            byte[] _sha2 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_versioned));
-            byte[] _sha3 = _shahasher.ComputeHash(_sha2);
-            string _verifyCode = BitConverter.ToString(_sha3).Replace("-", "").Substring(0, 8);
+            byte[] _shaHashed = _sha256.ComputeHash(_sha256.ComputeHash(_addedVersion));
+            Array.Resize(ref _shaHashed, 4);
 
-            string _privateKey1 = string.Join("", (!_mainNet ? "ef" : "80"), _privateKey);
-            string _privateKey2 = HexPlus.ByteArrayToHexString(SHA.EncodeSHA256(SHA.EncodeSHA256(HexPlus.HexStringToByteArray(_privateKey1))).Take(4).ToArray());
+            byte[] _result = new byte[_addedVersion.Length + _shaHashed.Length];
+            Array.Copy(_addedVersion, 0, _result, 0, _addedVersion.Length);
+            Array.Copy(_shaHashed, 0, _result, _addedVersion.Length, _shaHashed.Length);
+
+            string _key1 = string.Join("", (_mainNet ? "80" : "ef"), _privateKey);
+            string _key2 = HexPlus.ByteArrayToHexString(SHA.EncodeSHA256(SHA.EncodeSHA256(HexPlus.HexStringToByteArray(_key1))).Take(4).ToArray());
 
             Address _address = new Address();
-            _address.Text = Base58.Encode(Lion.HexPlus.HexStringToByteArray(_versioned + _verifyCode));
-            _address.PublicKey = _publicKey;
-            _address.PrivateKey = Base58.Encode(_privateKey1 + _privateKey2); ;
+            _address.Text = Base58.Encode(_result);
+            _address.PublicKey = HexPlus.ByteArrayToHexString(_publicKey);
+            _address.PrivateKey = Base58.Encode(_key1 + _key2);
             _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
             return _address;
         }
@@ -104,57 +108,5 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
-
-        public static string Private2Public(string _privateKey, bool _mainNet = true)
-        {
-            int _zeros = 0;
-            return "";
-            //return new Secp256k1().PrivateKeyToPublicKey(_privateKey, out _zeros);
-        }
-<<<<<<< Updated upstream
-
-        /// <summary>
-        /// compress  private key 
-        /// https://sourceforge.net/p/bitcoin/mailman/bitcoin-development/thread/CAPg+sBhDFCjAn1tRRQhaudtqwsh4vcVbxzm+AA2OuFxN71fwUA@mail.gmail.com/
-        /// </summary>
-        /// <param name="_uncompressKey"></param>
-        /// <returns></returns>
-        public static string CompressPrivateKey(string _uncompressKey, bool _mainnet)
-        {
-            string _orgKey = string.Join("", (!_mainnet ? "ef" : "80"), _uncompressKey);
-            string _addmin = HexPlus.ByteArrayToHexString(Lion.Encrypt.SHA.EncodeSHA256(Lion.Encrypt.SHA.EncodeSHA256(Lion.HexPlus.HexStringToByteArray(_orgKey))).Take(4).ToArray());
-            return Base58.Encode(_orgKey + _addmin);
-        }
-
-        public static Address GenerateAddress(out string _uncompressKey, string _existsPrivateKey = "", bool _mainNet = true)
-        {
-            string _netVersion = _mainNet ? "00" : "6f";
-            string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
-            _uncompressKey = _privateKey;
-            BigInteger _bigPrivateKey = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
-            var _publicKey = Secp256k1.PrivateKeyToPublicKey(_bigPrivateKey);
-            SHA256Managed sha256 = new SHA256Managed();
-            var _ripemd = new RIPEMD160Managed();
-            var _ripemdHashed = _ripemd.ComputeHash(sha256.ComputeHash(_publicKey));
-            var _addedVersion = new byte[_ripemdHashed.Length + 1];
-            if (!_mainNet)
-                _addedVersion[0] = 0x6f;
-            Buffer.BlockCopy(_ripemdHashed, 0, _addedVersion, 1, _ripemdHashed.Length);
-            var _doubleSha = sha256.ComputeHash(sha256.ComputeHash(_addedVersion));
-            Array.Resize(ref _doubleSha, 4);
-
-            byte[] _result = new byte[_addedVersion.Length + _doubleSha.Length];
-            Buffer.BlockCopy(_addedVersion, 0, _result, 0, _addedVersion.Length);
-            Buffer.BlockCopy(_doubleSha, 0, _result, _addedVersion.Length, _doubleSha.Length);
-
-            Address _address = new Address();
-            _address.Text = Base58.Encode(_result);
-            _address.PublicKey = Lion.HexPlus.ByteArrayToHexString(_publicKey);
-            _address.PrivateKey = CompressPrivateKey(_privateKey, _mainNet);
-            _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
-            return _address;
-        }
-=======
->>>>>>> Stashed changes
     }
 }
