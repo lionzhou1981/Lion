@@ -146,7 +146,7 @@ namespace Lion.Net.Sockets
         public SocketSession(SocketEngine _socketEngine, int _index)
         {
             this.Index = _index;
-            this.LastOperationTime = DateTime.Now;
+            this.LastOperationTime = DateTime.UtcNow;
             this.Paraments = new Dictionary<string, object>();
             this.SocketAsyncEventArgs = new SocketAsyncEventArgs();
             this.SocketAsyncEventArgs.UserToken = this;
@@ -198,7 +198,7 @@ namespace Lion.Net.Sockets
         public void SendBytes(byte[] _byteArray)
         {
             if (this.Status != SocketSessionStatus.Connected) { return; }
-            this.LastOperationTime = DateTime.Now;
+            this.LastOperationTime = DateTime.UtcNow;
             this.SocketEngine.BeginSend(this.SocketAsyncEventArgs.AcceptSocket, _byteArray);
         }
         #endregion

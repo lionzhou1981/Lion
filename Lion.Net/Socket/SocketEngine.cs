@@ -367,7 +367,6 @@ namespace Lion.Net.Sockets
             BitConverter.GetBytes(_keep1).CopyTo(this.keepAliveByteArray, 0);
             BitConverter.GetBytes(_keep2).CopyTo(this.keepAliveByteArray, Marshal.SizeOf(_keep0));
             BitConverter.GetBytes(_keep3).CopyTo(this.keepAliveByteArray, Marshal.SizeOf(_keep0) * 2);
-
         }
         ~SocketEngine()
         {
@@ -525,12 +524,9 @@ namespace Lion.Net.Sockets
 
             try
             {
-                if (this.keepAliveIO)
-                {
-                    _socketAsyncEventArgs.AcceptSocket.IOControl(IOControlCode.KeepAliveValues, this.keepAliveByteArray, null);
-                }
+                if (this.keepAliveIO) { _socketAsyncEventArgs.AcceptSocket.IOControl(IOControlCode.KeepAliveValues, this.keepAliveByteArray, null); }
 
-                DateTime _now = DateTime.Now;
+                DateTime _now = DateTime.UtcNow;
                 _socketSession.LastOperationTime = _now;
                 _socketSession.Id = _now.ToString("yyyyMMddHHmmss") + _socketSession.Index.ToString("00000000");
                 _socketSession.Status = SocketSessionStatus.Connected;
@@ -538,7 +534,7 @@ namespace Lion.Net.Sockets
                 this.OnSessionStart(_socketSession);
                 this.BeginReceive(_socketAsyncEventArgs);
             }
-            catch
+            catch(Exception)
             {
                 this.bufferManager.FreeBuffer(_socketAsyncEventArgs);
                 _socketSession.Clear();
@@ -586,7 +582,7 @@ namespace Lion.Net.Sockets
                             this.OnException(_ex);
                             _disconnect = true;
                         }
-                        _socketSession.LastOperationTime = DateTime.Now;
+                        _socketSession.LastOperationTime = DateTime.UtcNow;
                         #endregion
 
                         #region 匹配协议
@@ -673,8 +669,9 @@ namespace Lion.Net.Sockets
                         this.BeginReceive(_socketAsyncEventArgs);
                         return;
                     }
-                    catch
+                    catch(Exception _ex)
                     {
+                        Console.WriteLine(_ex);
                         _disconnect = true;
                     }
                 }
@@ -819,7 +816,7 @@ namespace Lion.Net.Sockets
                     if (_socketSession.Status != SocketSessionStatus.Connected) { continue; }
 
                     uint _keep = _socketSession.Protocol == null ? this.keepAlive : _socketSession.Protocol.KeepAlive;
-                    if (_keep > 0 && _socketSession.LastOperationTime.AddMilliseconds(_keep) < DateTime.Now)
+                    if (_keep > 0 && _socketSession.LastOperationTime.AddMilliseconds(_keep) < DateTime.UtcNow)
                     {
                         _socketSession.Handshaked = false;
                         _socketSession.Disconnect();
