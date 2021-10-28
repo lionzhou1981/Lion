@@ -4,22 +4,21 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Bitcoin.Coins
+namespace Lion.SDK.Bitcoin.Explorers
 {
-    //DASH
-    public class DigitalCash
+    public class LTC
     {
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://insight.dash.org/insight-api/blocks";
+                string _url = "https://api.blockcypher.com/v1/ltc/main";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                return _json["blocks"][0]["height"].Value<string>();
+                return _json["height"].Value<string>();
             }
             catch (Exception)
             {
@@ -37,8 +36,8 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                //string _url = $"https://www.coinexplorer.net/api/v1/DASH/transaction?txid={_txid}";
-                string _url = $"https://insight.dash.org/insight-api/tx/{_txid}";
+                //string _url = $"https://chain.so/api/v2/get_tx_outputs/ltc/{_txid}";
+                string _url = $"https://litecoinblockexplorer.net/api/tx/{_txid}";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
@@ -93,6 +92,5 @@ namespace Lion.SDK.Bitcoin.Coins
             }
         }
         #endregion
-
     }
 }

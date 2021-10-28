@@ -4,22 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Bitcoin.Coins
+namespace Lion.SDK.Bitcoin.Explorers
 {
-    //QTUM
-    public class Quantum
+    public class BCHN
     {
+
+
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://qtum.info/api/info";
+                string _url = "https://api.blockchair.com/bitcoin-cash/stats";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                return _json["height"].Value<string>();
+                return _json["data"]["blocks"].Value<string>();
             }
             catch (Exception)
             {
@@ -37,29 +38,17 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                //string _url = $"https://explorer.qtum.org/insight-api/tx/{_txid}";
-                string _url = $"https://qtum.info/api/tx/{_txid}";
+                string _url = $"https://bch-chain.api.btc.com/v3/tx/{_txid}?verbose=3";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                JArray _jArray = JArray.Parse(_json["outputs"].ToString());
-                JToken _jToken = _jArray[_index];
-                //foreach (var _item in _jArray)
-                //{
-                //    int _n = _item["n"].Value<int>();
-                //    if (_n != _index) { continue; }
-                //    _jToken = _item;
-                //    break;
-                //}
-                if (_jToken == null)
-                {
-                    return _error;
-                }
+                JToken _jToken = _json["data"]["outputs"][_index];
 
                 //address
                 _error = "address";
-                string _cashAddr = _jToken["address"].Value<string>().Trim();
+                string _cashAddr = _jToken["addresses"][0].Value<string>().Trim();
+                _cashAddr = Change2NewAddress(_cashAddr);
                 if (_cashAddr != _address.Trim())
                 {
                     return _error;
@@ -80,7 +69,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 //spent
                 _error = "spent";
-                if (_jToken["spentTxId"] != null || _jToken["spentIndex"] != null)
+                if (_jToken["spent_by_tx"].HasValues || _jToken["spent_by_tx_position"].Value<string>().Trim() != "-1")
                 {
                     return _error;
                 }
@@ -94,5 +83,22 @@ namespace Lion.SDK.Bitcoin.Coins
         }
         #endregion
 
+        #region Change2NewAddress
+        public static string Change2NewAddress(string _address)
+        {
+            try
+            {
+                WebClientPlus _client = new WebClientPlus(10000);
+                string _return = _client.DownloadString($"https://cashaddr.bitcoincash.org/convert?address={_address}");
+                _client.Dispose();
+                JObject _json = JObject.Parse(_return);
+                return _json["cashaddr"].Value<string>().Trim();
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+        #endregion
     }
 }

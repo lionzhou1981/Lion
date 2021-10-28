@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Bitcoin.Coins
+namespace Lion.SDK.Bitcoin
 {
-    public class Common
+    internal class Common
     {
         #region Change2Decimal
         public static decimal Change2Decimal(string _value)

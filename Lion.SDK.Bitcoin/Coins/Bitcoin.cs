@@ -12,6 +12,36 @@ namespace Lion.SDK.Bitcoin.Coins
 {
     public class Bitcoin
     {
+        #region GenerateAddress
+        public static Address GenerateAddress(string _existsPrivateKey = "", bool _mainNet = true)
+        {
+            string _netVersion = _mainNet ? "00" : "6f";
+            string _privateKey = _existsPrivateKey == "" ? RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
+            string _publicKey = new Secp256k1().PrivateKeyToPublicKey(_privateKey, out int _zeros);
+
+            HashAlgorithm _shahasher = HashAlgorithm.Create("SHA-256");
+            byte[] _sha1 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_publicKey));
+
+            RIPEMD160Managed _ripemd = new RIPEMD160Managed();
+            string _ripemdHashed = BitConverter.ToString(_ripemd.ComputeHash(_sha1)).Replace("-", "");
+
+            string _versioned = _netVersion + _ripemdHashed;
+            byte[] _sha2 = _shahasher.ComputeHash(HexPlus.HexStringToByteArray(_versioned));
+            byte[] _sha3 = _shahasher.ComputeHash(_sha2);
+            string _verifyCode = BitConverter.ToString(_sha3).Replace("-", "").Substring(0, 8);
+
+            string _privateKey1 = string.Join("", (!_mainNet ? "ef" : "80"), _privateKey);
+            string _privateKey2 = HexPlus.ByteArrayToHexString(SHA.EncodeSHA256(SHA.EncodeSHA256(HexPlus.HexStringToByteArray(_privateKey1))).Take(4).ToArray());
+
+            Address _address = new Address();
+            _address.Text = Base58.Encode(Lion.HexPlus.HexStringToByteArray(_versioned + _verifyCode));
+            _address.PublicKey = _publicKey;
+            _address.PrivateKey = Base58.Encode(_privateKey1 + _privateKey2); ;
+            _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
+            return _address;
+        }
+        #endregion
+
         #region IsAddress
         public static bool IsAddress(string _address, out byte? _version)
         {
@@ -75,151 +105,13 @@ namespace Lion.SDK.Bitcoin.Coins
         }
         #endregion
 
-        #region GetCurrentHeight
-        public static string GetCurrentHeight()
-        {
-            try
-            {
-                string _url = "https://api.blockcypher.com/v1/btc/main";
-                WebClientPlus _webClient = new WebClientPlus(10000);
-                string _result = _webClient.DownloadString(_url);
-                _webClient.Dispose();
-                JObject _json = JObject.Parse(_result);
-                return _json["height"].Value<string>();
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
-        #endregion
-
-        #region GetTxidInfo
-        public static JObject GetTxidInfo(string _txid)
-        {
-            try
-            {
-                string _url = $"https://chain.api.btc.com/v3/tx/{_txid}?verbose=3";
-                WebClientPlus _webClient = new WebClientPlus(10000);
-                string _result = _webClient.DownloadString(_url);
-                JObject _json = JObject.Parse(_result);
-                return _json;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-        #endregion
-
-        #region CheckTxidBalance
-        public static string CheckTxidBalance(string _txid, int _index, string _address, decimal _balance, out decimal _outBalance)
-        {
-            _outBalance = 0M;
-            string _error = "";
-            try
-            {
-                //get info
-                _error = "get info";
-                string _url = $"https://chain.api.btc.com/v3/tx/{_txid}?verbose=3";
-                WebClientPlus _webClient = new WebClientPlus(10000);
-                string _result = _webClient.DownloadString(_url);
-                _webClient.Dispose();
-                JObject _json = JObject.Parse(_result);
-                JToken _jToken = _json["data"]["outputs"][_index];
-
-                //address
-                _error = "address";
-                if (_jToken["addresses"][0].Value<string>().Trim() != _address.Trim())
-                {
-                    return _error;
-                }
-
-                //balance
-                _error = "balance";
-                string _value = _jToken["value"].Value<string>();
-                _outBalance = decimal.Parse(_value);
-                if (!_value.Contains("."))
-                {
-                    _outBalance = _outBalance / 100000000M;
-                }
-                if (_outBalance != _balance)
-                {
-                    return _error;
-                }
-
-                //spent
-                _error = "spent";
-                if (_jToken["spent_by_tx"].HasValues || _jToken["spent_by_tx_position"].Value<string>().Trim() != "-1")
-                {
-                    return _error;
-                }
-
-                return "";
-            }
-            catch (Exception)
-            {
-                return _error;
-            }
-        }
-        #endregion
-
-        #region CheckTxidBalance
-        public static string CheckTxidBalance(WebClientPlus _webClient, string _txid, int _index, string _address, decimal _balance)
-        {
-            string _error = "";
-            try
-            {
-                //get info
-                _error = "get info";
-                string _url = $"https://chain.api.btc.com/v3/tx/{_txid}?verbose=3";
-                string _result = _webClient.DownloadString(_url);
-                _webClient.Dispose();
-                JObject _json = JObject.Parse(_result);
-                JToken _jToken = _json["data"]["outputs"][_index];
-
-                //address
-                _error = "address";
-                if (_jToken["addresses"][0].Value<string>().Trim() != _address.Trim())
-                {
-                    return _error;
-                }
-
-                //balance
-                _error = "balance";
-                string _value = _jToken["value"].Value<string>();
-                decimal _infoBalance = decimal.Parse(_value);
-                if (!_value.Contains("."))
-                {
-                    _infoBalance = _infoBalance / 100000000M;
-                }
-                if (_infoBalance != _balance)
-                {
-                    return _error;
-                }
-
-                //spent
-                _error = "spent";
-                if (_jToken["spent_by_tx"].HasValues || _jToken["spent_by_tx_position"].Value<string>().Trim() != "-1")
-                {
-                    return _error;
-                }
-
-                return "";
-            }
-            catch (Exception)
-            {
-                return _error;
-            }
-        }
-        #endregion
-
-        public static string PrivKey2PubKey(string _privateKey, bool _mainNet = true)
+        public static string Private2Public(string _privateKey, bool _mainNet = true)
         {
             int _zeros = 0;
             return "";
             //return new Secp256k1().PrivateKeyToPublicKey(_privateKey, out _zeros);
         }
+<<<<<<< Updated upstream
 
         /// <summary>
         /// compress  private key 
@@ -262,5 +154,7 @@ namespace Lion.SDK.Bitcoin.Coins
             _address.Text = (_mainNet ? (_address.Text.StartsWith("1") ? "" : "1") : "") + _address.Text;
             return _address;
         }
+=======
+>>>>>>> Stashed changes
     }
 }

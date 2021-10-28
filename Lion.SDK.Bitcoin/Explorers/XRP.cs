@@ -4,22 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Bitcoin.Coins
+namespace Lion.SDK.Bitcoin.Explorers
 {
-    //ZEC
-    public class Zcash
+    public class XRP
     {
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://api.zcha.in/v2/mainnet/blocks?sort=height&direction=descending&limit=1&offset=0";
+                //string _url = "https://data.ripple.com/v2/health/importer?verbose=true";
+                string _url = "https://data.ripple.com/v2/ledgers/";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
-                JArray _jArray = JArray.Parse(_result);
-                return _jArray[0]["height"].Value<string>();
+                JObject _json = JObject.Parse(_result);
+                //return _json["last_validated_ledger"].Value<string>();
+                return _json["ledger"]["ledger_index"].Value<string>();
             }
             catch (Exception)
             {
@@ -28,8 +29,9 @@ namespace Lion.SDK.Bitcoin.Coins
         }
         #endregion
 
+
         #region CheckTxidBalance
-        public static string CheckTxidBalance(string _txid, int _index, string _address, decimal _balance, out decimal _outBalance)
+        public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
         {
             _outBalance = 0M;
             string _error = "";
@@ -37,19 +39,17 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                //string _url = $"http://www.tokenview.com:8088/search/{_txid}";
-                //string _url = $"https://chain.so/api/v2/get_tx_outputs/zec/{_txid}/{_index}";
-                string _url = $"https://zcashnetwork.info/api/tx/{_txid}";
+                string _url = $"https://data.ripple.com/v2/accounts/{_address}/balances";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                JArray _jArray = JArray.Parse(_json["vout"].ToString());
+                JArray _jArray = JArray.Parse(_json["balances"].ToString());
                 JToken _jToken = null;
                 foreach (var _item in _jArray)
                 {
-                    int _n = _item["n"].Value<int>();
-                    if (_n != _index) { continue; }
+                    string _currency = _item["currency"].Value<string>();
+                    if (_currency.ToLower() != "xrp") { continue; }
                     _jToken = _item;
                     break;
                 }
@@ -58,38 +58,26 @@ namespace Lion.SDK.Bitcoin.Coins
                     return _error;
                 }
 
-                //address
-                _error = "address";
-                string _cashAddr = _jToken["scriptPubKey"]["addresses"][0].Value<string>().Trim();
-                if (_cashAddr != _address.Trim())
-                {
-                    return _error;
-                }
-
                 //balance
                 _error = "balance";
                 string _value = _jToken["value"].Value<string>();
+                //_outBalance = Common.Change2Decimal(_value);
                 _outBalance = decimal.Parse(_value);
-                if (!_value.Contains("."))
-                {
-                    _outBalance = _outBalance / 100000000M;
-                }
-                if (_outBalance != _balance)
-                {
-                    return _error;
-                }
-
-                //spent
-                _error = "spent";
-                if (_jToken["spentTxId"].HasValues || _jToken["spentIndex"].HasValues || _jToken["spentHeight"].HasValues)
+                //if (!_outBalance.ToString().Contains("."))
+                //{
+                //    //_outBalance = _outBalance / 1000000000000000000M;
+                //    _outBalance = _outBalance / 1000000M;
+                //}
+                if (_outBalance < _balance)
                 {
                     return _error;
                 }
 
                 return "";
             }
-            catch (Exception)
+            catch (Exception _ex)
             {
+                Console.WriteLine(_ex.Message);
                 return _error;
             }
         }

@@ -6,11 +6,6 @@
     <OutputPath>..\..\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Explorers\**" />
-    <EmbeddedResource Remove="Explorers\**" />
-    <None Remove="Explorers\**" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.37" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.13.1" />
   </ItemGroup>
@@ -20,5 +15,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Coins\Eos.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Tokens\" />
   </ItemGroup>
 </Project>

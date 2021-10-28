@@ -1,43 +1,26 @@
-﻿using Lion.Encrypt;
-using Lion.Net;
+﻿using Lion.Net;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lion.SDK.Bitcoin.Coins
+namespace Lion.SDK.Bitcoin.Explorers
 {
-    public class Tron
+    public class ETH
     {
-        public static bool IsAddress(string _address)
-        {
-            if (_address.StartsWith("41") && _address.Length == 42)
-                return true;
-            if (!_address.StartsWith("41"))
-            {
-                try
-                {
-                    var _decoded = HexPlus.ByteArrayToHexString(Base58.Decode(_address));
-                    if (_decoded.Length != 50)
-                        return false;
-                }
-                catch { return false; }
-                return true;
-            }
-            return false;
-        }
-
         #region GetCurrentHeight
         public static string GetCurrentHeight()
         {
             try
             {
-                string _url = "https://apilist.tronscan.org/api/system/status";
+                string _url = "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=YourApiKeyToken";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
                 JObject _json = JObject.Parse(_result);
-                return _json["database"]["block"].Value<string>();
+                _result = _json["result"].Value<string>();
+                int _height = Convert.ToInt32(_result, 16);
+                return _height.ToString();
             }
             catch (Exception)
             {
@@ -47,6 +30,7 @@ namespace Lion.SDK.Bitcoin.Coins
         #endregion
 
         #region CheckTxidBalance
+        internal static string Name = "TetherUS";
         public static string CheckTxidBalance(string _address, decimal _balance, out decimal _outBalance)
         {
             _outBalance = 0M;
@@ -55,7 +39,9 @@ namespace Lion.SDK.Bitcoin.Coins
             {
                 //get info
                 _error = "get info";
-                string _url = $"https://api.trxplorer.io/v2/account/{_address}";
+                //string _url = $"http://api.ethplorer.io/getAddressInfo/0x32Be343B94f860124dC4fEe278FDCBD38C102D88?apiKey=freekey";
+                //string _url = $"https://api.blockcypher.com/v1/eth/main/addrs/{_address}/balance";
+                string _url = $"https://api.etherscan.io/api?module=account&action=balance&address={_address}&tag=latest&apikey=YourApiKeyToken";
                 WebClientPlus _webClient = new WebClientPlus(10000);
                 string _result = _webClient.DownloadString(_url);
                 _webClient.Dispose();
@@ -63,11 +49,11 @@ namespace Lion.SDK.Bitcoin.Coins
 
                 //balance
                 _error = "balance";
-                string _value = _json["balance"] + "";
-                _outBalance = Common.Change2Decimal(_value);
-                if (!_outBalance.ToString().Contains("."))
+                string _value = _json["result"] + "";
+                _outBalance = decimal.Parse(_value);
+                if (!_value.Contains("."))
                 {
-                    _outBalance = _outBalance / 1000000M;
+                    _outBalance = _outBalance / 1000000000000000000M;
                 }
                 if (_outBalance < _balance)
                 {
