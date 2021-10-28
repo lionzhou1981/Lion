@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Security.Cryptography;
 
 namespace  Lion.Encrypt
@@ -6,17 +7,32 @@ namespace  Lion.Encrypt
     public class SHA
     {
         #region EncodeSHA1
-        public static string EncodeSHA1(string _source)
+        public static byte[] EncodeSHA1(string _source)
         {
             SHA1 _sha1 = SHA1.Create();
-            byte[] _binary = _sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(_source));
+            return _sha1.ComputeHash(Encoding.UTF8.GetBytes(_source));
+        }
+        #endregion
 
+        #region EncodeSHA1ToHex
+        public static string EncodeSHA1ToHex(string _source)
+        {
+            byte[] _binary = EncodeSHA1(_source);
             StringBuilder _sb = new StringBuilder();
             foreach (byte _byte in _binary)
             {
                 _sb.AppendFormat("{0:x2}", _byte);
             }
             return _sb.ToString();
+        }
+        #endregion
+
+        #region EncodeSHA1ToBase64
+        public static string EncodeSHA1ToBase64(string _source)
+        {
+            byte[] _binary = EncodeSHA1(_source);
+
+            return Convert.ToBase64String(_binary);
         }
         #endregion
 
