@@ -49,6 +49,8 @@ namespace Lion
         /// <param name="_hex">hex string.</param>
         public static byte[] HexStringToByteArray(string _hex)
         {
+            if (_hex.Length % 2 != 0)
+                _hex = _hex.PadLeft(_hex.Length + 1, '0');
             return Enumerable.Range(0, _hex.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(_hex.Substring(x, 2), 16)).ToArray();
             byte[] bytes = null;
             if (String.IsNullOrEmpty(_hex))
