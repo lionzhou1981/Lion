@@ -289,12 +289,12 @@ namespace Lion.SDK.Bitcoin.Coins
 
         public static void Test()
         {
-            Console.WriteLine($"0x{BuildRawTransaction(1, 2000000000, 21000, "01d66b61545935979813a3e3a450e67641109ff9c90b7909b49bcead65ec6fa5", "7f51e67c16af89b2abdc4906b788d8dd443ffbc1", 0.001M)}");
+            Console.WriteLine($"0x{BuildRawTransaction(4, 10, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, "01d66b61545935979813a3e3a450e67641109ff9c90b7909b49bcead65ec6fa5", "7f51e67c16af89b2abdc4906b788d8dd443ffbc1", BigInteger.Pow(BigInteger.Parse("10"),16)).ToLower()}");
         }
 
-        public static string BuildRawTransaction(BigInteger _nonce, BigInteger _gasPrice, BigInteger _gasLimit, string _fromPrivateKey, string _addressTo, decimal _amount, string _data = "01")
+        public static string BuildRawTransaction(BigInteger _chainId, BigInteger _nonce, BigInteger _gasPrice, BigInteger _gasLimit, string _fromPrivateKey, string _addressTo, BigInteger _amount, string _data = "")
         {
-            var _amountDex = ToETHValue(_amount.ToString());
+            var _amountDex = _amount.ToString("X");//ToETHValue(_amount.ToString());
             SHA256Managed _sha256 = new SHA256Managed();
             var _basicRaw = Lion.Encrypt.RLP.EncodeList(new byte[][] {
                 ToBytesForRLPEncoding(_nonce),
@@ -302,38 +302,51 @@ namespace Lion.SDK.Bitcoin.Coins
                 ToBytesForRLPEncoding(_gasLimit),
                 HexToByteArray(_addressTo),
                 ToBytesForRLPEncoding(BigInteger.Parse(_amountDex,System.Globalization.NumberStyles.HexNumber)),
-                HexToByteArray(_data) });
-          
-            var _basicRawSHA = _sha256.ComputeHash(_basicRaw);
-
+                HexToByteArray(_data),
+                RLP.EncodeElement(_chainId.ToByteArray()),
+                HexToByteArray(""),
+                HexToByteArray("")
+            });
+            var _basicRawSHA = new Keccak256().Compute(_basicRaw);
             var _r = BigInteger.Zero;
             var _e = BigInteger.Zero;
             var _s = BigInteger.Zero;
             var _k = BigInteger.Zero;
+            var _recid = BigInteger.Zero;
             while (true)
             {
-                _k = new Random(Lion.RandomPlus.RandomSeed).Next(0, int.MaxValue);
+                _k = new Random(Lion.RandomPlus.RandomSeed).Next(1, int.MaxValue);
                 var _Gk = Secp256k1.G.Multiply(_k);
+                var _y = _Gk.Y & 1;
                 _r = _Gk.X;
-                if (_r >= KeyLimit)
+                _r = _r % Secp256k1.N;
+                if (_r >= KeyLimit || _r.Sign == 0)
                 {
                     Thread.Sleep(500);
                     continue;
                 }
                 _e = BigInteger.Parse($"0{BitConverter.ToString(_basicRawSHA).Replace("-", "")}", System.Globalization.NumberStyles.HexNumber);
-                var _d = BigInteger.Parse($"{_fromPrivateKey}", System.Globalization.NumberStyles.HexNumber);
-                _s = (_e + _r * _d) / _k;
+                var _d = BigInteger.Parse($"0{_fromPrivateKey}", System.Globalization.NumberStyles.HexNumber);
+                _s = _r * _d;
+                _s = _s + _e;
+                _s = _s * _k.ModInverse(Secp256k1.N);
                 _s = _s % Secp256k1.N;
-                if (_s >= KeyLimit)
+                if (_s > Secp256k1.HalfN)
+                    _recid = _y;
+                if (_s.CompareTo(Secp256k1.HalfN) > 0)
+                    _s = Secp256k1.N - _s;
+
+                if (_s >= KeyLimit || _s.Sign == 0)
                 {
                     Thread.Sleep(500);
                     continue;
                 }
                 break;
             }
+
             if (_k == BigInteger.Zero || _r == BigInteger.Zero || _e == BigInteger.Zero || _s == BigInteger.Zero)
                 throw new Exception("Transaction sign error");
-            BigInteger _addin = _r.IsEven ? 25 : 26; //we’ll just use 37 if r is even and 38 if r is odd, as this follows EIP-155.
+            BigInteger _v = _chainId * 2 + _recid + 35; 
             return BitConverter.ToString(Lion.Encrypt.RLP.EncodeList(new byte[][] {
                 ToBytesForRLPEncoding(_nonce),
                 ToBytesForRLPEncoding(_gasPrice),
@@ -341,10 +354,9 @@ namespace Lion.SDK.Bitcoin.Coins
                 HexToByteArray(_addressTo),
                 ToBytesForRLPEncoding(BigInteger.Parse(_amountDex,System.Globalization.NumberStyles.HexNumber)),
                 HexToByteArray(_data),
-
-                RLP.EncodeElement(_addin.ToByteArray()),
-                RLP.EncodeElement(_r.ToByteArray()),
-                RLP.EncodeElement(_s.ToByteArray())
+                ToBytesForRLPEncoding(_v),
+                RLP.EncodeElement(Lion.HexPlus.HexStringToByteArray(_r.ToString("X").TrimStart('0'))),
+                RLP.EncodeElement(Lion.HexPlus.HexStringToByteArray(_s.ToString("X").TrimStart('0')))
             })).Replace("-", "");
         }
     }
