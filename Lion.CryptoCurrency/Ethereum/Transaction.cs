@@ -8,13 +8,12 @@ namespace Lion.CryptoCurrency.Ethereum
 {
     public class Transaction
     {
-        public Chain Chain;
+        public uint ChainId;
         public uint GasPrice;
         public uint GasLimit;
         public string Address;
         public uint Nonce;
-        public decimal Value;
-        public BigInteger Value2BigInteger => BigInteger.Parse(this.Value.ToString($"0.{"".PadRight(18, '0')}"));
+        public Number Value;
         public string DataHex;
 
         #region ToSignedHex
@@ -25,9 +24,9 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeUInt(this.GasPrice),
                 RLP.EncodeUInt(this.GasLimit),
                 RLP.EncodeHex(this.Address),
-                RLP.EncodeBigInteger(this.Value2BigInteger),
+                RLP.EncodeBigInteger(this.Value.Integer),
                 RLP.EncodeString(this.DataHex),
-                RLP.EncodeInt((int)this.Chain),
+                RLP.EncodeInt((int)this.ChainId),
                 RLP.EncodeBytes(new byte[0]),
                 RLP.EncodeBytes(new byte[0])
             });
@@ -62,14 +61,14 @@ namespace Lion.CryptoCurrency.Ethereum
                 break;
             }
 
-            BigInteger _v = BigInteger.Parse(((int)this.Chain).ToString()) * 2 + _recid + 35;
+            BigInteger _v = BigInteger.Parse(((int)this.ChainId).ToString()) * 2 + _recid + 35;
 
             byte[] _signed = RLP.EncodeList(new byte[][] {
                 RLP.EncodeUInt(this.Nonce),
                 RLP.EncodeUInt(this.GasPrice),
                 RLP.EncodeUInt(this.GasLimit),
                 RLP.EncodeHex(this.Address),
-                RLP.EncodeBigInteger(this.Value2BigInteger),
+                RLP.EncodeBigInteger(this.Value.Integer),
                 RLP.EncodeString(this.DataHex),
                 RLP.EncodeBigInteger(_v),
                 RLP.EncodeBytes(HexPlus.HexStringToByteArray(_r.ToString("X").TrimStart('0'))),
