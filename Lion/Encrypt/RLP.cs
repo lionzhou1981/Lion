@@ -96,7 +96,7 @@ namespace Lion.Encrypt
             }
             _bytes = _trimed.ToArray();
 
-            return RLP.EncodeElement(_bytes);
+            return RLP.EncodeBytes(_bytes);
         }
         #endregion
 
