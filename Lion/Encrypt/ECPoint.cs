@@ -7,49 +7,42 @@ namespace Lion.Encrypt
 {
     public class ECPoint : ICloneable
     {
-        private readonly bool _isInfinity;
-        private readonly BigInteger _x;
-        private BigInteger _y;
+        private readonly bool isInfinity;
+        private readonly BigInteger x;
+        private BigInteger y;
 
-        public ECPoint(BigInteger x, BigInteger y) : this(x, y, false)
+        private ECPoint() { isInfinity = true; }
+
+        public ECPoint(BigInteger _x, BigInteger _y) : this(_x, _y, false) { }
+
+        public ECPoint(BigInteger _x, BigInteger _y, bool _isInfinity)
         {
+            x = _x;
+            y = _y;
+            isInfinity = _isInfinity;
         }
 
-        public ECPoint(BigInteger x, BigInteger y, bool isInfinity)
-        {
-            _x = x;
-            _y = y;
-            _isInfinity = isInfinity;
-        }
-
-        private ECPoint()
-        {
-            _isInfinity = true;
-        }
 
         public BigInteger X
         {
-            get { return _x; }
+            get { return x; }
         }
 
         public BigInteger Y
         {
-            get { return _y; }
+            get { return y; }
         }
 
-        public static ECPoint Infinity
-        {
-            get { return new ECPoint(); }
-        }
+        public static ECPoint Infinity { get { return new ECPoint(); } }
 
         public bool IsInfinity
         {
-            get { return _isInfinity; }
+            get { return isInfinity; }
         }
 
         public object Clone()
         {
-            return new ECPoint(_x, _y, _isInfinity);
+            return new ECPoint(x, y, isInfinity);
         }
 
         //TODO: Rename to Encode (point is implied)
@@ -108,7 +101,7 @@ namespace Lion.Encrypt
         public ECPoint Negate()
         {
             var r = (ECPoint)Clone();
-            r._y = -r._y + Secp256k1.P;
+            r.y = -r.y + Secp256k1.P;
             return r;
         }
 
