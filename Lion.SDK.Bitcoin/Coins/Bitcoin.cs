@@ -236,52 +236,42 @@ namespace Lion.SDK.Bitcoin.Coins
             return Base58.Encode(_orgKey + _addmin);
         }
 
-        internal static void AddBytes(List<byte> _bytes, params byte[] _addBytes)
+        public static List<byte> ECDSASign(string _scriptSig, string _outputPrivateKey)
         {
-            _bytes.AddRange(_addBytes);
+            BigInteger _k = BigInteger.Parse($"0{Lion.RandomPlus.GenerateHexKey()}", NumberStyles.HexNumber);
+            var _Gk = Secp256k1.G.Multiply(_k);
+            var _r = _Gk.X;
+            var _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
+            var _d = BigInteger.Parse($"0{_outputPrivateKey}", System.Globalization.NumberStyles.HexNumber);
+            var _s = _r * _d;
+            _s = _s + _e;
+            _s = _s * _k.ModInverse(Secp256k1.N);
+            _s = _s % Secp256k1.N;
+            if (_s.CompareTo(Secp256k1.HalfN) > 0)
+                _s = Secp256k1.N - _s;
+
+            var _rbytes = _r.ToByteArray().Reverse().ToList();
+            var _sbytes = _s.ToByteArray().Reverse().ToList();
+
+            var _allBytes = new List<byte>();
+            BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
+            _allBytes.Add(0x30);
+            _allBytes.AddRange(_rsLength.ToByteArray());
+            _allBytes.Add(0x02);
+            _allBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
+            _allBytes.AddRange(_rbytes.ToArray());
+            _allBytes.Add(0x02);
+            _allBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
+            _allBytes.AddRange(_sbytes.ToArray());
+            _allBytes.Add(0x01);
+            _allBytes.Add(0x41);
+            _allBytes.InsertRange(0, ((BigInteger)_allBytes.Count - 1).ToByteArray());
+            return _allBytes;
         }
 
-        internal static void AddBytesPadRightZero(List<byte> _bytes, int _length, params byte[] _addBytes)
+        public static string SendToAddress(List<BitcoinInput> _inputs, Dictionary<string, decimal> _outputs, decimal _fee = 0.0001M, bool _testNet = true)
         {
-            _bytes.AddRange(_addBytes);
-            if (_length <= _addBytes.Length)
-                return;
-            for (var i = 0; i < _length - _addBytes.Length; i++)
-            {
-                _bytes.Add(0x00);
-            }
-        }
-
-        const decimal SatoshiBase = 100000000M;
-
-        internal static BigInteger DecimalToSatoshi(decimal _value)
-        {
-            int _valuePay = decimal.ToInt32(SatoshiBase * _value);
-            return _valuePay;
-        }
-
-        internal static void SendValueToPubKey(List<byte> _scripts, string _pubKey, BigInteger _value)
-        {
-            AddBytesPadRightZero(_scripts, 8, _value.ToByteArray());
-            AddPubKey(_scripts, _pubKey);
-        }
-
-        internal static void AddPubKey(List<byte> _scripts, string _pubKey)
-        {
-            var _outputPubKeyBytes = Lion.HexPlus.HexStringToByteArray(_pubKey);
-            AddBytes(_scripts, ((BigInteger)_outputPubKeyBytes.Length).ToByteArray());
-            AddBytes(_scripts, _outputPubKeyBytes);
-        }
-
-        public static void SendToAddress()
-        {
-
-            //Console.WriteLine(Lion.HexPlus.ByteArrayToHexString("134,190,215,244,208,241,28,107,96,148,77,109,254,207,143,246,185,47,53,143,150,234,203,196,10,71,78,18,72,77,149,41".Split(',').Select(t => byte.Parse(t)).ToArray()));
-            //            
-            //var _privateKey = "e218a0fcc2d8c42988439808f7c95cb0d6ee091383f35b6c6282c97ece3ce240";
-            //
-
-            //structure
+            //pay to one structure
             //no sig template:"01000000015a9a9769092219a975afc9d2ca49b80ba7fdc901dcf445e6e7cebe3f994952ed010000001976a914767bf5194b5fc2f3922505a926f5484a9d52aa4b88acffffffff0210270000000000001976a91465ce9f49184862b59fc8f051c5ebdee0044f387d88ac645e0100000000001976a914767bf5194b5fc2f3922505a926f5484a9d52aa4b88ac0000000001000000"
             //01000000 version
             //01 inputcount
@@ -298,93 +288,84 @@ namespace Lion.SDK.Bitcoin.Coins
             //01000000 hash version
             //scriptsig template:
             //"01000000015a9a9769092219a975afc9d2ca49b80ba7fdc901dcf445e6e7cebe3f994952ed01000000{ECDSA(SHA256(SHA256(no sig template)).reverse()).RS}}0141{input scriptpubkey}ffffffff0210270000000000001976a91465ce9f49184862b59fc8f051c5ebdee0044f387d88ac645e0100000000001976a914767bf5194b5fc2f3922505a926f5484a9d52aa4b88ac0000000001000000"
-            string _lastTransactionId = "b956f26f85f00c5c79bae6276432aa5d977a2629bf665eebd3a940a4fa659905";
-            //string _outputPubKey = "76a914767bf5194b5fc2f3922505a926f5484a9d52aa4b88ac";
-            //string _outputPrivateKey = "e218a0fcc2d8c42988439808f7c95cb0d6ee091383f35b6c6282c97ece3ce240";
 
-            string _lastTransactionId2 = "2b7e11d90af2ce4995ae98c2ccbedd2f4df9d81fd8eafdb4505cc935c41b2dc6";
-            string _outputPubKey = "76a91465ce9f49184862b59fc8f051c5ebdee0044f387d88ac";
-            string _outputPrivateKey = "2f3acf9eca4066b71763d67903f8c2f37dbfc94acd72c374bd3fef3ca6d78477";
 
-            var _addr = Lion.SDK.Bitcoin.Coins.Bitcoin.GenerateAddress(out string _data, _outputPrivateKey, false);
-            var _outputScriptPubKey = _addr.PublicKey;
-            BigInteger _outputCount = 1;
-            //var _pubKeyHash = new SHA256Managed().ComputeHash(Lion.HexPlus.HexStringToByteArray(_pubKey));
-            //var _ripemd = new RIPEMD160Managed();
-            //var _ripemdHashedInput = _ripemd.ComputeHash(_pubKeyHash);
-            //Console.WriteLine(Lion.HexPlus.ByteArrayToHexString(_ripemdHashedInput));
+            //testdata
+            //_outputs = new Dictionary<string, decimal>();
+            //_outputs.Add("miy64GVdz6ZQaUKCVmhpjVLqKsUqMgyP6y", 0.0001M);
+            //_outputs.Add("mpoG4nsQyV1DjhKDqGjvF9Mam22P67JiSk", 0.0001M);
 
-            BigInteger _outputBalance = DecimalToSatoshi(0.000697M);
-            BigInteger _payValue = DecimalToSatoshi(0.0001M);
-            BigInteger _fee = DecimalToSatoshi(0.0001M);
-            BigInteger _balance = _outputBalance - _payValue - _fee;
-            var _outputPubKeyBytes = Lion.HexPlus.HexStringToByteArray(_outputPubKey);
 
-            string _paytoPubKey = "76a914fc0fe6f869f4075d07dfae8146a3be074ef8ce1088ac";
+            //_inputs = new List<BitcoinInput>();
+            //_inputs.Add(new BitcoinInput("a6ce685dec45397d768c5465e17991f8e1b5ddc84f87900ff6b0d4ea88be669f", 1, 0.00149M, "e218a0fcc2d8c42988439808f7c95cb0d6ee091383f35b6c6282c97ece3ce240", _testNet));
+            //_inputs.Add(new BitcoinInput("a6ce685dec45397d768c5465e17991f8e1b5ddc84f87900ff6b0d4ea88be669f", 0, 0.0001M, "071708c0a5a37a9c3c3ffa238fdc9c7928c2b5137a86e8f2db9407b3daa78646", _testNet));
+            //end test
 
-            BigInteger _lastTransactionOutPutIndex = 1;
-            BigInteger _lastTransactionOutPutIndex2 = 0;
+            BigInteger _outputCount = _outputs.Count;
+
+            decimal _outputBalance = _inputs.Sum(t => t.Balance) - _outputs.Sum(t => t.Value) - _fee;
+            if (_outputBalance < 0)
+                throw new Exception("Not enough balance");
+
+            var _firstInput = _inputs.First();
+            var _address = GenerateAddress(out string _, _firstInput.PrivateKey, !_testNet).Text;
+            if (_outputs.ContainsKey(_address))
+                _outputs[_address] += _outputBalance;
+            else
+                _outputs.Add(_address, _outputBalance);//balance return 
+
+            //base script: version/input count
             var _templateStartNoSign = new List<byte>();
-            AddBytesPadRightZero(_templateStartNoSign, 4, 0x01);//version;
-            AddBytes(_templateStartNoSign, 0x02);//input count;
-            AddBytes(_templateStartNoSign, Lion.HexPlus.HexStringToByteArray(_lastTransactionId).Reverse().ToArray());
-            AddBytesPadRightZero(_templateStartNoSign, 4, _lastTransactionOutPutIndex.ToByteArray().Reverse().ToArray());
-            AddBytes(_templateStartNoSign, Lion.HexPlus.HexStringToByteArray(_lastTransactionId2).Reverse().ToArray());
-            AddBytesPadRightZero(_templateStartNoSign, 4, _lastTransactionOutPutIndex2.ToByteArray().Reverse().ToArray());
-            //-------------end with no pubkey script--------
+            _templateStartNoSign.AddBytesPadRightZero(4, 0x01);//version;
+            _templateStartNoSign.AddBytes(((BigInteger)_inputs.Count).ToByteArray().Reverse().ToArray());
+
             //start from output,not contains sign,not contains hash type
             var _templateFromOutPutToHashType = new List<byte>();
-            AddBytes(_templateFromOutPutToHashType, 0xff, 0xff, 0xff, 0xff);//transaction seq
-            AddBytes(_templateFromOutPutToHashType, (_outputCount + 1).ToByteArray().Reverse().ToArray());//transaction seq
-            SendValueToPubKey(_templateFromOutPutToHashType, _paytoPubKey, _payValue);
-            SendValueToPubKey(_templateFromOutPutToHashType, _outputPubKey, _balance);
-            AddBytesPadRightZero(_templateFromOutPutToHashType, 4, 0x00);
-            //--------------end output------------------------
-            var _arrayToSign = new List<byte>();//sign bytes;
-            _arrayToSign.AddRange(_templateStartNoSign);
-            AddPubKey(_arrayToSign, _outputPubKey);
-            _arrayToSign.AddRange(_templateFromOutPutToHashType);
-            AddBytesPadRightZero(_arrayToSign, 4, 0x01);//hash type;
-            //generate sig
-            Console.WriteLine("Script:" + Lion.HexPlus.ByteArrayToHexString(_arrayToSign.ToArray()));
-            var _sciptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_arrayToSign.ToArray()))).Replace("-", "").ToLower();
-            Console.WriteLine("ScriptSig:" + _sciptSig);
-            //ECDSA
-            BigInteger _k = BigInteger.Parse($"0{Lion.RandomPlus.GenerateHexKey()}", NumberStyles.HexNumber);
-            var _Gk = Secp256k1.G.Multiply(_k);
-            var _r = _Gk.X;
-            var _e = BigInteger.Parse($"0{_sciptSig}", NumberStyles.HexNumber);
-            var _d = BigInteger.Parse($"0{_outputPrivateKey}", System.Globalization.NumberStyles.HexNumber);
-            var _s = _r * _d;
-            _s = _s + _e;
-            _s = _s * _k.ModInverse(Secp256k1.N);
-            _s = _s % Secp256k1.N;
-            if (_s.CompareTo(Secp256k1.HalfN) > 0)
-                _s = Secp256k1.N - _s;
-            Console.WriteLine($"K:{_k.ToString()}\r\nR:{_r.ToString()}\r\nS:{_s.ToString()}");
-            var _rbytes = _r.ToByteArray().Reverse().ToList();
-            var _sbytes = _s.ToByteArray().Reverse().ToList();
-            var _allBytes = new List<byte>();
-            BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
-            _allBytes.Add(0x30);
-            _allBytes.AddRange(_rsLength.ToByteArray());
-            _allBytes.Add(0x02);
-            _allBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
-            _allBytes.AddRange(_rbytes.ToArray());
-            _allBytes.Add(0x02);
-            _allBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
-            _allBytes.AddRange(_sbytes.ToArray());
-            _allBytes.Add(0x01);
-            _allBytes.Add(0x41);
-            _allBytes.InsertRange(0, ((BigInteger)_allBytes.Count - 1).ToByteArray());
-            BigInteger _sigLength = BigInteger.Parse(_outputScriptPubKey, NumberStyles.HexNumber).ToByteArray().Length + _allBytes.Count;
-            var _arrayToPay = new List<byte>();//sign bytes;
+            _templateFromOutPutToHashType.AddBytes((_outputCount + 1).ToByteArray().Reverse().ToArray());//transaction seq
+            _outputs.ToList().ForEach(t =>
+            {
+                var _outPutPKSH = BitcoinHelper.AddressToPKSH(t.Key);
+                _templateFromOutPutToHashType.SendValueToPubKey(_outPutPKSH, BitcoinHelper.DecimalToSatoshi(t.Value));
+            });
+            _templateFromOutPutToHashType.AddBytesPadRightZero(4, 0x00);
+            //base script sig = base+input+output+hashtype
+            //pay script sig = ecdsa(base script sig)
+            foreach (var _input in _inputs)
+            {
+                //sign bytes per input
+                var _arrayToSign = new List<byte>();
+                _arrayToSign.AddRange(_templateStartNoSign);
+                _inputs.ForEach(t =>
+                {
+                    //script per input
+                    _arrayToSign.AddRange(t.BaseInputScript);
+                    if (t.TxId == _input.TxId && t.TxIndex == _input.TxIndex)
+                        _arrayToSign.AddRange(Lion.HexPlus.HexStringToByteArray(t.SciptPubKey));
+                    else
+                        _arrayToSign.AddBytes(0x00);
+                    _arrayToSign.AddBytes(0xff, 0xff, 0xff, 0xff);
+                });
+                _arrayToSign.AddRange(_templateFromOutPutToHashType);
+                _arrayToSign.AddBytesPadRightZero(4, 0x01);//hash type;
+                //ECDSA
+                var _sciptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_arrayToSign.ToArray()))).Replace("-", "").ToLower();
+                _input.ScriptSig = ECDSASign(_sciptSig, _input.PrivateKey);
+            }
+            //pay bytes
+            var _arrayToPay = new List<byte>();
             _arrayToPay.AddRange(_templateStartNoSign);
-            AddBytes(_arrayToPay, _sigLength.ToByteArray().Reverse().Where(t => t != 0x00).ToArray());
-            AddBytes(_arrayToPay, _allBytes.ToArray());
-            AddBytes(_arrayToPay, Lion.HexPlus.HexStringToByteArray(_outputScriptPubKey));
+            _inputs.ForEach(t =>
+            {
+                _arrayToPay.AddRange(t.BaseInputScript);//script per input
+                BigInteger _sigLength = BigInteger.Parse(t.PublicKey, NumberStyles.HexNumber).ToByteArray().Length + t.ScriptSig.Count;
+                _arrayToPay.AddBytes(_sigLength.ToByteArray().Reverse().Where(f => f != 0x00).ToArray());
+                _arrayToPay.AddBytes(t.ScriptSig.ToArray());
+                _arrayToPay.AddBytes(Lion.HexPlus.HexStringToByteArray(t.PublicKey));
+                _arrayToPay.AddBytes(0xff, 0xff, 0xff, 0xff);//transaction seq
+            });
             _arrayToPay.AddRange(_templateFromOutPutToHashType);
             Console.WriteLine("Pay:" + Lion.HexPlus.ByteArrayToHexString(_arrayToPay.ToArray()));
+            return Lion.HexPlus.ByteArrayToHexString(_arrayToPay.ToArray());
         }
 
         public static Address GenerateAddress(out string _uncompressKey, string _existsPrivateKey = "", bool _mainNet = true)
