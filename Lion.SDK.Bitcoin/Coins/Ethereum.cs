@@ -277,7 +277,6 @@ namespace Lion.SDK.Bitcoin.Coins
         public static string BuildRawTransaction(BigInteger _chainId, BigInteger _nonce, BigInteger _gasPrice, BigInteger _gasLimit, string _fromPrivateKey, string _addressTo, BigInteger _amount, string _data = "")
         {
             var _amountDex = _amount.ToString("X");//ToETHValue(_amount.ToString());
-            SHA256Managed _sha256 = new SHA256Managed();
             var _basicRaw = Lion.Encrypt.RLP.EncodeList(new byte[][] {
                 ToBytesForRLPEncoding(_nonce),
                 ToBytesForRLPEncoding(_gasPrice),
