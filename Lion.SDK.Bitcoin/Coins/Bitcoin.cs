@@ -203,7 +203,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
         public static string PrivKey2PubKey(string _privateKey, bool _mainNet = true)
         {
-            return new Secp256k1().PrivateKeyToPublicKey(_privateKey);
+            return Lion.HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_privateKey));
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
         public static List<byte> ECDSASign(string _scriptSig, string _outputPrivateKey)
         {
-            BigInteger _k = BigInteger.Parse($"0{Lion.RandomPlus.GenerateHexKey()}", NumberStyles.HexNumber);
+            BigInteger _k = BigInteger.Parse($"0{Lion.RandomPlus.RandomHex()}", NumberStyles.HexNumber);
             var _Gk = Secp256k1.G.Multiply(_k);
             var _r = _Gk.X;
             var _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
@@ -354,7 +354,7 @@ namespace Lion.SDK.Bitcoin.Coins
         public static Address GenerateAddress(out string _uncompressKey, string _existsPrivateKey = "", bool _mainNet = true)
         {
             string _netVersion = _mainNet ? "00" : "6f";
-            string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.GenerateHexKey(64) : _existsPrivateKey;
+            string _privateKey = string.IsNullOrWhiteSpace(_existsPrivateKey) ? Lion.RandomPlus.RandomHex() : _existsPrivateKey;
             _uncompressKey = _privateKey;
             BigInteger _bigPrivateKey = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
             var _publicKey = Secp256k1.PrivateKeyToPublicKey(_bigPrivateKey);
