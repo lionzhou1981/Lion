@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
@@ -102,6 +103,38 @@ namespace Lion.CryptoCurrency.Bitcoin
                 _version = null;
                 return false;
             }
+        }
+        #endregion
+
+        #region Private2Public
+        public static string Private2Public(string _private)
+        {
+            return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private));
+        }
+        #endregion
+
+        #region Address2PKSH
+        public static string Address2PKSH(string _address)
+        {
+            var _base58Decode = Base58.Decode(_address);
+            var _publicBytes = new byte[_base58Decode.Length - 5];
+            Array.Copy(_base58Decode, 1, _publicBytes, 0, 20);
+
+            return Public2PKSH(HexPlus.ByteArrayToHexString(_publicBytes));
+        }
+        #endregion
+
+        #region Address2PKSH
+        public static string Public2PKSH(string _public)
+        {
+            List<byte> _hashed = new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(_public))).ToList();
+            _hashed.Insert(0, 0x14);//PKSH A9 -> do a RipeMD160 on the top stack item 14->push hex 14(decimal 20) bytes on stack
+            _hashed.Insert(0, 0xa9);
+            _hashed.Insert(0, 0x76);
+            _hashed.Add(0x88);
+            _hashed.Add(0xac);
+            _hashed.InsertRange(0, BigInteger.Parse(_hashed.Count.ToString()).ToByteArray());
+            return HexPlus.ByteArrayToHexString(_hashed.ToArray());
         }
         #endregion
     }
