@@ -27,8 +27,8 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeBigInteger(this.Value.Integer),
                 RLP.EncodeString(this.DataHex),
                 RLP.EncodeInt((int)this.ChainId),
-                RLP.EncodeBytes(new byte[0]),
-                RLP.EncodeBytes(new byte[0])
+                RLP.EncodeString(""),
+                RLP.EncodeString("")
             });
 
             byte[] _basicHashedRaw = new Keccak256().Compute(_basicRaw);

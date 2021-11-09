@@ -14,6 +14,7 @@ namespace Lion.Encrypt
         private const byte OFFSET_SHORT_LIST = 0xc0;
         private const byte OFFSET_LONG_LIST = 0xf7;
 
+
         #region EncodeList
         public static byte[] EncodeList(params byte[][] items)
         {
@@ -75,7 +76,7 @@ namespace Lion.Encrypt
 
         public static byte[] EncodeInt(int _int) => EncodeBigInteger(BigInteger.Parse(_int.ToString()));
         public static byte[] EncodeUInt(uint _uint) => EncodeBigInteger(BigInteger.Parse(_uint.ToString()));
-        public static byte[] EncodeHex(string _hex) => HexPlus.HexStringToByteArray(_hex);
+        public static byte[] EncodeHex(string _hex) => EncodeBytes(HexPlus.HexStringToByteArray(_hex));
         public static byte[] EncodeString(string _string, bool _hex = true) => _hex ? EncodeHex(_string) : Encoding.UTF8.GetBytes(_string);
 
         #region EncodeBigInteger
