@@ -12,7 +12,7 @@ namespace Lion.CryptoCurrency.Ethereum
         public Number(decimal _value, int _decimal = 18)
         {
             this.Decimal = _decimal;
-            this.Integer = BigInteger.Parse(_value.ToString($"0.{"".PadRight(_decimal, '0')}"));
+            this.Integer = BigInteger.Parse(_value.ToString($"0.{"".PadRight(_decimal, '0')}").Replace(".",""));
         }
         public Number(BigInteger _integer, int _decimal = 18)
         {

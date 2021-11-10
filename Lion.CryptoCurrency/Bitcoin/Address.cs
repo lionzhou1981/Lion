@@ -116,15 +116,15 @@ namespace Lion.CryptoCurrency.Bitcoin
         #region Address2PKSH
         public static string Address2PKSH(string _address)
         {
-            var _base58Decode = Base58.Decode(_address);
-            var _publicBytes = new byte[_base58Decode.Length - 5];
-            Array.Copy(_base58Decode, 1, _publicBytes, 0, 20);
+            byte[] _decoded = Base58.Decode(_address);
+            byte[] _public = new byte[_decoded.Length - 5];
+            Array.Copy(_decoded, 1, _public, 0, 20);
 
-            return Public2PKSH(HexPlus.ByteArrayToHexString(_publicBytes));
+            return Public2PKSH(HexPlus.ByteArrayToHexString(_public));
         }
         #endregion
 
-        #region Address2PKSH
+        #region Public2PKSH
         public static string Public2PKSH(string _public)
         {
             List<byte> _hashed = new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(_public))).ToList();
