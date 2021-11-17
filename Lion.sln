@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.SDK", "Lion.SDK\Lion.S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.Drawing", "Lion.Drawing\Lion.Drawing.csproj", "{EC4923F9-F2D0-480F-811A-949DB63AFC19}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{614465A0-FB0E-46F4-A15A-945F801A0B97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lion.CryptoCurrency", "Lion.CryptoCurrency\Lion.CryptoCurrency.csproj", "{B21F848E-E363-4F1F-93FC-DCE37690284B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC4923F9-F2D0-480F-811A-949DB63AFC19}.Release|Any CPU.Build.0 = Release|Any CPU
-		{614465A0-FB0E-46F4-A15A-945F801A0B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{614465A0-FB0E-46F4-A15A-945F801A0B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{614465A0-FB0E-46F4-A15A-945F801A0B97}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{614465A0-FB0E-46F4-A15A-945F801A0B97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B21F848E-E363-4F1F-93FC-DCE37690284B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B21F848E-E363-4F1F-93FC-DCE37690284B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B21F848E-E363-4F1F-93FC-DCE37690284B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B21F848E-E363-4F1F-93FC-DCE37690284B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

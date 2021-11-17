@@ -5,7 +5,6 @@ using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using Lion.Encrypt;
-using Newtonsoft.Json.Linq;
 
 namespace Lion.CryptoCurrency.Bitcoin
 {
@@ -38,7 +37,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             _vinUnsigned.AddRange(BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray()); //transaction seq
             foreach(TransactionVin _vin in this.Vins)
             {
-                _vinUnsigned.AddAndPadRight(8, 0x0, Decimal2Satoshi(_vin.Amount).ToByteArray());
+                _vinUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vin.Amount).ToString()).ToByteArray());
                 _vinUnsigned.AddRange(HexPlus.HexStringToByteArray(Address.Address2PKSH(_vin.Address)));
             }
             _vinUnsigned.AddAndPadRight(4, 0x0, 0x00);
@@ -60,9 +59,36 @@ namespace Lion.CryptoCurrency.Bitcoin
                 _voutUnsigned.AddRange(_vinUnsigned);
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type;
 
+                string _scriptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
+
                 //ECDSA
-                string _sciptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
-                _vout.ScriptSign = ECDSASign(_sciptSig, _vout.Private);
+                BigInteger _k = BigInteger.Parse($"0{RandomPlus.RandomHex()}", NumberStyles.HexNumber);
+                Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
+                BigInteger _r = _gk.X;
+                BigInteger _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
+                BigInteger _d = BigInteger.Parse($"0{_vout.Private}", NumberStyles.HexNumber);
+                BigInteger _s = ((_r * _d + _e) * _k.ModInverse(Secp256k1.N)) % Secp256k1.N;
+
+                if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
+
+                List<byte> _rbytes = _r.ToByteArray().Reverse().ToList();
+                List<byte> _sbytes = _s.ToByteArray().Reverse().ToList();
+
+                List<byte> _allBytes = new List<byte>();
+                BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
+                _allBytes.Add(0x30);
+                _allBytes.AddRange(_rsLength.ToByteArray());
+                _allBytes.Add(0x02);
+                _allBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
+                _allBytes.AddRange(_rbytes.ToArray());
+                _allBytes.Add(0x02);
+                _allBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
+                _allBytes.AddRange(_sbytes.ToArray());
+                _allBytes.Add(0x01);
+                _allBytes.Add(0x41);
+                _allBytes.InsertRange(0, ((BigInteger)_allBytes.Count - 1).ToByteArray());
+
+                _vout.ScriptSign = _allBytes;
             }
 
             //pay bytes
@@ -82,40 +108,9 @@ namespace Lion.CryptoCurrency.Bitcoin
             return HexPlus.ByteArrayToHexString(_signedRaw.ToArray());
         }
         #endregion
-
-        private static BigInteger Decimal2Satoshi(decimal _value) => decimal.ToInt32(100000000M * _value);
-
-        private  static List<byte> ECDSASign(string _scriptSig, string _private)
-        {
-            BigInteger _k = BigInteger.Parse($"0{Lion.RandomPlus.RandomHex()}", NumberStyles.HexNumber);
-            Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
-            BigInteger _r = _gk.X;
-            BigInteger _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
-            BigInteger _d = BigInteger.Parse($"0{_private}", NumberStyles.HexNumber);
-            BigInteger _s = ((_r * _d + _e) * _k.ModInverse(Secp256k1.N)) % Secp256k1.N;
-
-            if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
-
-            List<byte> _rbytes = _r.ToByteArray().Reverse().ToList();
-            List<byte> _sbytes = _s.ToByteArray().Reverse().ToList();
-
-            List<byte> _allBytes = new List<byte>();
-            BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
-            _allBytes.Add(0x30);
-            _allBytes.AddRange(_rsLength.ToByteArray());
-            _allBytes.Add(0x02);
-            _allBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
-            _allBytes.AddRange(_rbytes.ToArray());
-            _allBytes.Add(0x02);
-            _allBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
-            _allBytes.AddRange(_sbytes.ToArray());
-            _allBytes.Add(0x01);
-            _allBytes.Add(0x41);
-            _allBytes.InsertRange(0, ((BigInteger)_allBytes.Count - 1).ToByteArray());
-            return _allBytes;
-        }
     }
 
+    #region TransactionVout
     public class TransactionVout
     {
         public string TxId;
@@ -138,11 +133,28 @@ namespace Lion.CryptoCurrency.Bitcoin
         public List<byte> ScriptSign;
 
         public string ScriptPKSH => Address.Public2PKSH(this.Public);
-    }
 
+        public TransactionVout(string _txid,int _txIndex,decimal _amount,string _private)
+        {
+            this.TxId = _txid;
+            this.TxIndex = _txIndex;
+            this.Amount = _amount;
+            this.Private = _private;
+        }
+    }
+    #endregion
+
+    #region TransactionVin
     public class TransactionVin
     {
         public string Address;
         public decimal Amount;
+
+        public TransactionVin(string _address,decimal _amount)
+        {
+            this.Address = _address;
+            this.Amount = _amount;
+        }
     }
+    #endregion
 }
