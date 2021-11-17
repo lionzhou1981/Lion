@@ -113,8 +113,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         }
         #endregion
 
-        #region Address2PKSH
-        public static string Address2PKSH(string _address)
+        #region Address2Public
+        public static string Address2Public(string _address)
         {
             byte[] _decoded = Base58.Decode(_address);
             byte[] _public = new byte[_decoded.Length - 5];
@@ -122,6 +122,10 @@ namespace Lion.CryptoCurrency.Bitcoin
 
             return Public2PKSH(HexPlus.ByteArrayToHexString(_public));
         }
+        #endregion
+
+        #region Address2PKSH
+        public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address));
         #endregion
 
         #region Public2PKSH

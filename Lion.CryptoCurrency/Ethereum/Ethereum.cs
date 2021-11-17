@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Lion.CryptoCurrency.Ethereum
 {
-    public class Common
+    public class Ethereum
     {
         public const string ERC20_METHOD_TOTALSUPPLY = "0x18160ddd";
         public const string ERC20_METHOD_BALANCEOF = "0x70a08231";

@@ -37,7 +37,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             _vinUnsigned.AddRange(BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray()); //transaction seq
             foreach(TransactionVin _vin in this.Vins)
             {
-                _vinUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vin.Amount).ToString()).ToByteArray());
+                _vinUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vin.Amount).ToString("0")).ToByteArray());
                 _vinUnsigned.AddRange(HexPlus.HexStringToByteArray(Address.Address2PKSH(_vin.Address)));
             }
             _vinUnsigned.AddAndPadRight(4, 0x0, 0x00);
@@ -104,7 +104,7 @@ namespace Lion.CryptoCurrency.Bitcoin
                 _signedRaw.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });//transaction seq
             }
             _signedRaw.AddRange(_vinUnsigned);
-            
+
             return HexPlus.ByteArrayToHexString(_signedRaw.ToArray());
         }
         #endregion
