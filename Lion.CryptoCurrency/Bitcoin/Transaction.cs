@@ -16,8 +16,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         #region EstimateFee
         public decimal EstimateFee(decimal _fee = 0.00001M)
         {
-            decimal _totalBytesLength = Lion.HexPlus.HexStringToByteArray(ToSignedHex()).Length;
-            return _totalBytesLength / 1024M * _fee;
+            decimal _totalBytesLength = this.Vins.Count * 180 + 34 * Vouts.Count + 10;
+            return _totalBytesLength * _fee;
         }
         #endregion
 
