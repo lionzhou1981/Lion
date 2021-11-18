@@ -107,8 +107,9 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Private2Public
-        public static string Private2Public(string _private)
+        public static string Private2Public(string _private,bool _isBase58Encoded = false)
         {
+            _private = !_isBase58Encoded ? _private : Lion.HexPlus.ByteArrayToHexString(Lion.Encrypt.Base58.Decode(_private));
             return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private));
         }
         #endregion
