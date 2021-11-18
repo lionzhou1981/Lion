@@ -14,10 +14,10 @@ namespace Lion.CryptoCurrency.Bitcoin
         public IList<TransactionVin> Vins = new List<TransactionVin>();
 
         #region EstimateFee
-        public decimal EstimateFee(decimal _fee = 0.00001M)
+        public decimal EstimateFee(decimal _estimatedFee = 0.00001M,bool _leftBack=false)
         {
-            decimal _totalBytesLength = this.Vins.Count * 180 + 34 * Vouts.Count + 10;
-            return _totalBytesLength * _fee;
+            decimal _totalBytesLength = this.Vouts.Count * 180 + 34 * (this.Vins.Count + (_leftBack ? 1 : 0)) + 10;
+            return _totalBytesLength * _estimatedFee / 1000M;
         }
         #endregion
 
