@@ -13,6 +13,13 @@ namespace Lion.CryptoCurrency.Bitcoin
         public IList<TransactionVout> Vouts = new List<TransactionVout>();
         public IList<TransactionVin> Vins = new List<TransactionVin>();
 
+        #region EstimateFee
+        public decimal EstimateFee(decimal _fee = 0.00001M)
+        {
+            return _fee;
+        }
+        #endregion
+
         #region ToSignedHex
         public string ToSignedHex(decimal _maxFee = 0.0001M)
         {
@@ -58,7 +65,6 @@ namespace Lion.CryptoCurrency.Bitcoin
                 }
                 _voutUnsigned.AddRange(_vinUnsigned);
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type;
-
                 string _scriptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
 
                 //ECDSA
@@ -66,7 +72,7 @@ namespace Lion.CryptoCurrency.Bitcoin
                 Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
                 BigInteger _r = _gk.X;
                 BigInteger _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
-                BigInteger _d = BigInteger.Parse($"0{_vout.Private}", NumberStyles.HexNumber);
+                BigInteger _d = BigInteger.Parse($"0{_vout.PrivateHex}", NumberStyles.HexNumber);
                 BigInteger _s = ((_r * _d + _e) * _k.ModInverse(Secp256k1.N)) % Secp256k1.N;
 
                 if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
@@ -117,7 +123,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         public int TxIndex;
         public decimal Amount;
         public string Private;
-        public string Public => Address.Private2Public(this.Private);
+        public string PrivateHex => HexPlus.ByteArrayToHexString(Base58.Decode(this.Private));
+        public string Public => Address.Private2Public(this.Private, true);
 
         public List<byte> Scripts
         {
