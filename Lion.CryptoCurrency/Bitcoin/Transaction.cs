@@ -16,7 +16,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         #region EstimateFee
         public decimal EstimateFee(decimal _fee = 0.00001M)
         {
-            return _fee;
+            decimal _totalBytesLength = Lion.HexPlus.HexStringToByteArray(ToSignedHex()).Length;
+            return _totalBytesLength / 1024M * _fee;
         }
         #endregion
 
@@ -36,13 +37,13 @@ namespace Lion.CryptoCurrency.Bitcoin
 
             //base script: version/input count
             List<byte> _voutHead = new List<byte>();
-            _voutHead.AddAndPadRight(4,0x0, 0x01); //version;
+            _voutHead.AddAndPadRight(4, 0x0, 0x01); //version;
             _voutHead.AddRange(BigInteger.Parse(this.Vouts.Count.ToString()).ToByteArray().Reverse().ToArray());
 
             //start from output,not contains sign,not contains hash type
             List<byte> _vinUnsigned = new List<byte>();
             _vinUnsigned.AddRange(BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray()); //transaction seq
-            foreach(TransactionVin _vin in this.Vins)
+            foreach (TransactionVin _vin in this.Vins)
             {
                 _vinUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vin.Amount).ToString("0")).ToByteArray());
                 _vinUnsigned.AddRange(HexPlus.HexStringToByteArray(Address.Address2PKSH(_vin.Address)));
@@ -100,7 +101,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             //pay bytes
             List<byte> _signedRaw = new List<byte>();
             _signedRaw.AddRange(_voutHead);
-            foreach(TransactionVout _vout in this.Vouts)
+            foreach (TransactionVout _vout in this.Vouts)
             {
                 _signedRaw.AddRange(_vout.Scripts);//script per input
                 BigInteger _sigLength = BigInteger.Parse(_vout.Public, NumberStyles.HexNumber).ToByteArray().Length + _vout.ScriptSign.Count;
@@ -132,7 +133,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             {
                 List<byte> _scripts = new List<byte>();
                 _scripts.AddRange(HexPlus.HexStringToByteArray(TxId).Reverse().ToArray());
-                _scripts.AddAndPadRight(4,0x0, BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse().ToArray());
+                _scripts.AddAndPadRight(4, 0x0, BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse().ToArray());
                 return _scripts;
             }
         }
@@ -141,7 +142,7 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         public string ScriptPKSH => Address.Public2PKSH(this.Public);
 
-        public TransactionVout(string _txid,int _txIndex,decimal _amount,string _private)
+        public TransactionVout(string _txid, int _txIndex, decimal _amount, string _private)
         {
             this.TxId = _txid;
             this.TxIndex = _txIndex;
@@ -157,7 +158,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         public string Address;
         public decimal Amount;
 
-        public TransactionVin(string _address,decimal _amount)
+        public TransactionVin(string _address, decimal _amount)
         {
             this.Address = _address;
             this.Amount = _amount;
