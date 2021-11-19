@@ -111,8 +111,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         {            
             if (_base58)
             {
-                var _base58Array = Base58.Decode(_private);
-                _private = HexPlus.ByteArrayToHexString(_base58Array.Skip(1).Take(_base58Array.Length - 5).ToArray());
+                byte[] _base58s = Base58.Decode(_private);
+                _private = HexPlus.ByteArrayToHexString(_base58s.Skip(1).Take(_base58s.Length - 5).ToArray());
             }
             return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private));
         }

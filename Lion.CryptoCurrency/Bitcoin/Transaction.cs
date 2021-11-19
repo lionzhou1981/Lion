@@ -155,7 +155,6 @@ namespace Lion.CryptoCurrency.Bitcoin
             this.TxIndex = _txIndex;
             this.Amount = _amount;
             this.Private = _private;
-            Console.WriteLine("OUT " + _txid + "|" + _txIndex + "|" + _private);
         }
     }
     #endregion
