@@ -129,7 +129,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             get
             {
                 var _decoded = Base58.Decode(this.Private);
-                return HexPlus.ByteArrayToHexString(_decoded.Skip(1).Take(_decoded.Length-5).ToArray());
+                return HexPlus.ByteArrayToHexString(_decoded.Skip(1).Take(_decoded.Length - 5).ToArray());
             }
         }
         public string Public => Address.Private2Public(this.Private, true);

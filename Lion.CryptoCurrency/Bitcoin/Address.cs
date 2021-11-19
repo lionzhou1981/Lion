@@ -124,8 +124,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             byte[] _decoded = Base58.Decode(_address);
             byte[] _public = new byte[_decoded.Length - 5];
             Array.Copy(_decoded, 1, _public, 0, 20);
-
-            return Public2PKSH(HexPlus.ByteArrayToHexString(_public));
+            return HexPlus.ByteArrayToHexString(_public);
         }
         #endregion
 
@@ -136,7 +135,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         #region Public2PKSH
         public static string Public2PKSH(string _public)
         {
-            List<byte> _hashed = new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(_public))).ToList();
+            List<byte> _hashed = HexPlus.HexStringToByteArray(_public).ToList();
             _hashed.Insert(0, 0x14);//PKSH A9 -> do a RipeMD160 on the top stack item 14->push hex 14(decimal 20) bytes on stack
             _hashed.Insert(0, 0xa9);
             _hashed.Insert(0, 0x76);

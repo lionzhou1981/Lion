@@ -12,9 +12,7 @@ namespace Lion.SDK.Bitcoin.Coins
         public static string AddressToPublicKey(string _address)
         {
             var _base58Decode = Lion.Encrypt.Base58.Decode(_address);
-            var _pubKeyBytes = new byte[_base58Decode.Length - 5];
-            Buffer.BlockCopy(_base58Decode, 1, _pubKeyBytes, 0, 20);
-            return Lion.HexPlus.ByteArrayToHexString(_pubKeyBytes);
+            return Lion.HexPlus.ByteArrayToHexString(_base58Decode.Skip(1).Take(_base58Decode.Length-5).ToArray());
         }
 
         public static string AddressToPKSH(string _address)
@@ -24,7 +22,7 @@ namespace Lion.SDK.Bitcoin.Coins
 
         public static string PublicKeyToPKSH(string _publicKey)
         {
-            var _hashed = new Lion.Encrypt.RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(Lion.HexPlus.HexStringToByteArray(_publicKey))).ToList();
+            var _hashed = Lion.HexPlus.HexStringToByteArray(_publicKey).ToList();
             _hashed.Insert(0, 0x14);//PKSH A9 -> do a RipeMD160 on the top stack item 14->push hex 14(decimal 20) bytes on stack
             _hashed.Insert(0, 0xa9);
             _hashed.Insert(0, 0x76);
