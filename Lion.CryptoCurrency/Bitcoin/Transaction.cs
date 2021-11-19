@@ -147,7 +147,7 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         public List<byte> ScriptSign;
 
-        public string ScriptPKSH => Address.Public2PKSH(this.Public);
+        public string ScriptPKSH => Address.Public2PKSH(Lion.HexPlus.ByteArrayToHexString(new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(this.Public)))));
 
         public TransactionVout(string _txid, int _txIndex, decimal _amount, string _private)
         {
@@ -155,6 +155,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             this.TxIndex = _txIndex;
             this.Amount = _amount;
             this.Private = _private;
+            Console.WriteLine("OUT " + _txid + "|" + _txIndex + "|" + _private);
         }
     }
     #endregion
