@@ -14,7 +14,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         public IList<TransactionVin> Vins = new List<TransactionVin>();
 
         #region EstimateFee
-        public decimal EstimateFee(decimal _estimatedFee = 0.00001M,bool _leftBack=false)
+        public decimal EstimateFee(decimal _estimatedFee = 0.00001M, bool _leftBack = false)
         {
             decimal _totalBytesLength = this.Vouts.Count * 180 + 34 * (this.Vins.Count + (_leftBack ? 1 : 0)) + 10;
             return _totalBytesLength * _estimatedFee / 1000M;
@@ -124,7 +124,14 @@ namespace Lion.CryptoCurrency.Bitcoin
         public int TxIndex;
         public decimal Amount;
         public string Private;
-        public string PrivateHex => HexPlus.ByteArrayToHexString(Base58.Decode(this.Private));
+        public string PrivateHex
+        {
+            get
+            {
+                var _decoded = Base58.Decode(this.Private);
+                return HexPlus.ByteArrayToHexString(_decoded.Skip(1).Take(_decoded.Length-5).ToArray());
+            }
+        }
         public string Public => Address.Private2Public(this.Private, true);
 
         public List<byte> Scripts

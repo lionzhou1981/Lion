@@ -31,7 +31,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             Array.Copy(_addedVersion, 0, _result, 0, _addedVersion.Length);
             Array.Copy(_shaHashed, 0, _result, _addedVersion.Length, _shaHashed.Length);
 
-            string _key1 = string.Join("", (_mainNet ? "80" : "ef"), _privateKey);
+            string _key1 = string.Join("", (_mainNet ? "80" : "ef"), _privateKey);//
             string _key2 = HexPlus.ByteArrayToHexString(SHA.EncodeSHA256(SHA.EncodeSHA256(HexPlus.HexStringToByteArray(_key1))).Take(4).ToArray());
 
             Address _address = new Address();
@@ -108,8 +108,13 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         #region Private2Public
         public static string Private2Public(string _private,bool _base58 = false)
-        {
-            return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_base58 ? HexPlus.ByteArrayToHexString(Base58.Decode(_private)) : _private));
+        {            
+            if (_base58)
+            {
+                var _base58Array = Base58.Decode(_private);
+                _private = HexPlus.ByteArrayToHexString(_base58Array.Skip(1).Take(_base58Array.Length - 5).ToArray());
+            }
+            return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private));
         }
         #endregion
 
