@@ -9,7 +9,7 @@ namespace Lion.CryptoCurrency.Ethereum
     public class Transaction
     {
         public uint ChainId;
-        public uint GasPrice;
+        public Number GasPrice;
         public uint GasLimit;
         public string Address;
         public uint Nonce;
@@ -21,7 +21,7 @@ namespace Lion.CryptoCurrency.Ethereum
         {
             byte[] _basicRaw = RLP.EncodeList(new byte[][] {
                 RLP.EncodeUInt(this.Nonce),
-                RLP.EncodeUInt(this.GasPrice),
+                RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
                 RLP.EncodeUInt(this.GasLimit),
                 RLP.EncodeHex(this.Address),
                 RLP.EncodeBigInteger(this.Value.Integer),
@@ -43,7 +43,7 @@ namespace Lion.CryptoCurrency.Ethereum
             Random _random = new Random(RandomPlus.RandomSeed);
             while (true)
             {
-                _k = _random.Next(1, int.MaxValue);
+                _k = BigInteger.Parse($"0{Lion.RandomPlus.RandomHex()}", NumberStyles.HexNumber);
                 ECPoint _gk = Secp256k1.G.Multiply(_k);
 
                 _r = _gk.X % Secp256k1.N;
@@ -65,7 +65,7 @@ namespace Lion.CryptoCurrency.Ethereum
 
             byte[] _signed = RLP.EncodeList(new byte[][] {
                 RLP.EncodeUInt(this.Nonce),
-                RLP.EncodeUInt(this.GasPrice),
+                RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
                 RLP.EncodeUInt(this.GasLimit),
                 RLP.EncodeHex(this.Address),
                 RLP.EncodeBigInteger(this.Value.Integer),

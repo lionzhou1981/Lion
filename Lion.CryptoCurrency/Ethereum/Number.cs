@@ -7,13 +7,21 @@ namespace Lion.CryptoCurrency.Ethereum
     public class Number
     {
         public BigInteger Integer;
+        private decimal OrgValue;
         public int Decimal;
 
         public Number(decimal _value, int _decimal = 18)
         {
             this.Decimal = _decimal;
+            OrgValue = _value;
             this.Integer = BigInteger.Parse(_value.ToString($"0.{"".PadRight(_decimal, '0')}").Replace(".",""));
         }
+
+        public BigInteger ToGWei()
+        {
+            return BigInteger.Parse(OrgValue.ToString($"0.{"".PadRight(9, '0')}").Replace(".", ""));
+        }
+
         public Number(BigInteger _integer, int _decimal = 18)
         {
             this.Decimal = _decimal;
