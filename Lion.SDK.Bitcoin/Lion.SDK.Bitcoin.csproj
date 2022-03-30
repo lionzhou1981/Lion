@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Coins\Eos.cs" />
+    <Compile Remove="Coins\Ethereum.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Tokens\" />
