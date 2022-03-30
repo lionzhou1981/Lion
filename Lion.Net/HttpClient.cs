@@ -113,6 +113,7 @@ namespace Lion.Net
             this.Request.ContentType = this.ContentType;
             this.Request.Referer = _referer;
             this.Request.ContentLength = 0;
+            this.Request.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
             if (this.X_Forwarded_For != null)
             {
                 this.Request.Headers["X_Forwarded_For"] = this.X_Forwarded_For;
