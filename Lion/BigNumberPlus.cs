@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
-
+using Lion.Encrypt;
 
 namespace Lion
 {
@@ -13,7 +13,8 @@ namespace Lion
         #region HexToBigInt
         public static BigInteger HexToBigInt(string _hex)
         {
-            _hex = "0" + (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex.Substring(2) : _hex);
+            _hex = (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex.Substring(2) : _hex);
+            _hex = (_hex.Length % 2) == 1 || _hex[0] != '0' ? "0" + _hex : _hex;
             return System.Numerics.BigInteger.Parse(_hex, System.Globalization.NumberStyles.AllowHexSpecifier);
         }
         #endregion
@@ -126,7 +127,6 @@ namespace Lion
             return false;
         }
         #endregion
+
     }
-
-
 }
