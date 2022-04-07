@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
@@ -9,6 +10,43 @@ namespace Lion.CryptoCurrency.Bitcoin
 {
     public class Address : CryptoCurrency.Address
     {
+        #region GenerateMultiSignAddress
+        public static Address GenerateMultiSignAddress(int _requireKeyCount, List<string> _publicKeys, bool _mainNet)
+        {
+            if (_publicKeys.Count < _requireKeyCount)
+                throw new ArgumentException("Key count lower then require count");
+            using (MemoryStream _keyStream = new MemoryStream())
+            {
+                _keyStream.WriteByte((byte)(80 + _requireKeyCount));//RequireCount
+                _publicKeys.ForEach(t =>
+                {
+                    var _keyBytes = Lion.HexPlus.HexStringToByteArray(t);
+                    var _lengthBytes = ((BigInteger)_keyBytes.Length).ToByteArray();
+                    _keyStream.Write(_lengthBytes, 0, _lengthBytes.Length);
+                    _keyStream.Write(_keyBytes, 0, _keyBytes.Length);
+                });
+                _keyStream.WriteByte((byte)(80 + _publicKeys.Count));//KEYCOUNT
+                _keyStream.WriteByte(0xae);//OP_CHECKMULTISIG=0xae
+                var _scriptPubKey = _keyStream.ToArray();
+
+                SHA256Managed _sha256 = new SHA256Managed();
+                RIPEMD160Managed _ripemd = new RIPEMD160Managed();
+                var _notVersioned = _ripemd.ComputeHash(_sha256.ComputeHash(_scriptPubKey));
+                var _versioned = new List<byte>();
+                _versioned.Add(_mainNet ? (byte)5 : (byte)196);
+                _versioned.AddRange(_notVersioned);
+                var _doubleSHA = _sha256.ComputeHash(_sha256.ComputeHash(_versioned.ToArray())); //double sha take 4  for verify code 
+                _versioned.AddRange(_doubleSHA.Take(4));
+                var _address = Base58.Encode(_versioned.ToArray());
+                return new Address()
+                {
+                    Public = Lion.HexPlus.ByteArrayToHexString(_scriptPubKey),
+                    Text = _address
+                };
+            }
+        }
+        #endregion
+
         #region Generate
         public static Address Generate(string _privateKey = "", bool _mainNet = true)
         {
@@ -107,8 +145,8 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Private2Public
-        public static string Private2Public(string _private,bool _base58 = false)
-        {            
+        public static string Private2Public(string _private, bool _base58 = false)
+        {
             if (_base58)
             {
                 byte[] _base58s = Base58.Decode(_private);
