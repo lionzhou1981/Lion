@@ -16,7 +16,7 @@ namespace Lion.CryptoCurrency.Ethereum
         public string Address;
         public uint Nonce;
         public Number Value;
-        public string DataHex;
+        public string DataHex = "";
         private static Tuple<int, BigInteger> calculateParameters(BigInteger range)
         {
             int bitsNeeded = 0;
