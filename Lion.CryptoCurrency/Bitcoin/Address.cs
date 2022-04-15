@@ -193,6 +193,31 @@ namespace Lion.CryptoCurrency.Bitcoin
         }
         #endregion
 
+        #region Private2Wif
+        public static string Private2Wif(string _privateKeyHex,bool _mainNet,bool _compressed)
+        {
+            List<byte> _resultArray = new List<byte>();
+            _resultArray.Add((byte)(_mainNet ? 0x80 : 0xef));
+            _resultArray.AddRange(Lion.HexPlus.HexStringToByteArray(_privateKeyHex));
+            if (_compressed)
+                _resultArray.Add(0x01);
+            SHA256Managed _sha256 = new SHA256Managed();
+            _resultArray.AddRange(_sha256.ComputeHash(_sha256.ComputeHash(_resultArray.ToArray())).Take(4).ToArray());
+            return Base58.Encode(_resultArray.ToArray());
+        }
+        #endregion
+
+        #region Wif2Private
+        public static string Wif2Private(string _wifKey)
+        {
+            var _key = Base58.Decode(_wifKey).Skip(1).ToList();
+            _key = _key.Take(_key.Count - 4).ToList();
+            if(_key.Last() == 0x01)
+                _key  =_key.Take(_key.Count - 1).ToList();
+            return Lion.HexPlus.ByteArrayToHexString(_key.ToArray());
+        }
+        #endregion
+
         #region Address2PKSH
         public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address), _address.StartsWith("2") || _address.StartsWith("3"));
         #endregion
