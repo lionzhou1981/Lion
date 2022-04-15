@@ -10,6 +10,29 @@ namespace Lion.CryptoCurrency.Bitcoin
 {
     public class Transaction
     {
+        public static void Test()
+        {
+            ///Single
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _vout = new Lion.CryptoCurrency.Bitcoin.TransactionVout("f218a7d4a0dcabc29fe8bc726fe8cee371620b2291aa3911f1b04eaa3e7de3a9", 0, 0.00009M, "93ANUS61rBbq87VF5GHn591wqvcr5C4u2c6MX1w1j2ss872uXnm");
+            Lion.CryptoCurrency.Bitcoin.Transaction _transaction = new Lion.CryptoCurrency.Bitcoin.Transaction();
+            _transaction.Vouts.Add(_vout);
+            _transaction.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("2N5WDRiM5P8wWt6gbjFsAQ328GzNhAXEEUh", 0.00008M));
+            Console.WriteLine("Single:"+_transaction.ToSignedHex());
+            ///Multi
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout("3d2c8bc178d33e8be1e2a968d71ea99cf78347b42d1320c9aba04058f9793e1e", 0, 0.00008M, 
+                new string[] { "93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6", "92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5" }, 
+                new string[] {
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6",true,true),
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("91wianQnsbCCGxfQuc9GWc4WUYeJ5bVjeZAUj64V4ToWfsy8Q15",true,true),
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5",true,true) }, 2);
+
+            Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
+            _transactionMulti.Vouts.Add(_voutMulti);
+            _transactionMulti.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("miy64GVdz6ZQaUKCVmhpjVLqKsUqMgyP6y", 0.00007M));
+            Console.WriteLine("Multi:"+_transactionMulti.ToSignedHex());
+        }
+
+
         public IList<TransactionVout> Vouts = new List<TransactionVout>();
         public IList<TransactionVin> Vins = new List<TransactionVin>();
 
@@ -33,7 +56,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             if (_vinAmount <= 0M) { throw new Exception("Vin amount is zero."); }
             if (_voutAmount <= 0M) { throw new Exception("Vout amount is zero."); }
             if (_vinAmount >= _voutAmount) { throw new Exception("Vout amount less than Vin amount."); }
-            if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
+            //if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
 
             //base script: version/input count
             List<byte> _voutHead = new List<byte>();
@@ -61,53 +84,85 @@ namespace Lion.CryptoCurrency.Bitcoin
                 {
                     //script per input
                     _voutUnsigned.AddRange(_out.Scripts);
-                    _voutUnsigned.AddRange(_out.TxId == _vout.TxId && _out.TxIndex == _vout.TxIndex ? HexPlus.HexStringToByteArray(_out.ScriptPKSH) : new byte[] { 0x00 });
+                    var _pkshArray = HexPlus.HexStringToByteArray(_out.ScriptPKSH);
+                    if (_out.PublicKeys.Count > 1)
+                    {
+                        BigInteger _pkshArrayLength = _pkshArray.Length;
+                        _voutUnsigned.AddRange(_pkshArrayLength.ToByteArray());
+                    }
+                    _voutUnsigned.AddRange(_out.TxId == _vout.TxId && _out.TxIndex == _vout.TxIndex ? _pkshArray : new byte[] { 0x00 });
                     _voutUnsigned.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });
                 }
                 _voutUnsigned.AddRange(_vinUnsigned);
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type;
                 string _scriptSig = BitConverter.ToString(new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
-
-                //ECDSA
-                BigInteger _k = BigInteger.Parse($"0{RandomPlus.RandomHex()}", NumberStyles.HexNumber);
-                Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
-                BigInteger _r = _gk.X;
-                BigInteger _e = BigInteger.Parse($"0{_scriptSig}", NumberStyles.HexNumber);
-                BigInteger _d = BigInteger.Parse($"0{_vout.PrivateHex}", NumberStyles.HexNumber);
-                BigInteger _s = ((_r * _d + _e) * _k.ModInverse(Secp256k1.N)) % Secp256k1.N;
-
-                if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
-
-                List<byte> _rbytes = _r.ToByteArray().Reverse().ToList();
-                List<byte> _sbytes = _s.ToByteArray().Reverse().ToList();
-
+                
                 List<byte> _allBytes = new List<byte>();
-                BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
-                _allBytes.Add(0x30);
-                _allBytes.AddRange(_rsLength.ToByteArray());
-                _allBytes.Add(0x02);
-                _allBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
-                _allBytes.AddRange(_rbytes.ToArray());
-                _allBytes.Add(0x02);
-                _allBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
-                _allBytes.AddRange(_sbytes.ToArray());
-                _allBytes.Add(0x01);
-                _allBytes.Add(0x41);
-                _allBytes.InsertRange(0, ((BigInteger)_allBytes.Count - 1).ToByteArray());
+                foreach (var _privateKey in _vout.Privates)
+                {
+                    //ECDSA
+                    BigInteger _k = Lion.BigNumberPlus.HexToBigInt(RandomPlus.RandomHex());
+                    Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
+                    BigInteger _r = _gk.X;
+                    BigInteger _e = Lion.BigNumberPlus.HexToBigInt(_scriptSig);
+                    BigInteger _d = Lion.BigNumberPlus.HexToBigInt(Address.PrivateDecompress(_privateKey));
+                    BigInteger _s = ((_r * _d + _e) * _k.ModInverse(Secp256k1.N)) % Secp256k1.N;
 
+                    if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
+
+                    List<byte> _rbytes = _r.ToByteArray().Reverse().ToList();
+                    List<byte> _sbytes = _s.ToByteArray().Reverse().ToList();
+                    List<byte> _subBytes = new List<byte>();
+                    BigInteger _rsLength = _rbytes.Count() + _sbytes.Count() + 4;
+                    _subBytes.Add(0x30);
+                    _subBytes.AddRange(_rsLength.ToByteArray());
+                    _subBytes.Add(0x02);
+                    _subBytes.AddRange(((BigInteger)_rbytes.Count()).ToByteArray());
+                    _subBytes.AddRange(_rbytes.ToArray());
+                    _subBytes.Add(0x02);
+                    _subBytes.AddRange(((BigInteger)_sbytes.Count()).ToByteArray());
+                    _subBytes.AddRange(_sbytes.ToArray());
+                    _subBytes.Add(0x01);
+                    //_subBytes.Add(0x41);
+                    _subBytes.InsertRange(0, ((BigInteger)_subBytes.Count).ToByteArray());
+                    _allBytes.AddRange(_subBytes);
+                }
+                if (_vout.Privates.Count == 1)
+                    _allBytes.Add(0x41);
+                else
+                    _allBytes.Add(0x4c);
+                
                 _vout.ScriptSign = _allBytes;
+
             }
 
             //pay bytes
             List<byte> _signedRaw = new List<byte>();
             _signedRaw.AddRange(_voutHead);
+            //_signedRaw.Add(0xfd);
             foreach (TransactionVout _vout in this.Vouts)
             {
                 _signedRaw.AddRange(_vout.Scripts);//script per input
-                BigInteger _sigLength = BigInteger.Parse(_vout.Public, NumberStyles.HexNumber).ToByteArray().Length + _vout.ScriptSign.Count;
-                _signedRaw.AddRange(_sigLength.ToByteArray().Reverse().Where(f => f != 0x00).ToArray());
-                _signedRaw.AddRange(_vout.ScriptSign.ToArray());
-                _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.Public));
+                _signedRaw.Add(0xfd);
+                if (_vout.PublicKeys.Count <= 1)
+                {
+                    BigInteger _sigLength = BigInteger.Parse(_vout.Public, NumberStyles.HexNumber).ToByteArray().Length + _vout.ScriptSign.Count+1;
+                    _signedRaw.AddRange(_sigLength.ToByteArray().ToArray());
+                    _signedRaw.Add(0x00);
+                    _signedRaw.AddRange(_vout.ScriptSign.ToArray());
+                    _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.Public));
+                }
+                else
+                {
+                    var _scriptPubKeyArray = Lion.HexPlus.HexStringToByteArray(Address.Publics2ScriptPubKey(_vout.PrivateKeyRequired, _vout.PublicKeys));
+                    BigInteger _scriptPubKeyArrayLength = _scriptPubKeyArray.Length;
+                    BigInteger _sigLength = _scriptPubKeyArrayLength + _vout.ScriptSign.Count + _scriptPubKeyArrayLength.ToByteArray().Length+1;
+                    _signedRaw.AddRange(_sigLength.ToByteArray().ToArray());
+                    _signedRaw.Add(0x00);
+                    _signedRaw.AddRange(_vout.ScriptSign.ToArray());
+                    _signedRaw.AddRange(_scriptPubKeyArrayLength.ToByteArray());
+                    _signedRaw.AddRange(_scriptPubKeyArray);
+                }
                 _signedRaw.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });//transaction seq
             }
             _signedRaw.AddRange(_vinUnsigned);
@@ -123,7 +178,17 @@ namespace Lion.CryptoCurrency.Bitcoin
         public string TxId;
         public int TxIndex;
         public decimal Amount;
-        public string Private;
+        public List<string> Privates = new List<string>();
+        public List<string> PublicKeys = new List<string>();
+        public int PrivateKeyRequired;
+        public string Private
+        {
+            get
+            {
+                return Privates[0];
+            }
+        }
+
         public string PrivateHex
         {
             get
@@ -132,7 +197,14 @@ namespace Lion.CryptoCurrency.Bitcoin
                 return HexPlus.ByteArrayToHexString(_decoded.Skip(1).Take(_decoded.Length - 5).ToArray());
             }
         }
-        public string Public => Address.Private2Public(this.Private, true);
+
+        public string Public
+        {
+            get
+            {
+                return Address.Private2Public(this.Private, true);
+            }
+        }
 
         public List<byte> Scripts
         {
@@ -147,14 +219,32 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         public List<byte> ScriptSign;
 
-        public string ScriptPKSH => Address.Public2PKSH(Lion.HexPlus.ByteArrayToHexString(new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(this.Public)))));
+        public string ScriptPKSH
+        {
+            get
+            {
+                return Privates.Count > 1 ? Address.Publics2ScriptPubKey(PrivateKeyRequired, PublicKeys) : Address.Public2PKSH(Lion.HexPlus.ByteArrayToHexString(new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(this.Public)))));
+            }
+        }
 
         public TransactionVout(string _txid, int _txIndex, decimal _amount, string _private)
         {
             this.TxId = _txid;
             this.TxIndex = _txIndex;
             this.Amount = _amount;
-            this.Private = _private;
+            this.Privates = new List<string>() { _private };
+        }
+
+        public TransactionVout(string _txid, int _txIndex, decimal _amount, string[] _privates,string[] _publicKeys,int _privateRequireCount)
+        {
+            this.TxId = _txid;
+            this.TxIndex = _txIndex;
+            this.Amount = _amount;
+            this.Privates = _privates.Distinct().ToList();
+            this.PublicKeys = _publicKeys.Distinct().ToList();
+            this.PrivateKeyRequired = _privateRequireCount;
+            if (_privateRequireCount > this.PublicKeys.Count || _privateRequireCount > this.Privates.Count)
+                throw new Exception("Keys required error");
         }
     }
     #endregion

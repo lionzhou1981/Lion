@@ -11,39 +11,56 @@ namespace Lion.CryptoCurrency.Bitcoin
     public class Address : CryptoCurrency.Address
     {
         #region GenerateMultiSignAddress
-        public static Address GenerateMultiSignAddress(int _requireKeyCount, List<string> _publicKeys, bool _mainNet)
+        public static string Privats2ScriptPubKey(int _requireKeyCount, List<string> _privateKeys)
         {
-            if (_publicKeys.Count < _requireKeyCount)
-                throw new ArgumentException("Key count lower then require count");
-            using (MemoryStream _keyStream = new MemoryStream())
-            {
-                _keyStream.WriteByte((byte)(80 + _requireKeyCount));//RequireCount
-                _publicKeys.ForEach(t =>
-                {
-                    var _keyBytes = Lion.HexPlus.HexStringToByteArray(t);
-                    var _lengthBytes = ((BigInteger)_keyBytes.Length).ToByteArray();
-                    _keyStream.Write(_lengthBytes, 0, _lengthBytes.Length);
-                    _keyStream.Write(_keyBytes, 0, _keyBytes.Length);
-                });
-                _keyStream.WriteByte((byte)(80 + _publicKeys.Count));//KEYCOUNT
-                _keyStream.WriteByte(0xae);//OP_CHECKMULTISIG=0xae
-                var _scriptPubKey = _keyStream.ToArray();
+            return Publics2ScriptPubKey(_requireKeyCount, _privateKeys.Select(t => Address.Private2Public(t, false, true)).ToList());
+        }
 
-                SHA256Managed _sha256 = new SHA256Managed();
-                RIPEMD160Managed _ripemd = new RIPEMD160Managed();
-                var _notVersioned = _ripemd.ComputeHash(_sha256.ComputeHash(_scriptPubKey));
-                var _versioned = new List<byte>();
-                _versioned.Add(_mainNet ? (byte)5 : (byte)196);
-                _versioned.AddRange(_notVersioned);
-                var _doubleSHA = _sha256.ComputeHash(_sha256.ComputeHash(_versioned.ToArray())); //double sha take 4  for verify code 
-                _versioned.AddRange(_doubleSHA.Take(4));
-                var _address = Base58.Encode(_versioned.ToArray());
-                return new Address()
+        public static string Publics2ScriptPubKey(int _requireKeyCount, List<string> _publicKeys)
+        {
+            try
+            {
+                using (MemoryStream _keyStream = new MemoryStream())
                 {
-                    Public = Lion.HexPlus.ByteArrayToHexString(_scriptPubKey),
-                    Text = _address
-                };
+                    _keyStream.WriteByte((byte)(80 + _requireKeyCount));//RequireCount
+                    _publicKeys.ForEach(t =>
+                    {
+                        var _keyBytes = Lion.HexPlus.HexStringToByteArray(t);
+                        var _lengthBytes = ((BigInteger)_keyBytes.Length).ToByteArray();
+                        _keyStream.Write(_lengthBytes, 0, _lengthBytes.Length);
+                        _keyStream.Write(_keyBytes, 0, _keyBytes.Length);
+                    });
+                    _keyStream.WriteByte((byte)(80 + _publicKeys.Count));//KEYCOUNT
+                    _keyStream.WriteByte(0xae);//OP_CHECKMULTISIG=0xae
+                    var _signArray = _keyStream.ToArray();
+                    return BitConverter.ToString(_signArray).ToLower().Replace("-", "");
+                }
             }
+            catch
+            {
+                throw new Exception("Public keys convert to scriptpubkey error");
+            }
+        }
+        public static Address GenerateMultiSignAddress(int _requireKeyCount, List<string> _privateKeys, bool _mainNet)
+        {
+            if (_privateKeys.Count < _requireKeyCount)
+                throw new ArgumentException("Key count lower then require count");
+            var _scriptPubHash = Publics2ScriptPubKey(_requireKeyCount, _privateKeys.Select(t=>Address.Private2Public(t,false,true)).ToList());
+            var _signArray = Lion.HexPlus.HexStringToByteArray(_scriptPubHash);
+            SHA256Managed _sha256 = new SHA256Managed();
+            RIPEMD160Managed _ripemd = new RIPEMD160Managed();
+            var _notVersioned = _ripemd.ComputeHash(_sha256.ComputeHash(_signArray));
+            var _versioned = new List<byte>();
+            _versioned.Add(_mainNet ? (byte)5 : (byte)196);
+            _versioned.AddRange(_notVersioned);
+            var _doubleSHA = _sha256.ComputeHash(_sha256.ComputeHash(_versioned.ToArray())); //double sha take 4  for verify code 
+            _versioned.AddRange(_doubleSHA.Take(4));
+            var _address = Base58.Encode(_versioned.ToArray());
+            return new Address()
+            {
+                Public = _scriptPubHash,
+                Text = _address
+            };
         }
         #endregion
 
@@ -145,16 +162,17 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Private2Public
-        public static string Private2Public(string _private, bool _base58 = false)
+        public static string Private2Public(string _private, bool _base58 = false,bool _compressedPublicKey = false)
         {
             if (_base58)
             {
                 byte[] _base58s = Base58.Decode(_private);
                 _private = HexPlus.ByteArrayToHexString(_base58s.Skip(1).Take(_base58s.Length - 5).ToArray());
             }
-            return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private));
+            return HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_private, _compressedPublicKey));
         }
         #endregion
+
 
         #region Address2Public
         public static string Address2Public(string _address)
@@ -166,19 +184,35 @@ namespace Lion.CryptoCurrency.Bitcoin
         }
         #endregion
 
+
+        #region PrivateDecompress
+        public static string PrivateDecompress(string _compressed)
+        {
+            var _decoded = Base58.Decode(_compressed);
+            return HexPlus.ByteArrayToHexString(_decoded.Skip(1).Take(_decoded.Length - 5).ToArray());
+        }
+        #endregion
+
         #region Address2PKSH
-        public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address));
+        public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address), _address.StartsWith("2") || _address.StartsWith("3"));
         #endregion
 
         #region Public2PKSH
-        public static string Public2PKSH(string _public)
+        public static string Public2PKSH(string _public,bool _multiSig = false)
         {
             List<byte> _hashed = HexPlus.HexStringToByteArray(_public).ToList();
             _hashed.Insert(0, 0x14);//PKSH A9 -> do a RipeMD160 on the top stack item 14->push hex 14(decimal 20) bytes on stack
             _hashed.Insert(0, 0xa9);
-            _hashed.Insert(0, 0x76);
-            _hashed.Add(0x88);
-            _hashed.Add(0xac);
+            if (_multiSig)
+            {               
+                _hashed.Add(0x87);
+            }
+            else
+            {
+                _hashed.Insert(0, 0x76);
+                _hashed.Add(0x88);
+                _hashed.Add(0xac);
+            }
             _hashed.InsertRange(0, BigInteger.Parse(_hashed.Count.ToString()).ToByteArray());
             return HexPlus.ByteArrayToHexString(_hashed.ToArray());
         }

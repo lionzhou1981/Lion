@@ -13,14 +13,14 @@ namespace Lion.Encrypt
         public static readonly BigInteger HalfN = BigInteger.Parse("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", System.Globalization.NumberStyles.HexNumber) / 2;
 
 
-        public static byte[] PrivateKeyToPublicKey(string _hexPrivateKey)
+        public static byte[] PrivateKeyToPublicKey(string _hexPrivateKey, bool _compressed = false)
         {
-            return PrivateKeyToPublicKey(BigInteger.Parse("0" + _hexPrivateKey, System.Globalization.NumberStyles.HexNumber));
+            return PrivateKeyToPublicKey(BigInteger.Parse("0" + _hexPrivateKey, System.Globalization.NumberStyles.HexNumber), _compressed);
         }
 
-        public static byte[] PrivateKeyToPublicKey(BigInteger _privateKey)
+        public static byte[] PrivateKeyToPublicKey(BigInteger _privateKey,bool _compressed = false)
         {
-            return G.Multiply(_privateKey).EncodePoint(false);
+            return G.Multiply(_privateKey).EncodePoint(_compressed);
         }
     }
 }
