@@ -65,12 +65,12 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Generate
-        public static Address Generate(string _privateKey = "", bool _mainNet = true)
+        public static Address Generate(string _privateKey = "", bool _mainNet = true, bool _compressed = false)
         {
             _privateKey = _privateKey == "" ? RandomPlus.RandomHex(64) : _privateKey;
 
             BigInteger _privateInt = BigInteger.Parse("0" + _privateKey, System.Globalization.NumberStyles.HexNumber);
-            byte[] _publicKey = Secp256k1.PrivateKeyToPublicKey(_privateInt);
+            byte[] _publicKey = Secp256k1.PrivateKeyToPublicKey(_privateInt, _compressed);
 
             SHA256Managed _sha256 = new SHA256Managed();
             RIPEMD160Managed _ripemd = new RIPEMD160Managed();
@@ -208,13 +208,30 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Wif2Private
-        public static string Wif2Private(string _wifKey)
+        public static string Wif2Private(string _wifKey,out bool _mainNet,out bool _compressed)
         {
-            var _key = Base58.Decode(_wifKey).Skip(1).ToList();
+            var _allDecoded = Base58.Decode(_wifKey);
+            _mainNet = _allDecoded[0] == 0x80;
+            var _key = _allDecoded.Skip(1).ToList();
+            var _keyCheckSum = _key.Skip(_key.Count - 4).Take(4).ToArray();
             _key = _key.Take(_key.Count - 4).ToList();
-            if(_key.Last() == 0x01)
-                _key  =_key.Take(_key.Count - 1).ToList();
-            return Lion.HexPlus.ByteArrayToHexString(_key.ToArray());
+            _compressed = false;
+            if (_key.Last() == 0x01)
+            {
+                _key = _key.Take(_key.Count - 1).ToList();
+                _compressed = true;
+            }
+            var _result =  BitConverter.ToString(_key.ToArray()).ToLower().Replace("-","");
+            List<byte> _resultArray = new List<byte>();
+            _resultArray.Add((byte)(_mainNet ? 0x80 : 0xef));
+            _resultArray.AddRange(Lion.HexPlus.HexStringToByteArray(_result));
+            if (_compressed)
+                _resultArray.Add(0x01);
+            SHA256Managed _sha256 = new SHA256Managed();
+            var _checksum = Lion.HexPlus.ByteArrayToHexString(_sha256.ComputeHash(_sha256.ComputeHash(_resultArray.ToArray())).Take(4).ToArray());
+            if (_checksum != Lion.HexPlus.ByteArrayToHexString(_keyCheckSum))
+                throw new Exception("Check sum error");
+            return _result;
         }
         #endregion
 
