@@ -12,23 +12,18 @@ namespace Lion.CryptoCurrency.Bitcoin
     {
         public static void Test()
         {
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _vout = new Lion.CryptoCurrency.Bitcoin.TransactionVout("30bd4ebeb721558adf5665708b080be225a35e874247b72d1eb3f556f9c5d4a9", 0, 0.0076774M, new WifPrivateKey("L1NQUnWSftP4NqCgVYQe1G5jPRvFdL5agkHWigHznk6XHJKeYvRV"));
-            Lion.CryptoCurrency.Bitcoin.Transaction _transaction = new Lion.CryptoCurrency.Bitcoin.Transaction();
-            _transaction.Vouts.Add(_vout);
-            _transaction.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("3Lj5gR83W6vp1bJYkfDHrzyw49EyXYXCyL", 0.0075774M));
-            Console.WriteLine("Single:"+_transaction.ToSignedHex());
-            /////Multi
-            //Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout("3d2c8bc178d33e8be1e2a968d71ea99cf78347b42d1320c9aba04058f9793e1e", 0, 0.00008M, 
-            //    new string[] { "93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6", "92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5" }, 
-            //    new string[] {
-            //    Lion.CryptoCurrency.Bitcoin.Address.Private2Public("93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6",true,true),
-            //    Lion.CryptoCurrency.Bitcoin.Address.Private2Public("91wianQnsbCCGxfQuc9GWc4WUYeJ5bVjeZAUj64V4ToWfsy8Q15",true,true),
-            //    Lion.CryptoCurrency.Bitcoin.Address.Private2Public("92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5",true,true) }, 2);
+            ///Multi
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout("3d2c8bc178d33e8be1e2a968d71ea99cf78347b42d1320c9aba04058f9793e1e", 0, 0.00008M,
+                new WifPrivateKey[] { new WifPrivateKey("93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6"), new WifPrivateKey("92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5") },
+                new string[] {
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("93JVVDgTPmfSdrA844ZycQyo88V9NzujdRkaHsbyBv19m9afGc6",true,true),
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("91wianQnsbCCGxfQuc9GWc4WUYeJ5bVjeZAUj64V4ToWfsy8Q15",true,true),
+                Lion.CryptoCurrency.Bitcoin.Address.Private2Public("92cEYV4dqDVAsmHyugsXneVAx6zEmzw7H5XJk2y4zog667KkiC5",true,true) }, 2);
 
-            //Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
-            //_transactionMulti.Vouts.Add(_voutMulti);
-            //_transactionMulti.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("miy64GVdz6ZQaUKCVmhpjVLqKsUqMgyP6y", 0.00007M));
-            //Console.WriteLine("Multi:"+_transactionMulti.ToSignedHex());
+            Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
+            _transactionMulti.Vouts.Add(_voutMulti);
+            _transactionMulti.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("miy64GVdz6ZQaUKCVmhpjVLqKsUqMgyP6y", 0.00007M));
+            Console.WriteLine("Multi:" + _transactionMulti.ToSignedHex());
         }
 
 
@@ -124,7 +119,8 @@ namespace Lion.CryptoCurrency.Bitcoin
                     _subBytes.Add(0x01);
                     if (_vout.Privates.Count == 1)
                     {
-                        _subBytes.Add((byte)(_vout.Private.Compressed ? 0x21 : 0x41));
+                        BigInteger _publicBytesLength = Lion.BigNumberPlus.HexToBigInt(_vout.Private.PublicKey).ToByteArray().Length;
+                        _subBytes.AddRange(_publicBytesLength.ToByteArray());
                         _subBytes.InsertRange(0, ((BigInteger)(_subBytes.Count - 1)).ToByteArray());
                     }
                     else
