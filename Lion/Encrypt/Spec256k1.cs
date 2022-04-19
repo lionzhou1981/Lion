@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 
@@ -15,7 +16,7 @@ namespace Lion.Encrypt
 
         public static byte[] PrivateKeyToPublicKey(string _hexPrivateKey, bool _compressed = false)
         {
-            return PrivateKeyToPublicKey(BigInteger.Parse("0" + _hexPrivateKey, System.Globalization.NumberStyles.HexNumber), _compressed);
+            return PrivateKeyToPublicKey(BigInteger.Parse("0" + _hexPrivateKey, NumberStyles.HexNumber), _compressed);
         }
 
         public static byte[] PrivateKeyToPublicKey(BigInteger _privateKey,bool _compressed = false)
