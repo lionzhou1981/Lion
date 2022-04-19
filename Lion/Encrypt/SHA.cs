@@ -37,16 +37,11 @@ namespace  Lion.Encrypt
         #endregion
 
         #region EncodeSHA256
-        public static string EncodeSHA256(string _source, System.Text.Encoding _encoding)
+        public static string EncodeSHA256(string _source, Encoding _encoding)
         {
             byte[] _binary = EncodeSHA256(_encoding.GetBytes(_source));
 
-            StringBuilder _sb = new StringBuilder();
-            foreach (byte _byte in _binary)
-            {
-                _sb.AppendFormat("{0:x2}", _byte);
-            }
-            return _sb.ToString();
+            return HexPlus.ByteArrayToHexString(_binary);
         }
         public static byte[] EncodeSHA256(byte[] _source)
         {
