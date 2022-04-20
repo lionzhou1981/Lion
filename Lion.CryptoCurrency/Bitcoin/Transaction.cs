@@ -273,7 +273,7 @@ namespace Lion.CryptoCurrency.Bitcoin
                 else
                 {
                     _signedRaw.Add(0xfd);
-                    var _scriptPubKeyArray = Lion.HexPlus.HexStringToByteArray(Address.Publics2ScriptPubKey(_vout.PrivateKeyRequired, _vout.PublicKeys));
+                    var _scriptPubKeyArray = Lion.HexPlus.HexStringToByteArray(Address.Publics2PublicScript(_vout.PublicKeys.ToArray(), _vout.PrivateKeyRequired));
                     BigInteger _scriptPubKeyArrayLength = _scriptPubKeyArray.Length;
                     BigInteger _sigLength = _scriptPubKeyArrayLength + _vout.ScriptSign.Count + _scriptPubKeyArrayLength.ToByteArray().Length + 1;
                     _signedRaw.AddRange(_sigLength.ToByteArray().ToArray());
@@ -325,7 +325,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         {
             get
             {
-                return Privates.Count > 1 ? Address.Publics2ScriptPubKey(PrivateKeyRequired, PublicKeys) : Address.Public2PKSH(Lion.HexPlus.ByteArrayToHexString(new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(this.Private.PublicKey)))));
+                return Privates.Count > 1 ? Address.Publics2PublicScript(PublicKeys.ToArray(), PrivateKeyRequired) : Address.Public2PKSH(Lion.HexPlus.ByteArrayToHexString(new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(HexPlus.HexStringToByteArray(this.Private.PublicKey)))));
             }
         }
 
@@ -333,7 +333,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         {
             get
             {
-                return Privates.Count > 1 ? Address.Publics2ScriptPubKey(PrivateKeyRequired, PublicKeys) : Address.Public2P2SH(this.Private.PublicKey);
+                return Privates.Count > 1 ? Address.Publics2PublicScript(PublicKeys.ToArray(), PrivateKeyRequired) : Address.Public2P2SH(this.Private.PublicKey);
             }
         }
 
