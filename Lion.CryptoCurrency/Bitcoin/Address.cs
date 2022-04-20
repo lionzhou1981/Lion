@@ -236,7 +236,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region Address2PKSH
-        public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address), _address.StartsWith("2") || _address.StartsWith("3"));
+        public static string Address2PKSH(string _address) => Public2PKSH(Address2Public(_address),_address.StartsWith("2") || _address.StartsWith("3"));
         #endregion
 
         #region Public2PKSH
@@ -257,6 +257,18 @@ namespace Lion.CryptoCurrency.Bitcoin
             }
             _hashed.InsertRange(0, BigInteger.Parse(_hashed.Count.ToString()).ToByteArray());
             return HexPlus.ByteArrayToHexString(_hashed.ToArray());
+        }
+        #endregion
+
+        #region Public2P2SH
+        public static string Public2P2SH(string _public)
+        {
+            var _hash160 = new RIPEMD160Managed().ComputeHash(new SHA256Managed().ComputeHash(Lion.HexPlus.HexStringToByteArray(_public))).ToList();
+            _hash160.InsertRange(0,((BigInteger)_hash160.Count).ToByteArray());
+            _hash160.Insert(0, 0x00);
+            _hash160.Insert(0, 0x16);
+            _hash160.Insert(0, 0x17);
+            return BitConverter.ToString(_hash160.ToArray()).ToLower().Replace("-", "");
         }
         #endregion
     }
