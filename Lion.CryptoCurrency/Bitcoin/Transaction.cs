@@ -12,20 +12,15 @@ namespace Lion.CryptoCurrency.Bitcoin
     {
         public static void Test()
         {
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("6296207c76d058fb4cb89d20f46326eb037fd6eb82993d43f71d31b02ae71ab1").Reverse().ToArray()), 0, 0.00087547M,
-                new WifPrivateKey(""));
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("86e19fe0c7f972552da38e411f92939f75aaf6a981d8a9c081a018b9e95165be").Reverse().ToArray()), 0, 0.00063659M,
-            new WifPrivateKey(""));
-            //        Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout("21ccfd21d8cc95c183baa3ba798334a0398153a5b31fad8d1b3149a976cd115f", 1, 0.00027984M,
-            //new WifPrivateKey[] { new WifPrivateKey("L1G3H9FobEKw5zE4aW98ZAHu9xQ9ZF2zckaGv9GwJAsXhXq4anpA") },
-            //new string[] {
-            //            new WifPrivateKey("L1G3H9FobEKw5zE4aW98ZAHu9xQ9ZF2zckaGv9GwJAsXhXq4anpA").PublicKey }, 1);
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("7edb88107615872f9b39b40d02309d3024ef71c0712918f180ed4ada40790449").Reverse().ToArray()), 51, 0.00010015M,
+new WifPrivateKey(""));
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("cc6177bdf43c97194f65936c4901d452b4fe94438261cdb8fe4bce0fde1e4c79").Reverse().ToArray()), 13, 0.00039400M,
+new WifPrivateKey(""));
 
             Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
-            _transactionMulti.Vouts.Add(_voutMulti);
             _transactionMulti.Vouts.Add(_voutMulti1);
-            //_transactionMulti.Vouts.Add(_voutMulti1);
-            var _v = 0.00087547M+ 0.00063659M - 0.00001M;
+            _transactionMulti.Vouts.Add(_voutMulti);
+            var _v = _transactionMulti.Vouts.Sum(t=>t.Amount) - 0.00001M;
             _transactionMulti.Vins.Add(new Lion.CryptoCurrency.Bitcoin.TransactionVin("3Lj5gR83W6vp1bJYkfDHrzyw49EyXYXCyL", _v));
             Console.WriteLine("Multi:" + _transactionMulti.ToWitnessSignedHex());
         }
@@ -42,7 +37,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             if (_vinAmount <= 0M) { throw new Exception("Vin amount is zero."); }
             if (_voutAmount <= 0M) { throw new Exception("Vout amount is zero."); }
             if (_vinAmount >= _voutAmount) { throw new Exception("Vout amount less than Vin amount."); }
-            //if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
+            if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
 
             //base script: version/input count
             List<byte> _voutHead = new List<byte>();
@@ -60,36 +55,33 @@ namespace Lion.CryptoCurrency.Bitcoin
             //pay script sig = ecdsa(base script sig)
             var _sha = new SHA256Managed();
             var _seq = new byte[] { 0xff, 0xff, 0xff, 0xff };
-            var _seqHash = _sha.ComputeHash(_sha.ComputeHash(_seq));
+            var _seqHash = new SHA256Managed().ComputeHash(new SHA256Managed().ComputeHash(_seq));
             var _vinHash = _sha.ComputeHash(_sha.ComputeHash(_vinUnsigned.ToArray()));
-
-            //var _preVouts = new List<byte>();
-            //var _seqs = new List<byte>();
-            //foreach (TransactionVout _vout in this.Vouts)
-            //{
-            //    _preVouts.AddRange(_vout.Scripts);
-            //    _seqs.AddRange(_seq);
-            //}
-            //var _preVoutHash = _sha.ComputeHash(_sha.ComputeHash(_preVouts.ToArray()));
-            //var _seqHashs = _sha.ComputeHash(_sha.ComputeHash(_seqs.ToArray()));
+            var _preVouts = new List<byte>();
+            var _seqs = new List<byte>();
+            foreach (TransactionVout _vout in this.Vouts)
+            {
+                _preVouts.AddRange(_vout.Scripts);
+                _seqs.AddRange(_seq);
+            }
+            var _preVoutHash = _sha.ComputeHash(_sha.ComputeHash(_preVouts.ToArray()));
+            var _seqHashs = _sha.ComputeHash(_sha.ComputeHash(_seqs.ToArray()));
 
             foreach (TransactionVout _vout in this.Vouts)
             {
                 List<byte> _voutUnsigned = new List<byte>();
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x02);
-                _voutUnsigned.AddRange(_sha.ComputeHash(_sha.ComputeHash(_vout.Scripts.ToArray())));
-                _voutUnsigned.AddRange(_seqHash);
+                _voutUnsigned.AddRange(_preVoutHash);
+                _voutUnsigned.AddRange(_seqHashs);
                 _voutUnsigned.AddRange(_vout.Scripts);
                 _voutUnsigned.AddRange(HexPlus.HexStringToByteArray(_vout.ScriptPKSH));
                 _voutUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vout.Amount).ToString("0")).ToByteArray());
                 _voutUnsigned.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });
                 _voutUnsigned.AddRange(_vinHash);
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x00);
-                _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type;
-                
+                _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type HASH_ALL;
                 Console.WriteLine("Before sign:"+BitConverter.ToString(_voutUnsigned.ToArray()).Replace("-", "").ToLower());
                 string _scriptSig = BitConverter.ToString(_sha.ComputeHash(_sha.ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
-
                 //ECDSA
                 BigInteger _k = Lion.BigNumberPlus.HexToBigInt(RandomPlus.RandomHex());
                 Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
