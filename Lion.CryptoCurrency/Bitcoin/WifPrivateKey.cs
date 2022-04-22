@@ -10,13 +10,13 @@ namespace Lion.CryptoCurrency.Bitcoin
         {
             get
             {
-                return Address.Private2Public(PrivateKey, false, Compressed);
+                return Lion.CryptoCurrency.Bitcoin.Address.Private2Public(PrivateKey, false, Compressed);
             }
         }
 
         public string PrivateKey
         {
-            get; 
+            get;
         }
         public bool Compressed
         {
@@ -28,12 +28,15 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         public string RawPrivateKey { get; }
 
+        public string Address {get;set;}
+
         private bool mainNet;
         private bool compressed;
 
-        public WifPrivateKey(string _wifKey)
+        public WifPrivateKey(string _address,string _wifKey)
         {
-            PrivateKey = Address.Wif2Private(_wifKey, out mainNet, out compressed);
+            Address = _address;
+            PrivateKey = Lion.CryptoCurrency.Bitcoin.Address.Wif2Private(_wifKey, out mainNet, out compressed);
             RawPrivateKey = _wifKey;
         }
     }

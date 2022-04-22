@@ -48,7 +48,14 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region GetSegWitAddress
-        public static Address GetSegWitAddress(string[] _privates = null, int _required = 1, bool _mainnet = true)
+        public static Address GetSegWitAddress(string _private = "", bool _mainnet = true)
+        {
+            return null;
+        }
+        #endregion
+
+        #region GetMultisignAddress
+        public static Address GetMultisignAddress(string[] _privates = null, int _required = 1, bool _mainnet = true)
         {
             if (_privates == null) { _privates = new string[] { "" }; }
             if (_privates.Length < _required) { throw new ArgumentException("Key count lower then require count"); }

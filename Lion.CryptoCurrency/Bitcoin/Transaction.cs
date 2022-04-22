@@ -12,10 +12,11 @@ namespace Lion.CryptoCurrency.Bitcoin
     {
         public static void Test()
         {
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("7edb88107615872f9b39b40d02309d3024ef71c0712918f180ed4ada40790449").Reverse().ToArray()), 51, 0.00010015M,
-new WifPrivateKey(""));
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("cc6177bdf43c97194f65936c4901d452b4fe94438261cdb8fe4bce0fde1e4c79").Reverse().ToArray()), 13, 0.00039400M,
-new WifPrivateKey(""));
+            //var s = Lion.CryptoCurrency.Bitcoin.Address.GetSegWitAddress(new WifPrivateKey("L3Lp6vGgZUm9zZpKqY5xu6AQ8taeY1SXPw34RwYYJwgBT1Ymhx4b").PrivateKey).Text;
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("9019409b83df8949bf3cd06737759f1e4819f5edbc44e5d05b3238201811ad24").Reverse().ToArray()), 36, 0.00000546M,
+new WifPrivateKey("32rBPMC58TzvuPCFZShfxbUdh6QxZA9wgS",""));
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti = new Lion.CryptoCurrency.Bitcoin.TransactionVout("8a5fc689599799fc7cfcccd208c89714988b4031bd7b414eae7e4ecc0f74c13c", 0, 0.001M,
+new WifPrivateKey("1FpYP8fqnajh9YotPwexbGqycsUmsdjXQN", ""));
 
             Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
             _transactionMulti.Vouts.Add(_voutMulti1);
@@ -39,11 +40,12 @@ new WifPrivateKey(""));
             if (_vinAmount >= _voutAmount) { throw new Exception("Vout amount less than Vin amount."); }
             if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
 
+            var _txOutCount = BigInteger.Parse(this.Vouts.Count.ToString()).ToByteArray();
             //base script: version/input count
             List<byte> _voutHead = new List<byte>();
             _voutHead.AddAndPadRight(5, 0x0, 0x02); //version;
             _voutHead.Add(0x01);
-            _voutHead.AddRange(BigInteger.Parse(this.Vouts.Count.ToString()).ToByteArray());
+            _voutHead.AddRange(_txOutCount);
             //start from output,not contains sign,not contains hash type
             List<byte> _vinUnsigned = new List<byte>();
             foreach (TransactionVin _vin in this.Vins)
@@ -59,6 +61,7 @@ new WifPrivateKey(""));
             var _vinHash = _sha.ComputeHash(_sha.ComputeHash(_vinUnsigned.ToArray()));
             var _preVouts = new List<byte>();
             var _seqs = new List<byte>();
+            var _txInCount = BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray();
             foreach (TransactionVout _vout in this.Vouts)
             {
                 _preVouts.AddRange(_vout.Scripts);
@@ -71,17 +74,40 @@ new WifPrivateKey(""));
             {
                 List<byte> _voutUnsigned = new List<byte>();
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x02);
-                _voutUnsigned.AddRange(_preVoutHash);
-                _voutUnsigned.AddRange(_seqHashs);
-                _voutUnsigned.AddRange(_vout.Scripts);
-                _voutUnsigned.AddRange(HexPlus.HexStringToByteArray(_vout.ScriptPKSH));
-                _voutUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vout.Amount).ToString("0")).ToByteArray());
-                _voutUnsigned.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });
-                _voutUnsigned.AddRange(_vinHash);
+                if (_vout.IsWitness)
+                {
+                    //witness transaction join HASH_ALL(hash_outputs/hash_seqs/hash_inputs) to transaction scripts
+                    _voutUnsigned.AddRange(_preVoutHash);
+                    _voutUnsigned.AddRange(_seqHashs);
+                    _voutUnsigned.AddRange(_vout.Scripts);
+                    _voutUnsigned.AddRange(HexPlus.HexStringToByteArray(_vout.ScriptPKSH));
+                    _voutUnsigned.AddAndPadRight(8, 0x0, BigInteger.Parse((100000000M * _vout.Amount).ToString("0")).ToByteArray());
+                    _voutUnsigned.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });
+                    _voutUnsigned.AddRange(_vinHash);
+                }
+                else
+                {
+                    //legacy transaction HASH_ALL(transaction scripts)
+                    _voutUnsigned.AddRange(_txOutCount);
+                    foreach (TransactionVout _childVout in this.Vouts)
+                    {
+                        _voutUnsigned.AddRange(_childVout.Scripts);
+                        if (_childVout.TxId != _vout.TxId || _childVout.TxIndex != _vout.TxIndex) //each inputs script in scripts,not current input skip PKSH,replace with 0x00
+                            _voutUnsigned.Add(0x00);
+                        else
+                        {
+                            _voutUnsigned.AddRange(HexPlus.HexStringToByteArray(_childVout.ScriptPKSH));
+                        }
+                        _voutUnsigned.AddRange(new byte[] { 0xff, 0xff, 0xff, 0xff });
+                    }
+                    _voutUnsigned.AddRange(_txInCount);
+                    _voutUnsigned.AddRange(_vinUnsigned);
+                }
                 _voutUnsigned.AddAndPadRight(4, 0x0, 0x00);
-                _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type HASH_ALL;
+                _voutUnsigned.AddAndPadRight(4, 0x0, 0x01); //hash type=HASH_ALL;
                 Console.WriteLine("Before sign:"+BitConverter.ToString(_voutUnsigned.ToArray()).Replace("-", "").ToLower());
                 string _scriptSig = BitConverter.ToString(_sha.ComputeHash(_sha.ComputeHash(_voutUnsigned.ToArray()))).Replace("-", "").ToLower();
+                Console.WriteLine("Sig:" + _scriptSig);
                 //ECDSA
                 BigInteger _k = Lion.BigNumberPlus.HexToBigInt(RandomPlus.RandomHex());
                 Encrypt.ECPoint _gk = Secp256k1.G.Multiply(_k);
@@ -111,23 +137,37 @@ new WifPrivateKey(""));
                 _vout.ScriptSign = _subBytes;
             }
 
-            _vinUnsigned.InsertRange(0,BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray()); //transaction seq
+            _vinUnsigned.InsertRange(0,_txInCount); //transaction seq
             //pay bytes
             List<byte> _signedRaw = new List<byte>();
             _signedRaw.AddRange(_voutHead);
             foreach (TransactionVout _vout in this.Vouts)
             {
-                _signedRaw.AddRange(_vout.Scripts);//script per input
-                _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.ScriptP2SH));
+                _signedRaw.AddRange(_vout.Scripts);//script per input             
+                if (!_vout.IsWitness)
+                {
+                    var _publicKeys = Lion.HexPlus.HexStringToByteArray(_vout.Private.PublicKey);
+                    BigInteger _sigLength = _vout.ScriptSign.Count + (BigInteger)_publicKeys.Length;
+                    _signedRaw.AddRange(_sigLength.ToByteArray().Where(t=>t!=0x00).ToArray());
+                    _signedRaw.AddRange(_vout.ScriptSign.ToArray());
+                    _signedRaw.AddRange(_publicKeys);
+                }
+                else
+                    _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.ScriptP2SH));
                 _signedRaw.AddRange(_seq);
             }
             _signedRaw.AddRange(_vinUnsigned);
             foreach (TransactionVout _vout in this.Vouts)
             {
-                BigInteger _sigLength = BigInteger.Parse(_vout.Private.PublicKey, NumberStyles.HexNumber).ToByteArray().Length + _vout.ScriptSign.Count+1;
-                _signedRaw.Add(0x02);
-                _signedRaw.AddRange(_vout.ScriptSign.ToArray());
-                _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.Private.PublicKey));
+                if (!_vout.IsWitness)
+                    _signedRaw.Add(0x00);
+                else
+                {
+                    BigInteger _sigLength = BigInteger.Parse(_vout.Private.PublicKey, NumberStyles.HexNumber).ToByteArray().Length + _vout.ScriptSign.Count + 1;
+                    _signedRaw.Add(0x02);
+                    _signedRaw.AddRange(_vout.ScriptSign.ToArray());
+                    _signedRaw.AddRange(HexPlus.HexStringToByteArray(_vout.Private.PublicKey));
+                }
             }
             _signedRaw.AddAndPadRight(4, 0x0, 0x00);
             
@@ -326,6 +366,14 @@ new WifPrivateKey(""));
             get
             {
                 return Privates.Count > 1 ? Address.Publics2PublicScript(PublicKeys.ToArray(), PrivateKeyRequired) : Address.Public2P2SH(this.Private.PublicKey);
+            }
+        }
+
+        public bool IsWitness
+        {
+            get
+            {
+                return this.Private.Address.StartsWith("3") || this.Private.Address.StartsWith("2");
             }
         }
 

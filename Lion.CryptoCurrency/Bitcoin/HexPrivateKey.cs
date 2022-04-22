@@ -10,7 +10,7 @@ namespace Lion.CryptoCurrency.Bitcoin
         {
             get
             {
-                return Address.Private2Public(PrivateKey, false, false);
+                return Lion.CryptoCurrency.Bitcoin.Address.Private2Public(PrivateKey, false, false);
             }
         }
 
@@ -26,8 +26,10 @@ namespace Lion.CryptoCurrency.Bitcoin
 
         public string RawPrivateKey { get; }
 
-        public HexPrivateKey(string _hex)
+        public string Address { get; }
+        public HexPrivateKey(string _address,string _hex)
         {
+            Address = _address;
             PrivateKey = _hex;
             RawPrivateKey = _hex;
         }
