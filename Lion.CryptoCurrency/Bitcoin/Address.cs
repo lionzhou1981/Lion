@@ -55,12 +55,12 @@ namespace Lion.CryptoCurrency.Bitcoin
         #endregion
 
         #region GetMultisignAddress
-        public static Address GetMultisignAddress(string[] _privates = null, int _required = 1, bool _mainnet = true)
+        public static Address GetMultisignAddress(string[] _privates = null,int _privateCount = 1, int _required = 1, bool _mainnet = true)
         {
-            if (_privates == null) { _privates = new string[] { "" }; }
+            if (_privates == null) { _privates = new string[_privateCount]; }
             if (_privates.Length < _required) { throw new ArgumentException("Key count lower then require count"); }
 
-            for (int i = 0; i < _privates.Length; i++) { _privates[i] = _privates[i] == "" ? RandomPlus.RandomHex(64) : _privates[i]; }
+            for (int i = 0; i < _privates.Length; i++) { _privates[i] = string.IsNullOrWhiteSpace(_privates[i]) ? RandomPlus.RandomHex(64) : _privates[i]; }
 
             string _publicScript = Privates2PublicScript(_privates, _required);
             byte[] _signArray = HexPlus.HexStringToByteArray(_publicScript);
