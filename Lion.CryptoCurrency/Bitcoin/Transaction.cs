@@ -12,7 +12,7 @@ namespace Lion.CryptoCurrency.Bitcoin
     {
         public static void Test()
         {
-            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("f3a3b596f33c7db267f8e2cae3c091c1b5f9b5610acba4e7a50ec8bafd1f43b6").Reverse().ToArray()), 0, 0.0006M,
+            Lion.CryptoCurrency.Bitcoin.TransactionVout _voutMulti1 = new Lion.CryptoCurrency.Bitcoin.TransactionVout(Lion.HexPlus.ByteArrayToHexString(Lion.HexPlus.HexStringToByteArray("f3a3b596f33c7db267f8e2cae3c091c1b5f9b5610acba4e7a50ec8bafd1f43b6").Reverse().ToArray()),180, 0.0006M,
 new WifPrivateKey("32rBPMC58TzvuPCFZShfxbUdh6QxZA9wgS", ""));
             Lion.CryptoCurrency.Bitcoin.Transaction _transactionMulti = new Lion.CryptoCurrency.Bitcoin.Transaction();
             _transactionMulti.Vouts.Add(_voutMulti1);
@@ -174,8 +174,6 @@ new WifPrivateKey("32rBPMC58TzvuPCFZShfxbUdh6QxZA9wgS", ""));
                 }
             }
             _signedRaw.AddAndPadRight(4, 0x0, 0x00);
-
-
             return HexPlus.ByteArrayToHexString(_signedRaw.ToArray());
         }
         #endregion
@@ -399,7 +397,7 @@ new WifPrivateKey("32rBPMC58TzvuPCFZShfxbUdh6QxZA9wgS", ""));
             {
                 List<byte> _scripts = new List<byte>();
                 _scripts.AddRange(HexPlus.HexStringToByteArray(TxId).Reverse().ToArray());
-                _scripts.AddAndPadRight(4, 0x0, BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse().ToArray());
+                _scripts.AddAndPadRight(4, 0x0, BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse().Where(t=>t!=0x0).ToArray());
                 return _scripts;
             }
         }
