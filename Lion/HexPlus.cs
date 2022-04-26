@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Lion
@@ -47,6 +48,27 @@ namespace Lion
         {
             if (_hex.Length % 2 != 0) { _hex = _hex.PadLeft(_hex.Length + 1, '0'); }
             return Enumerable.Range(0, _hex.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(_hex.Substring(x, 2), 16)).ToArray();
+        }
+        #endregion
+
+
+        #region TrimStart
+        /// <summary>
+        /// Trim strart 0x0
+        /// </summary>
+        /// <returns>byte[]</returns>
+        /// <param name="_hex">hex string.</param>
+        public static byte[] TrimStart(IEnumerable<byte> _hex)
+        {
+            int _count = 0;
+            int _length = _hex.Count();
+            for (var i =0;i< _length; i++)
+            {
+                if (_hex.ElementAt(i) != 0x0)
+                    break;
+                _count += 1;
+            }
+            return _hex.Skip(_count).ToArray();
         }
         #endregion
 

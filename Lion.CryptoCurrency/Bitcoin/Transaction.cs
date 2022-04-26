@@ -185,7 +185,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             {
                 List<byte> _scripts = new List<byte>();
                 _scripts.AddRange(HexPlus.HexStringToByteArray(TxId).Reverse().ToArray());
-                _scripts.AddAndPadRight(4, 0x0, BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse().Where(t=>t!=0x0).ToArray());
+                _scripts.AddAndPadRight(4, 0x0, Lion.HexPlus.TrimStart(BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse()));
                 return _scripts;
             }
         }
