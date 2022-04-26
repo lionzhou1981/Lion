@@ -35,7 +35,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             if (_vinAmount >= _voutAmount) { throw new Exception("Vout amount less than Vin amount."); }
             if (_voutAmount - _vinAmount > _maxFee) { throw new Exception("Fee is too much."); }
 
-            byte[] _voutCount = BigInteger.Parse(this.Vouts.Count.ToString()).ToByteArray();
+            byte[] _voutCount = BigInteger.Parse(this.Vouts.Count.ToString()).ToByteArray(true,false);
 
             //base script: version/input count
             List<byte> _voutHead = new List<byte>();
@@ -58,7 +58,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             byte[] _vinHash = SHA.EncodeSHA256(SHA.EncodeSHA256(_vinUnsigned.ToArray()));
             List<byte> _preVouts = new List<byte>();
             List<byte> _seqs = new List<byte>();
-            byte[] vinCount = BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray().Reverse().ToArray();
+            byte[] vinCount = BigInteger.Parse(this.Vins.Count.ToString()).ToByteArray(true,false);
 
             foreach (TransactionVout _vout in this.Vouts)
             {
@@ -128,7 +128,7 @@ namespace Lion.CryptoCurrency.Bitcoin
                 {
                     byte[] _publicKeys = HexPlus.HexStringToByteArray(_vout.Private.Public);
                     BigInteger _sigLength = _vout.ScriptSign.Length + (BigInteger)_publicKeys.Length;
-                    _signedRaw.AddRange(_sigLength.ToByteArray().Where(t => t != 0x00).ToArray());
+                    _signedRaw.AddRange(_sigLength.ToByteArray(true,false));
                     _signedRaw.AddRange(_vout.ScriptSign.ToArray());
                     _signedRaw.AddRange(_publicKeys);
                 }
@@ -185,7 +185,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             {
                 List<byte> _scripts = new List<byte>();
                 _scripts.AddRange(HexPlus.HexStringToByteArray(TxId).Reverse().ToArray());
-                _scripts.AddAndPadRight(4, 0x0, Lion.HexPlus.TrimStart(BigInteger.Parse(this.TxIndex.ToString()).ToByteArray().Reverse()));
+                _scripts.AddAndPadRight(4, 0x0, ((BigInteger)this.TxIndex).ToByteArray(true, true));
                 return _scripts;
             }
         }

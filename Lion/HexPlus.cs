@@ -51,27 +51,6 @@ namespace Lion
         }
         #endregion
 
-
-        #region TrimStart
-        /// <summary>
-        /// Trim strart 0x0
-        /// </summary>
-        /// <returns>byte[]</returns>
-        /// <param name="_hex">hex string.</param>
-        public static byte[] TrimStart(IEnumerable<byte> _hex)
-        {
-            int _count = 0;
-            int _length = _hex.Count();
-            for (var i =0;i< _length; i++)
-            {
-                if (_hex.ElementAt(i) != 0x0)
-                    break;
-                _count += 1;
-            }
-            return _hex.Skip(_count).ToArray();
-        }
-        #endregion
-
         #region Concat
         public static byte[] Concat(params byte[][] _values)
         {
