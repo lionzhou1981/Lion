@@ -21,5 +21,14 @@ namespace Lion.CryptoCurrency.Ethereum
         public const uint CHAIN_ID_GOERLI = 5;
         public const uint CHAIN_ID_KOVAN = 42;
         public const uint CHAIN_ID_PRIVATE = 1337;
+
+        public const string EIP1155_METHOD_BALANCEOF = "0x00fdd58e";
+        public const string EIP1155_METHOD_BALANCEOFBATCH = "0x4e1273f4";
+        public const string EIP1155_METHOD_BURN = "0xf5298aca";
+        public const string EIP1155_METHOD_BURNBATCH = "0x6b20c454";
+        public const string EIP1155_METHOD_MINT = "0x731133e9";
+        public const string EIP1155_METHOD_MINTBATCH = "0x1f7fdffa";
+        public const string EIP1155_METHOD_SAFEBATCHTRANSFERFROM = "0x2eb2c2d6";
+        public const string EIP1155_METHOD_SAFETRANSFERFROM = "0xf242432a";
     }
 }
