@@ -41,7 +41,7 @@ namespace Lion.CryptoCurrency.Ethereum
 
         }
 
-        public static BigInteger randomBetween(BigInteger minimum, BigInteger maximum)
+        private static BigInteger randomBetween(BigInteger minimum, BigInteger maximum)
         {
             if (maximum < minimum)
             {
