@@ -118,5 +118,14 @@ namespace Lion.CryptoCurrency.Ethereum
             }
         }
         #endregion
+
+        #region Parse(byte[])
+        public static ContractABI FromData(string _hex) => FromData(HexPlus.HexStringToByteArray(_hex));
+
+        public static ContractABI FromData(byte[] _bytes)
+        {
+            return null;
+        }
+        #endregion
     }
 }
