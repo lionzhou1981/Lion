@@ -6,6 +6,12 @@ namespace Lion.CryptoCurrency.Ethereum
 {
     public static class EIP1155
     {
+        public static string Transfer()
+        {
+            ContractABI _abi = new ContractABI(Ethereum.EIP1155_METHOD_TRANSFER);
+            return _abi.ToData();
+        }
+
         public static string Mint(uint _transactionNonce, uint _chainId, Address _addrFrom, string _contractAddress, uint _nftId, uint _amount, string _hexData)
         {
             ContractABI _abi = new ContractABI(Ethereum.EIP1155_METHOD_MINT);

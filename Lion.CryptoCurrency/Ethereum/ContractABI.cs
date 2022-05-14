@@ -8,6 +8,108 @@ namespace Lion.CryptoCurrency.Ethereum
 {
     public class ContractABI : List<object>
     {
+
+        public static ContractABI Decode(Dictionary<string,List<string>> _mathodsAndArgs,string _hexData)
+        {
+            _hexData = _hexData.StartsWith("0x") ? _hexData.Substring(2) : _hexData;
+            var _methodName = _hexData.Substring(0, 8);
+            _hexData = _hexData.Substring(8);
+            var _methods = _mathodsAndArgs.Where(t => t.Key == _methodName || t.Key == "0x" + _methodName);
+            if (_methods.Count() == 0)
+                throw new Exception("No method equal the hexdata");
+            else if(_methods.Count()>1)
+                throw new Exception("Too many method equal the hexdata");
+            var _methodArgs = _methods.First().Value;
+            object[] _tempArray = new object[_methodArgs.Count];
+            for (int i = 0; i < _methodArgs.Count; i++)
+            {
+                var _type = _methodArgs[i];
+                var _value = _hexData.Substring(0, 64);
+                if (_type == "address")
+                {
+                    _value = _value.TrimStart('0');
+                    if (_value.Length % 2 != 0)
+                        _value = "0" + _value;
+                    _tempArray[i] = "0x" + _value;
+                }
+                else if (!_type.Contains("[") && !_type.Contains("memory") &&!_type.Contains("calldata"))
+                    _tempArray[i] = Data2Obj(_type, _hexData);
+                _hexData = _hexData.Substring(64);
+            }
+            //_hexData = _hexData.Substring(_methodArgs.Count * 64);//skip type define
+            for (int i=0;i<_methodArgs.Count;i++)
+            {
+                var _type = _methodArgs[i];
+                if (_tempArray[i] != null)
+                    continue;
+                var _array = _type.Contains("[");
+                if (_array)
+                {
+                    var _isString = _type.Contains("string");
+                    var _arrayLen = int.Parse(_hexData.Substring(0, 64), System.Globalization.NumberStyles.HexNumber);
+                    int[] _stringZeroPadLength = new int[_arrayLen];
+                    _hexData = _hexData.Substring((_isString ? _arrayLen + 1 : 1) * 64);
+                    object[] _subArray = new object[_arrayLen];
+                    for (int j = 0; j < _arrayLen; j++)
+                    {
+                        int _dataLength = 64;
+                        if (_isString)
+                        {
+                            int _stringLength = int.Parse(_hexData.Substring(0, 64), System.Globalization.NumberStyles.HexNumber)*2;
+                            _dataLength = _stringLength % 64 > 0 ? (_stringLength / 64 + 1) * 64 : _stringLength;
+                        }
+                        _hexData = _isString ? _hexData.Substring(64) : _hexData;
+                        _subArray[j] = Data2Obj(_type, _hexData, _dataLength);
+                        _hexData = _hexData.Substring(_dataLength);
+                    }
+                    _tempArray[i] = _subArray;
+                }
+                else
+                {
+                    int _dataLength = _type == "string"? int.Parse(_hexData.Substring(0, 64), System.Globalization.NumberStyles.HexNumber): 64;
+                    _hexData = _hexData.Substring(64);
+                    _tempArray[i] = Data2Obj(_type, _hexData, _dataLength);
+                    _hexData = _hexData.Substring(_dataLength);
+                }
+            }
+            ContractABI _re = new ContractABI("0x" + _methodName);
+            _re.AddRange(_tempArray);
+            return _re;
+        }
+
+        private static object Data2Obj(string _type,string _hexData,int _dataLength = 64)
+        {
+            _type = _type.Replace("[", "").Replace("]", "");
+            switch (_type)
+            {
+                case "uint":
+                    return int.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
+                case "uint32":
+                    return  UInt32.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
+                case "uint64":
+                case "uint256":
+                    return UInt64.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
+                case "bool":
+                    return int.Parse(_hexData.Substring(0, _dataLength)) == 1;
+                case "string":
+                    return DataToString(_hexData.Substring(0, _dataLength));
+            }
+            return null;
+        }
+
+        private static string DataToString(string _hexData)
+        {
+            StringBuilder _resultString = new StringBuilder();
+            for(int i=0;i<_hexData.Length;i+=2)
+            {
+                var _value = _hexData.Substring(i, 2);
+                if (_value == "00")
+                    break;
+                _resultString.Append((char)int.Parse(_value, System.Globalization.NumberStyles.HexNumber));
+            }
+            return _resultString.ToString();
+        }
+
         public string MethodId;
 
         public ContractABI(string _methodId) : base() => this.MethodId = _methodId;
