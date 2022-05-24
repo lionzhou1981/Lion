@@ -11,7 +11,7 @@ namespace Lion
 
         public static int HexToInt32(string _hex)
         {
-            _hex = "0" + (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex.Substring(2) : _hex);
+            _hex = "0" + (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex[2..] : _hex);
             return int.Parse(_hex, System.Globalization.NumberStyles.AllowHexSpecifier);
         }
 
