@@ -22,60 +22,48 @@ namespace Lion.CryptoCurrency.Ethereum
         #region Eth_BlockNumber
         public static BigInteger Eth_BlockNumber()
         {
-            var _result = Call("eth_blockNumber");
-            if (_result.Success)
-            {
-                return Ethereum.HexToBigInteger(_result.Result["result"].Value<string>()) - BigInteger.One;
-            }
-            else
-            {
-                return -1;
-            }
+            var (Success, Result) = Call("eth_blockNumber");
+            return Success ? Ethereum.HexToBigInteger(Result["result"].Value<string>()) - BigInteger.One : -1;
         }
         #endregion
 
         #region Eth_GetBlockByNumber
         public static JObject Eth_GetBlockByNumber(BigInteger _block)
         {
-            var _result = Call("eth_getBlockByNumber", "1", "0x" + _block.ToString("X").TrimStart('0'), true);
-            if (_result.Success)
-            {
-                return _result.Result["result"].Value<JObject>();
-            }
-            else
-            {
-                return null;
-            }
+            var (Success, Result) = Call("eth_getBlockByNumber", "1", "0x" + _block.ToString("X").TrimStart('0'), true);
+            return Success ? Result["result"].Value<JObject>() : null;
+        }
+        #endregion
+
+        #region Eth_Call
+        public static string Eth_Call(string _from = "", string _to = "", uint _gas = 0, Number _gasPrice = null, Number _value = null, string _data = "", string _tag = "latest")
+        {
+            Dictionary<string, string> _values = new Dictionary<string, string>();
+            if (_from != "") { _values.Add("from", _from); }
+            if (_to != "") { _values.Add("to", _to); }
+            if (_gas != 0) { _values.Add("gas", "0x" + BigInteger.Parse(_gas.ToString()).ToString("X").TrimStart('0')); }
+            if (_gasPrice != null) { _values.Add("gasPrice", "0x" + _gasPrice.ToGWei().ToString("X").TrimStart('0')); }
+            if (_value != null) { _values.Add("value", "0x" + _value.ToGWei().ToString("X").TrimStart('0')); }
+            if (_data != "") { _values.Add("data", _data); }
+
+            var (Success, Result) = Call("eth_call", "1", _values, _tag);
+            return Success ? Result["result"].Value<string>() : "";
         }
         #endregion
 
         #region Eth_GetTransactionByHash
         public static JObject Eth_GetTransactionByHash(string _txid)
         {
-            var _result = Call("eth_getTransactionByHash", "1", _txid);
-            if (_result.Success)
-            {
-                return _result.Result["result"].Value<JObject>();
-            }
-            else
-            {
-                return null;
-            }
+            var (Success, Result) = Call("eth_getTransactionByHash", "1", _txid);
+            return Success ? Result["result"].Value<JObject>() : null;
         }
         #endregion
 
         #region Eth_GetTransactionReceipt
         public static JObject Eth_GetTransactionReceipt(string _txid)
         {
-            var _result = Call("eth_getTransactionReceipt", "1", _txid);
-            if (_result.Success)
-            {
-                return _result.Result["result"].Value<JObject>();
-            }
-            else
-            {
-                return null;
-            }
+            var (Success, Result) = Call("eth_getTransactionReceipt", "1", _txid);
+            return Success ? Result["result"].Value<JObject>() : null;
         }
         #endregion
 
@@ -92,18 +80,25 @@ namespace Lion.CryptoCurrency.Ethereum
                 JArray _data = new JArray();
                 foreach (object _e in _params)
                 {
-                    if (_e is KeyValuePair<string, string>)
+                    if (_e is KeyValuePair<string, string> _value)
                     {
-                        KeyValuePair<string, string> _value = (KeyValuePair<string, string>)_e;
                         JObject _sub = new JObject();
                         _sub[_value.Key] = _value.Value;
                         _data.Add(_sub);
                     }
-                    else if (_e is List<KeyValuePair<string, string>>)
+                    else if (_e is List<KeyValuePair<string, string>> _childs)
                     {
-                        List<KeyValuePair<string, string>> _childs = (List<KeyValuePair<string, string>>)_e;
                         JObject _sub = new JObject();
                         foreach (KeyValuePair<string, string> _child in _childs)
+                        {
+                            _sub[_child.Key] = _child.Value;
+                        }
+                        _data.Add(_sub);
+                    }
+                    else if (_e is Dictionary<string, string> _dicts)
+                    {
+                        JObject _sub = new JObject();
+                        foreach (KeyValuePair<string, string> _child in _dicts)
                         {
                             _sub[_child.Key] = _child.Value;
                         }
@@ -116,6 +111,7 @@ namespace Lion.CryptoCurrency.Ethereum
                 }
                 _jsonRpc["params"] = _data;
 
+
                 HttpClient _http = new HttpClient(60000);
                 _http.BeginResponse("POST", Host, "");
                 _http.Request.ContentType = "application/json";
@@ -127,11 +123,10 @@ namespace Lion.CryptoCurrency.Ethereum
             }
             catch(Exception _ex)
             {
+                Console.WriteLine(_ex);
                 return (false, new JObject() { ["error"] = _ex.ToString() });
             }
         }
         #endregion
-
-
     }
 }
