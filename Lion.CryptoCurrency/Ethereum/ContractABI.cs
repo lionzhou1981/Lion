@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Lion.CryptoCurrency.Ethereum
 {
@@ -77,22 +78,35 @@ namespace Lion.CryptoCurrency.Ethereum
             return _re;
         }
 
+        private static Regex RegIntRegion = new Regex("int(\\d+)");
         private static object Data2Obj(string _type,string _hexData,int _dataLength = 64)
         {
             _type = _type.Replace("[", "").Replace("]", "");
+            if (_type.Contains("int") && RegIntRegion.IsMatch(_type))
+            {
+                Match _match = RegIntRegion.Match(_type);
+                int _len = int.Parse(_match.Groups[1].Value);
+                string _lenAddin = _len >= 8 && _len <= 16 ? "16" : _len >= 32 && _len <= 32 ? "32" : "256";
+                _type = _match.Groups[0].Value+ _lenAddin;
+            }
+            var _value = _hexData.Substring(0, _dataLength);
             switch (_type)
             {
+                case "int":
                 case "uint":
-                    return int.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
+                case "int16":
+                case "uint16":
+                    return int.Parse(_value, System.Globalization.NumberStyles.HexNumber);
+                case "int32":
                 case "uint32":
-                    return  UInt32.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
-                case "uint64":
+                    return uint.Parse(_value, System.Globalization.NumberStyles.HexNumber);
+                case "int256":
                 case "uint256":
-                    return UInt64.Parse(_hexData.Substring(0, _dataLength), System.Globalization.NumberStyles.HexNumber);
+                    return ulong.Parse(_value, System.Globalization.NumberStyles.HexNumber);
                 case "bool":
-                    return int.Parse(_hexData.Substring(0, _dataLength)) == 1;
+                    return int.Parse(_value) == 1;
                 case "string":
-                    return DataToString(_hexData.Substring(0, _dataLength));
+                    return DataToString(_value);
             }
             return null;
         }
