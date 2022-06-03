@@ -138,8 +138,8 @@ namespace Lion.CryptoCurrency.Ethereum
                 _recid = _gk.Y & 1;
                 if (_r == BigInteger.Zero) { throw new Exception("Sign failed because R is Zero."); }
                 if (_r >= _limit || _r.Sign == 0) { Thread.Sleep(100); continue; }                
-                _e =  Lion.BigNumberPlus.HexToBigInt(BitConverter.ToString(_basicHashedRaw).Replace("-", ""));
-                _s = ((_e + (_r * Lion.BigNumberPlus.HexToBigInt(_private))) * BigInteger.ModPow(_k, Secp256k1.N - 2, Secp256k1.N)) % Secp256k1.N;
+                _e =  BigNumberPlus.HexToBigInt(BitConverter.ToString(_basicHashedRaw).Replace("-", ""));
+                _s = ((_e + (_r * BigNumberPlus.HexToBigInt(_private))) * BigInteger.ModPow(_k, Secp256k1.N - 2, Secp256k1.N)) % Secp256k1.N;
                 if (_s == BigInteger.Zero) { throw new Exception("Sign failed because S is Zero."); }
                 if (_s > Secp256k1.HalfN) { _recid = _recid ^ 1; }
                 if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
