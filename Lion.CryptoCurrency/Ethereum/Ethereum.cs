@@ -32,7 +32,7 @@ namespace Lion.CryptoCurrency.Ethereum
         public const string EIP1155_METHOD_MINTBATCH = "0x1f7fdffa";
         public const string EIP1155_METHOD_SAFEBATCHTRANSFERFROM = "0x2eb2c2d6";
         public const string EIP1155_METHOD_SAFETRANSFERFROM = "0xf242432a";
-        public const string EIP1155_METHOD_TRANSFER = "0x8a4068dd";
+        public const string EIP1155_METHOD_TRANSFER = "0x12514bba";
 
         #region HexToBigInteger
         public static BigInteger HexToBigInteger(string _hex)
