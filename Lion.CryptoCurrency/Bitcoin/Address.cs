@@ -11,6 +11,8 @@ namespace Lion.CryptoCurrency.Bitcoin
 {
     public class Address : CryptoCurrency.Address
     {
+        public Address(string _text) : base(_text) { }
+
         #region GetLegacyAddress
         public static Address GetLegacyAddress(string _private = "", bool _mainnet = true)
         {
@@ -36,9 +38,8 @@ namespace Lion.CryptoCurrency.Bitcoin
             string _key1 = string.Join("", (_mainnet ? "80" : "ef"), _private);
             string _key2 = HexPlus.ByteArrayToHexString(SHA.EncodeSHA256(SHA.EncodeSHA256(HexPlus.HexStringToByteArray(_key1))).Take(4).ToArray());
 
-            Address _address = new Address
+            Address _address = new Address(Base58.Encode(_result))
             {
-                Text = Base58.Encode(_result),
                 Public = HexPlus.ByteArrayToHexString(_public),
                 Private = Base58.Encode(_key1 + _key2)
             };
@@ -81,9 +82,8 @@ namespace Lion.CryptoCurrency.Bitcoin
 
             for (int i = 0; i < _privates.Length; i++) { _privates[i] = Private2Wif(_privates[i], _mainnet, true); }
 
-            Address _address = new Address
+            Address _address = new Address(Base58.Encode(_result))
             {
-                Text = Base58.Encode(_result),
                 Public = _publicScript,
                 Privates = _privates
             };

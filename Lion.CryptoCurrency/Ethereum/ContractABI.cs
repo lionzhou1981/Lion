@@ -176,8 +176,8 @@ namespace Lion.CryptoCurrency.Ethereum
                         case "System.UInt16":
                         case "System.UInt32":
                         case "System.UInt64":
-                        case "Lion.SDK.Bitcoin.Nodes.Ethereum.Address":
-                        case "Lion.SDK.Bitcoin.Nodes.Ethereum.Number": _dataList.Add(HexPlus.PadLeft(_itemData, 32)); break;
+                        case "Lion.CryptoCurrency.Ethereum.Address":
+                        case "Lion.CryptoCurrency.Ethereum.Number": _dataList.Add(HexPlus.PadLeft(_itemData, 32)); break;
                         case "System.String": _dataList.Add(_itemData); break;
                     }
                 }
@@ -199,6 +199,7 @@ namespace Lion.CryptoCurrency.Ethereum
                     case "System.UInt16": _data = BitConverter.GetBytes((ushort)_item); break;
                     case "System.UInt32": _data = BitConverter.GetBytes((uint)_item); break;
                     case "System.UInt64": _data = BitConverter.GetBytes((UInt64)_item); break;
+                    case "System.Numerics.BigInteger":  _data = ((BigInteger)_item).ToByteArray(); break;
                     case "Lion.CryptoCurrency.Ethereum.Number": _data = ((Number)_item).ToBytes(); break;
                     case "Lion.CryptoCurrency.Ethereum.Address": return ((Address)_item).ToBytes();
                     case "System.String":

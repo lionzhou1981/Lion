@@ -10,12 +10,14 @@ namespace Lion.CryptoCurrency.Ethereum
 {
     public class Geth
     {
+        public static bool Debug;
         public static string Host;
 
         #region Init
-        public static void Init(string _host)
+        public static void Init(string _host, bool _debug = false)
         {
             Host = _host;
+            Debug = _debug;
         }
         #endregion
 
@@ -24,14 +26,6 @@ namespace Lion.CryptoCurrency.Ethereum
         {
             var (Success, Result) = Call("eth_blockNumber");
             return Success ? Ethereum.HexToBigInteger(Result["result"].Value<string>()) - BigInteger.One : -1;
-        }
-        #endregion
-
-        #region Eth_GetBlockByNumber
-        public static JObject Eth_GetBlockByNumber(BigInteger _block)
-        {
-            var (Success, Result) = Call("eth_getBlockByNumber", "1", "0x" + _block.ToString("X").TrimStart('0'), true);
-            return Success ? Result["result"].Value<JObject>() : null;
         }
         #endregion
 
@@ -51,6 +45,47 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        #region Eth_EstimateGas 
+        public static BigInteger Eth_EstimateGas(string _from = "", string _to = "", uint _gas = 0, Number _gasPrice = null, Number _value = null, string _data = "", uint _nonce = uint.MaxValue)
+        {
+            Dictionary<string, string> _values = new Dictionary<string, string>();
+            if (_from != "") { _values.Add("from", _from); }
+            if (_to != "") { _values.Add("to", _to); }
+            if (_gas != 0) { _values.Add("gas", "0x" + BigInteger.Parse(_gas.ToString()).ToString("X").TrimStart('0')); }
+            if (_gasPrice != null) { _values.Add("gasPrice", "0x" + _gasPrice.ToGWei().ToString("X").TrimStart('0')); }
+            if (_value != null) { _values.Add("value", "0x" + _value.ToGWei().ToString("X").TrimStart('0')); }
+            if (_data != "") { _values.Add("data", _data); }
+            if (_nonce != uint.MaxValue) { _values.Add("nonce", "0x"+(new Number(_nonce).ToHex())); }
+
+            var (Success, Result) = Call("eth_estimateGas", "1", _values);
+            return Success ? Ethereum.HexToBigInteger(Result["result"].Value<string>()) : BigInteger.MinusOne;
+        }
+        #endregion
+
+        #region Eth_GasPrice
+        public static BigInteger Eth_GasPrice()
+        {
+            var (Success, Result) = Call("eth_gasPrice");
+            return Success ? Ethereum.HexToBigInteger(Result["result"].Value<string>()) : BigInteger.MinusOne;
+        }
+        #endregion
+
+        #region Eth_GetBlockByNumber
+        public static JObject Eth_GetBlockByNumber(BigInteger _block)
+        {
+            var (Success, Result) = Call("eth_getBlockByNumber", "1", "0x" + _block.ToString("X").TrimStart('0'), true);
+            return Success ? Result["result"].Value<JObject>() : null;
+        }
+        #endregion
+
+        #region Eth_GetTransactionCount
+        public static BigInteger Eth_GetTransactionCount(string _address,string _tag= "latest")
+        {
+            var (Success, Result) = Call("eth_getTransactionCount", "1", _address, _tag);
+            return Success ?  Ethereum.HexToBigInteger(Result["result"].Value<string>()) : BigInteger.MinusOne;
+        }
+        #endregion
+
         #region Eth_GetTransactionByHash
         public static JObject Eth_GetTransactionByHash(string _txid)
         {
@@ -64,6 +99,14 @@ namespace Lion.CryptoCurrency.Ethereum
         {
             var (Success, Result) = Call("eth_getTransactionReceipt", "1", _txid);
             return Success ? Result["result"].Value<JObject>() : null;
+        }
+        #endregion
+
+        #region Eth_SendRawTransaction
+        public static string Eth_SendRawTransaction(string _hex)
+        {
+            var (Success, Result) = Call("eth_sendRawTransaction", "1", _hex);
+            return Success ? Result["result"].Value<string>() : "";
         }
         #endregion
 
@@ -111,6 +154,7 @@ namespace Lion.CryptoCurrency.Ethereum
                 }
                 _jsonRpc["params"] = _data;
 
+                if (Debug) { Console.WriteLine(_jsonRpc.ToString(Formatting.None)); }
 
                 HttpClient _http = new HttpClient(60000);
                 _http.BeginResponse("POST", Host, "");
@@ -118,6 +162,8 @@ namespace Lion.CryptoCurrency.Ethereum
                 _http.EndResponse(Encoding.UTF8.GetBytes(_jsonRpc.ToString(Formatting.None)));
                 string _result = _http.GetResponseString(Encoding.UTF8);
                 _http.Dispose();
+
+                if (Debug) { Console.WriteLine(JObject.Parse(_result).ToString(Formatting.None)); }
 
                 return (true, JObject.Parse(_result));
             }

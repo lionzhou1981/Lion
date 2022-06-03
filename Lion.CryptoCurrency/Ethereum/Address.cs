@@ -9,12 +9,14 @@ namespace Lion.CryptoCurrency.Ethereum
 {
     public class Address : CryptoCurrency.Address
     {
+        public Address(string _text) : base(_text) { }
+
         public byte[] ToBytes() => HexPlus.HexStringToByteArray(base.Text.Substring(2));
 
         #region Generate
         public static Address Generate(string _privateKey = "")
         {
-            Address _address = new Address();
+            Address _address = new Address("");
             _address.Private = _privateKey == "" ? RandomPlus.RandomHex(64) : _privateKey;
             _address.Public = HexPlus.ByteArrayToHexString(Secp256k1.PrivateKeyToPublicKey(_address.Private));
             _address.Public = _address.Public.Substring(2);

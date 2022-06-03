@@ -2,6 +2,11 @@
 {
     public class Address
     {
+        public Address(string _text)
+        {
+            this.text = _text;
+        }
+
         private string text = "";
         public virtual string Text { get => text; set => text = value; }
 
