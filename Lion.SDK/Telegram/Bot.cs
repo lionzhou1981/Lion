@@ -25,7 +25,7 @@ namespace Lion.SDK.Telegram
         {
             JObject _sendObj = new JObject
             {
-                ["chat_id"] = int.Parse(_channelOrUserId),
+                ["chat_id"] = long.Parse(_channelOrUserId),
                 ["text"] = _textMsg,
                 ["disable_web_page_preview"] = _disableLinkePreview,
                 ["disable_notification"] = _disableNotify,
