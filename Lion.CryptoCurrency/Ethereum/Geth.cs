@@ -55,7 +55,7 @@ namespace Lion.CryptoCurrency.Ethereum
             if (_gasPrice != null) { _values.Add("gasPrice", "0x" + _gasPrice.ToGWei().ToString("X").TrimStart('0')); }
             if (_value != null) { _values.Add("value", "0x" + _value.ToGWei().ToString("X").TrimStart('0')); }
             if (_data != "") { _values.Add("data", _data); }
-            if (_nonce != uint.MaxValue) { _values.Add("nonce", "0x"+(new Number(_nonce).ToHex())); }
+            if (_nonce != uint.MaxValue) { _values.Add("nonce", "0x"+(new Number(_nonce).ToHex().TrimStart('0'))); }
 
             var (Success, Result) = Call("eth_estimateGas", "1", _values);
             return Success ? Ethereum.HexToBigInteger(Result["result"].Value<string>()) : BigInteger.MinusOne;
