@@ -77,12 +77,12 @@ namespace Lion.CryptoCurrency.Bitcoin
 
             byte[] _result = new byte[_addedVersion.Length + _shaHashed.Length];
             Array.Copy(_addedVersion, 0, _result, 0, _addedVersion.Length);
-            Array.Copy(_shaHashed, 0, _result, _addedVersion.Length, _shaHashed.Length);           
+            Array.Copy(_shaHashed, 0, _result, _addedVersion.Length, _shaHashed.Length);
 
             Address _address = new Address(Base58.Encode(_result.ToArray()))
             {
                 Public = HexPlus.ByteArrayToHexString(_public.ToArray()),
-                Private = _private
+                Private = Private2Wif(_private, _mainnet, true)
             };
             return _address;
         }
