@@ -24,6 +24,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             RIPEMD160Managed _ripemd = new RIPEMD160Managed();
 
             byte[] _ripemdHashed = _ripemd.ComputeHash(SHA.EncodeSHA256(_public));
+            
             byte[] _addedVersion = new byte[_ripemdHashed.Length + 1];
             _addedVersion[0] = (byte)(_mainnet ? 0x00 : 0x6f);
             Array.Copy(_ripemdHashed, 0, _addedVersion, 1, _ripemdHashed.Length);
@@ -51,7 +52,39 @@ namespace Lion.CryptoCurrency.Bitcoin
         #region GetSegWitAddress
         public static Address GetSegWitAddress(string _private = "", bool _mainnet = true)
         {
-            return null;
+            _private = _private == "" ? RandomPlus.RandomHex(64) : _private;
+
+            BigInteger _privateInt = BigInteger.Parse("0" + _private, NumberStyles.HexNumber);
+            var _public = Secp256k1.PrivateKeyToPublicKey(_privateInt, true);
+
+            RIPEMD160Managed _ripemd = new RIPEMD160Managed();
+
+            var _ripemdHashed = _ripemd.ComputeHash(SHA.EncodeSHA256(_public));
+            byte[] _addedOp = new byte[_ripemdHashed.Length + 2];
+            _addedOp[0] = 0x00;
+            _addedOp[1] = 0x14;
+            Array.Copy(_ripemdHashed.ToArray(), 0, _addedOp, 2, _ripemdHashed.Length);
+
+            _ripemdHashed = _ripemd.ComputeHash(SHA.EncodeSHA256(_addedOp.ToArray()));
+            Console.WriteLine(Lion.HexPlus.ByteArrayToHexString(_ripemdHashed.ToArray()));
+
+            byte[] _addedVersion = new byte[_ripemdHashed.Length + 1];
+            _addedVersion[0] = (byte)(_mainnet ? 0x05 : 0xc4);
+            Array.Copy(_ripemdHashed.ToArray(), 0, _addedVersion, 1, _ripemdHashed.Length);
+
+            byte[] _shaHashed = SHA.EncodeSHA256(SHA.EncodeSHA256(_addedVersion));
+            Array.Resize(ref _shaHashed, 4);
+
+            byte[] _result = new byte[_addedVersion.Length + _shaHashed.Length];
+            Array.Copy(_addedVersion, 0, _result, 0, _addedVersion.Length);
+            Array.Copy(_shaHashed, 0, _result, _addedVersion.Length, _shaHashed.Length);           
+
+            Address _address = new Address(Base58.Encode(_result.ToArray()))
+            {
+                Public = HexPlus.ByteArrayToHexString(_public.ToArray()),
+                Private = _private
+            };
+            return _address;
         }
         #endregion
 
