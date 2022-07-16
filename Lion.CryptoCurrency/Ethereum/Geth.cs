@@ -70,6 +70,14 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        #region Eth_GetBalance
+        public static string Eth_GetBalance(string _address, string _flag = "latest")
+        {
+            var (Success, Result) = Call("eth_getBalance", "1", _address, _flag);
+            return Success ? Ethereum.HexToDecimal(Result["result"].Value<string>()) : "";
+        }
+        #endregion
+
         #region Eth_GetBlockByNumber
         public static JObject Eth_GetBlockByNumber(BigInteger _block)
         {
