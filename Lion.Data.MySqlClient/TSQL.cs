@@ -252,7 +252,7 @@ namespace Lion.Data.MySqlClient
                 _return += (_index > 0 ? "," : "");
                 if (_field.AsName != "_ThisIsCustomField_")
                 {
-                    _return += "`" + _field.Name.Replace(".", "`.`") + "`" + (_field.AsName != "" ? " AS [" + _field.AsName + "`" : "");
+                    _return += $"{_field.Name}{(_field.AsName != "" ? $" AS {_field.AsName}" : "")}";
                 }
                 else
                 {
