@@ -61,7 +61,7 @@ namespace Lion.SDK.Google
         public static string MakeQRCode(string _key, string _title, string _issuer)
         {
             // http://chart.apis.google.com/chart?cht=qr&chs=200x200&chl=xxxx
-
+            //https://github.com/google/google-authenticator/wiki/Key-Uri-Format
             return $"otpauth://totp/{FormatParam(_title)}?secret={FormatParam(_key)}&issuer={FormatParam(_issuer)}";
         }
 
