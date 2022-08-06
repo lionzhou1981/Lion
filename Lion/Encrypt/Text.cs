@@ -30,7 +30,6 @@ namespace Lion.Encrypt
             while (true)
             {
                 _index = int.Parse(BigInteger.Remainder(_number, _divisor).ToString());
-                Console.WriteLine(_index);
                 _number = _number / _divisor;
                 _textList.Add(_list2[_index]);
                 if (_number == 0) { break; }
