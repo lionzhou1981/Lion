@@ -24,7 +24,7 @@ namespace Lion.SDK.Mailgun
             _result = "";
             ServicePointManager.Expect100Continue = false;
             CredentialCache _credentialCache = new CredentialCache();
-            _credentialCache.Add(new Uri("https://api.mailgun.net/v3"), "Basic", new NetworkCredential("api", ApiKey));
+            _credentialCache.Add(new Uri("https://api.eu.mailgun.net/v3"), "Basic", new NetworkCredential("api", ApiKey));
             Dictionary<string, string> _headers = new Dictionary<string, string>();
             _headers.Add("key", ApiKey);
             Dictionary<string, string> _formdata = new Dictionary<string, string>();
@@ -36,7 +36,7 @@ namespace Lion.SDK.Mailgun
                 _formdata.Add("text", _content);
             else
                 _formdata.Add("html", _content);
-            if (Lion.Net.HttpClient.PostAsFormData($"https://api.mailgun.net/v3/{Domain}/messages", _headers, _formdata, out _result, _credentialCache, 120 * 1000))
+            if (Lion.Net.HttpClient.PostAsFormData($"https://api.eu.mailgun.net/v3/{Domain}/messages", _headers, _formdata, out _result, _credentialCache, 120 * 1000))
             {
                 return !string.IsNullOrWhiteSpace(JObject.Parse(_result)["id"].ToString());
             }
