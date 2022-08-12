@@ -248,6 +248,27 @@ namespace Lion.CryptoCurrency.Market
     }
     #endregion
 
+    #region Ticker
+    public class Ticker
+    {
+        public string Pair;
+        public decimal LastPrice;
+        public decimal LastAmount = 0M;
+        public decimal BidPrice = 0M;
+        public decimal BidAmount = 0M;
+        public decimal AskPrice = 0M;
+        public decimal AskAmount = 0M;
+        public decimal Open24H;
+        public decimal High24H;
+        public decimal Low24H;
+        public decimal Volume24H;
+        public decimal Volume24H2 = 0M;
+        public decimal Change24H = 0M;
+        public decimal ChangeRate24H = 0M;
+        public DateTime DateTime = DateTime.MinValue;
+    }
+    #endregion
+
     #region Tickers
     public class Tickers : ConcurrentDictionary<string, Ticker>
     {
@@ -287,27 +308,6 @@ namespace Lion.CryptoCurrency.Market
             }
         }
         #endregion
-    }
-    #endregion
-
-    #region Ticker
-    public class Ticker
-    {
-        public string Pair;
-        public decimal LastPrice;
-        public decimal LastAmount = 0M;
-        public decimal BidPrice = 0M;
-        public decimal BidAmount = 0M;
-        public decimal AskPrice = 0M;
-        public decimal AskAmount = 0M;
-        public decimal Open24H;
-        public decimal High24H;
-        public decimal Low24H;
-        public decimal Volume24H;
-        public decimal Volume24H2 = 0M;
-        public decimal Change24H = 0M;
-        public decimal ChangeRate24H = 0M;
-        public DateTime DateTime = DateTime.MinValue;
     }
     #endregion
 

@@ -52,6 +52,22 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
-        
+        #region DecimalToHex
+        public static string DecimalToHex(decimal _value, int _decimal = 18)
+        {
+            string _text = _value.ToString($"0.".PadRight(_decimal + 2, '0'));
+            BigInteger _number = BigInteger.Parse(_text.Replace(".", ""));
+            return $"0x{_number.ToString("X").TrimStart('0')}";
+        }
+        #endregion
+
+        #region BigIntegerToDecimal
+        public static decimal BigIntegerToDecimal(BigInteger _big, int _decimal = 18)
+        {
+            string _text = _big.ToString().PadLeft(_decimal + 1, '0');
+            decimal _result = decimal.Parse($"{_text.Substring(0,_text.Length-_decimal)}.{_text.Substring(_text.Length - _decimal)}");
+            return _result;
+        }
+        #endregion
     }
 }
