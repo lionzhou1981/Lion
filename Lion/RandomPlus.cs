@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Lion
 {
@@ -19,6 +20,18 @@ namespace Lion
                 int _value = BitConverter.ToInt32(_byteArray, 0);
                 return _value <= 0 ? -_value : _value;
             }
+        }
+        #endregion
+
+        #region RandomNumbers
+        public static string RandomNumbers(int _length = 6)
+        {
+            StringBuilder _builder = new StringBuilder();
+            for (int i = 0; i < 6; i++)
+            {
+                _builder.Append(new Random(RandomSeed).Next(0, 10).ToString());
+            }
+            return _builder.ToString();
         }
         #endregion
 
