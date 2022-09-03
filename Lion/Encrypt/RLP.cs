@@ -14,7 +14,6 @@ namespace Lion.Encrypt
         private const byte OFFSET_SHORT_LIST = 0xc0;
         private const byte OFFSET_LONG_LIST = 0xf7;
 
-
         #region EncodeList
         public static byte[] EncodeList(params byte[][] items)
         {
@@ -47,7 +46,7 @@ namespace Lion.Encrypt
                 while (tmpLength != 0)
                 {
                     ++byteNum;
-                    tmpLength = tmpLength >> 8;
+                    tmpLength >>= 8;
                 }
 
                 tmpLength = totalLength;
@@ -145,5 +144,12 @@ namespace Lion.Encrypt
 
         public static bool IsNullOrZero(byte[] _array) { return _array == null || _array.Length == 0; }
         public static bool IsSingleZero(byte[] _array) { return _array.Length == 1 && _array[0] == 0; }
+
+        #region DecodeList
+        public static byte[][] DecodeList(byte[] _source)
+        {
+            return null;
+        }
+        #endregion
     }
 }

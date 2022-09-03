@@ -96,12 +96,10 @@ namespace Lion.CryptoCurrency.Ethereum
 
         }
 
-        #region ToSignedHex
-        private RNGCryptoServiceProvider rngProvider = new RNGCryptoServiceProvider();
-
-        public string ToSignedHex(string _private)
+        #region ToBasicRaw
+        public byte[] ToBasicRaw()
         {
-            byte[] _basicRaw = RLP.EncodeList(new byte[][] {
+            return RLP.EncodeList(new byte[][] {
                 RLP.EncodeUInt(this.Nonce),
                 RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
                 RLP.EncodeUInt(this.GasLimit),
@@ -112,60 +110,14 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeString(""),
                 RLP.EncodeString("")
             });
+        }
+        #endregion
 
-            byte[] _basicHashedRaw = new Keccak256().Compute(_basicRaw);
-
-            BigInteger _limit = BigInteger.Pow(BigInteger.Parse("2"), 256),
-                       _r = BigInteger.Zero,
-                       _e = BigInteger.Zero,
-                       _s = BigInteger.Zero,
-                       _k = BigInteger.Zero,
-                       _recid = BigInteger.Zero;
-
-            while (true)
-            {
-                _k = BigInteger.Zero;
-                if (_k == BigInteger.Zero)
-                {
-                    byte[] _kBytes = new byte[33];
-                    rngProvider.GetBytes(_kBytes);
-                    _kBytes[32] = 0;
-                    _k = new BigInteger(_kBytes);
-                }
-                if (_k.IsZero || _k >= Secp256k1.N) { continue; }
-
-                var _gk = Secp256k1.G.Multiply(_k);
-                _r = _gk.X % Secp256k1.N;
-                _recid = _gk.Y & 1;
-
-                if (_r == BigInteger.Zero) { throw new Exception("Sign failed because R is Zero."); }
-                if (_r >= _limit || _r.Sign == 0) { Thread.Sleep(100); continue; }
-
-                _e = BigNumberPlus.HexToBigInt(BitConverter.ToString(_basicHashedRaw).Replace("-", ""));
-                _s = ((_e + (_r * BigNumberPlus.HexToBigInt(_private))) * BigInteger.ModPow(_k, Secp256k1.N - 2, Secp256k1.N)) % Secp256k1.N;
-
-                if (_s == BigInteger.Zero) { throw new Exception("Sign failed because S is Zero."); }
-                if (_s > Secp256k1.HalfN) { _recid ^= 1; }
-                if (_s.CompareTo(Secp256k1.HalfN) > 0) { _s = Secp256k1.N - _s; }
-                if (_s >= _limit || _s.Sign == 0 || _r.ToString("X").StartsWith("0") || _s.ToString("X").StartsWith("0")) { Thread.Sleep(100); continue; }
-                break;
-            }
-
-            BigInteger _v = BigInteger.Parse(((int)this.ChainId).ToString()) * 2 + _recid + 35;
-
-            byte[] _signed = RLP.EncodeList(new byte[][] {
-                RLP.EncodeUInt(this.Nonce),
-                RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
-                RLP.EncodeUInt(this.GasLimit),
-                RLP.EncodeHex(this.Address.StartsWith("0x")?this.Address[2..]:this.Address),
-                RLP.EncodeBigInteger(this.Value.Integer),
-                RLP.EncodeString(this.DataHex.StartsWith("0x")?this.DataHex[2..]:this.DataHex),
-                RLP.EncodeBigInteger(_v),
-                RLP.EncodeBytes(HexPlus.HexStringToByteArray(_r.ToString("X"))),
-                RLP.EncodeBytes(HexPlus.HexStringToByteArray(_s.ToString("X")))
-            });
-
-            return HexPlus.ByteArrayToHexString(_signed).ToLower();
+        #region ToSignedHex
+        public string ToSignedHex(string _private)
+        {
+            byte[] _basicRaw = ToBasicRaw();
+            return Ethereum.Sign(_basicRaw, _private, (int)this.ChainId);
         }
         #endregion
     }
