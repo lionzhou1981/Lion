@@ -64,6 +64,14 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        #region DecimalToBigInteger
+        public static BigInteger DecimalToBigInteger(decimal _value, int _decimal = 18)
+        {
+            string _text = _value.ToString($"0.".PadRight(_decimal + 2, '0'));
+            return BigInteger.Parse(_text.Replace(".", ""));
+        }
+        #endregion
+
         #region BigIntegerToDecimal
         public static decimal BigIntegerToDecimal(BigInteger _big, int _decimal = 18)
         {
@@ -119,7 +127,7 @@ namespace Lion.CryptoCurrency.Ethereum
 
             BigInteger _v = BigInteger.Parse(_chainId.ToString()) * 2 + _recid + 35;
 
-            byte[] _signed = RLP.EncodeList(new byte[][] {
+            byte[] _signed = RLP.EncodeList(
                 rlpItems[0],
                 rlpItems[1],
                 rlpItems[2],
@@ -129,7 +137,7 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeBigInteger(_v),
                 RLP.EncodeBytes(HexPlus.HexStringToByteArray(_r.ToString("X"))),
                 RLP.EncodeBytes(HexPlus.HexStringToByteArray(_s.ToString("X")))
-            });
+            );
 
             return HexPlus.ByteArrayToHexString(_signed).ToLower();
         }

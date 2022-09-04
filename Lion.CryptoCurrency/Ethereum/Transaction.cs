@@ -99,7 +99,7 @@ namespace Lion.CryptoCurrency.Ethereum
         #region ToBasicRaw
         public byte[] ToBasicRaw()
         {
-            return RLP.EncodeList(new byte[][] {
+            return RLP.EncodeList(
                 RLP.EncodeUInt(this.Nonce),
                 RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
                 RLP.EncodeUInt(this.GasLimit),
@@ -109,7 +109,7 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeInt((int)this.ChainId),
                 RLP.EncodeString(""),
                 RLP.EncodeString("")
-            });
+            );
         }
         #endregion
 
