@@ -237,10 +237,10 @@ namespace Lion.Encrypt
             return _currentPos;
         }
 
-        public static byte[][] DecodeList(byte[] _msgData, int _level, int _startPos, int _endPos, int _levelToIndex)
+        public static byte[][] DecodeList(byte[] _msgData)
         {
             var _items = new RLPItemList();
-            Decode(_msgData, _level, _startPos, _endPos, _levelToIndex, _items);
+            Decode(_msgData, 0, 0, _msgData.Length, 1, _items);
             return _items.Select(t=>t.Data).ToArray();
         }
             
