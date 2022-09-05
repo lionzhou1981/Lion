@@ -85,7 +85,8 @@ namespace Lion.CryptoCurrency.Ethereum
         public static string Sign(byte[] _basicRaw,string _private,int _chainId = 1)
         {
             byte[] _basicHashedRaw = new Keccak256().Compute(_basicRaw);
-            byte[][] rlpItems = RLP.DecodeList(_basicHashedRaw);
+            Console.WriteLine(HexPlus.ByteArrayToHexString(_basicRaw));
+            byte[][] rlpItems = RLP.DecodeList(_basicRaw);
 
             BigInteger _limit = BigInteger.Pow(BigInteger.Parse("2"), 256),
                        _r = BigInteger.Zero,
@@ -128,12 +129,12 @@ namespace Lion.CryptoCurrency.Ethereum
             BigInteger _v = BigInteger.Parse(_chainId.ToString()) * 2 + _recid + 35;
 
             byte[] _signed = RLP.EncodeList(
-                rlpItems[0],
-                rlpItems[1],
-                rlpItems[2],
-                rlpItems[3],
-                rlpItems[4],
-                rlpItems[5],
+                RLP.EncodeBytes(rlpItems[0]),
+                RLP.EncodeBytes(rlpItems[1]),
+                RLP.EncodeBytes(rlpItems[2]),
+                RLP.EncodeBytes(rlpItems[3]),
+                RLP.EncodeBytes(rlpItems[4]),
+                RLP.EncodeBytes(rlpItems[5]),
                 RLP.EncodeBigInteger(_v),
                 RLP.EncodeBytes(HexPlus.HexStringToByteArray(_r.ToString("X"))),
                 RLP.EncodeBytes(HexPlus.HexStringToByteArray(_s.ToString("X")))

@@ -15,68 +15,56 @@ namespace Lion.Encrypt
         private const byte OFFSET_LONG_LIST = 0xf7;
 
         #region EncodeList
-        public static byte[] EncodeList(params byte[][] items)
+        public static byte[] EncodeList(params byte[][] _items)
         {
-            if (items == null || (items.Length == 1 && items[0] == null)) { return new[] { OFFSET_SHORT_LIST }; }
+            if (_items == null || (_items.Length == 1 && _items[0] == null)) { return new[] { OFFSET_SHORT_LIST }; }
 
-            var totalLength = 0;
-            for (var i = 0; i < items.Length; i++) { totalLength += items[i].Length; }
+            var _total = 0;
+            for (var i = 0; i < _items.Length; i++) { _total += _items[i].Length; }
 
-
-            byte[] data;
-
-            int copyPos;
-
-            if (totalLength < SIZE_THRESHOLD)
+            byte[] _data;
+            int _pos;
+            if (_total < SIZE_THRESHOLD)
             {
-                var dataLength = 1 + totalLength;
-                data = new byte[dataLength];
-
-                //single byte length
-                data[0] = (byte)(OFFSET_SHORT_LIST + totalLength);
-                copyPos = 1;
+                _data = new byte[1 + _total];
+                _data[0] = (byte)(OFFSET_SHORT_LIST + _total);
+                _pos = 1;
             }
             else
             {
                 // length of length = BX
                 // prefix = [BX, [length]]
-                var tmpLength = totalLength;
-                byte byteNum = 0;
+                var _length = _total;
+                byte _byteCount = 0;
+                while (_length != 0) { ++_byteCount; _length >>= 8; }
 
-                while (tmpLength != 0)
-                {
-                    ++byteNum;
-                    tmpLength >>= 8;
-                }
+                _length = _total;
 
-                tmpLength = totalLength;
-
-                var lenBytes = new byte[byteNum];
-                for (var i = 0; i < byteNum; ++i)
-                    lenBytes[byteNum - 1 - i] = (byte)(tmpLength >> (8 * i));
+                var _lengthBytes = new byte[_byteCount];
+                for (var i = 0; i < _byteCount; ++i) { _lengthBytes[_byteCount - 1 - i] = (byte)(_length >> (8 * i)); }
+                    
                 // first byte = F7 + bytes.length
-                data = new byte[1 + lenBytes.Length + totalLength];
+                _data = new byte[1 + _lengthBytes.Length + _total];
 
-                data[0] = (byte)(OFFSET_LONG_LIST + byteNum);
-                Array.Copy(lenBytes, 0, data, 1, lenBytes.Length);
+                _data[0] = (byte)(OFFSET_LONG_LIST + _byteCount);
+                Array.Copy(_lengthBytes, 0, _data, 1, _lengthBytes.Length);
 
-                copyPos = lenBytes.Length + 1;
+                _pos = _lengthBytes.Length + 1;
             }
 
             //Combine all elements
-            foreach (var item in items)
+            foreach (var item in _items)
             {
-                Array.Copy(item, 0, data, copyPos, item.Length);
-                copyPos += item.Length;
+                Array.Copy(item, 0, _data, _pos, item.Length);
+                _pos += item.Length;
             }
-            return data;
+            return _data;
         }
         #endregion
 
         public static byte[] EncodeInt(int _int) => EncodeBigInteger(BigInteger.Parse(_int.ToString()));
         public static byte[] EncodeUInt(uint _uint) => EncodeBigInteger(BigInteger.Parse(_uint.ToString()));
         public static byte[] EncodeHex(string _hex) => EncodeBytes(HexPlus.HexStringToByteArray(_hex));
-        public static byte[] EncodeString(string _string, bool _hex = true) => _hex ? EncodeHex(_string) : Encoding.UTF8.GetBytes(_string);
 
         #region EncodeBigInteger
         public static byte[] EncodeBigInteger(BigInteger _bi)
@@ -103,196 +91,158 @@ namespace Lion.Encrypt
         #region EncodeBytes
         public static byte[] EncodeBytes(byte[] _source)
         {
-            if (IsNullOrZero(_source)) { return new[] { OFFSET_SHORT_ITEM }; }
-            if (IsSingleZero(_source)) { return _source; }
+            if (_source == null || _source.Length == 0) { return new[] { OFFSET_SHORT_ITEM }; }
+            if (_source.Length == 1 || _source[0] == 0) { return _source; }
             if (_source.Length == 1 && _source[0] < 0x80) { return _source; }
 
             if (_source.Length < SIZE_THRESHOLD)
             {
                 // length = 8X
-                var length = (byte)(OFFSET_SHORT_ITEM + _source.Length);
-                var data = new byte[_source.Length + 1];
-                Array.Copy(_source, 0, data, 1, _source.Length);
-                data[0] = length;
-
-                return data;
+                var _length = (byte)(OFFSET_SHORT_ITEM + _source.Length);
+                var _data = new byte[_source.Length + 1];
+                Array.Copy(_source, 0, _data, 1, _source.Length);
+                _data[0] = _length;
+                return _data;
             }
             else
             {
                 // length of length = BX
                 // prefix = [BX, [length]]
-                var tmpLength = _source.Length;
-                byte byteNum = 0;
-                while (tmpLength != 0)
-                {
-                    ++byteNum;
-                    tmpLength = tmpLength >> 8;
-                }
-                var lenBytes = new byte[byteNum];
-                for (var i = 0; i < byteNum; ++i)
-                    lenBytes[byteNum - 1 - i] = (byte)(_source.Length >> (8 * i));
-                // first byte = F7 + bytes.length
-                var data = new byte[_source.Length + 1 + byteNum];
-                Array.Copy(_source, 0, data, 1 + byteNum, _source.Length);
-                data[0] = (byte)(OFFSET_LONG_ITEM + byteNum);
-                Array.Copy(lenBytes, 0, data, 1, lenBytes.Length);
+                var _length = _source.Length;
+                byte _byteCount = 0;
+                while (_length != 0) { ++_byteCount; _length = _length >> 8; }
 
-                return data;
+                var _lenghtBytes = new byte[_byteCount];
+                for (var i = 0; i < _byteCount; ++i) { _lenghtBytes[_byteCount - 1 - i] = (byte)(_source.Length >> (8 * i)); }
+                    
+                // first byte = F7 + bytes.length
+                var _data = new byte[_source.Length + 1 + _byteCount];
+                Array.Copy(_source, 0, _data, 1 + _byteCount, _source.Length);
+                _data[0] = (byte)(OFFSET_LONG_ITEM + _byteCount);
+                Array.Copy(_lenghtBytes, 0, _data, 1, _lenghtBytes.Length);
+
+                return _data;
             }
         }
         #endregion
 
-        public static bool IsNullOrZero(byte[] _array) { return _array == null || _array.Length == 0; }
-        public static bool IsSingleZero(byte[] _array) { return _array.Length == 1 && _array[0] == 0; }
+        #region DecodeList
+        public static byte[][] DecodeList(byte[] _source)
+        {
+            if (_source == null || _source.Length == 0) { return null; }
 
-        public static readonly byte[] EMPTY_BYTE_ARRAY = new byte[0];
-        private static int CalculateLength(int _length, byte[] _msgData, int _pos)
+            var _data = new byte[0];
+            if (_source[0] > OFFSET_LONG_LIST) //biglist
+            {
+                var _headLength = (byte)(_source[0] - OFFSET_LONG_LIST);
+                var _dataLength = DecodeLength(_headLength, _source, 0);
+                _data = new byte[_dataLength];
+                Array.Copy(_source, _headLength + 1, _data, 0, _data.Length);
+            }
+            else if (_source[0] >= OFFSET_SHORT_LIST && _source[0] <= OFFSET_LONG_LIST) //small list
+            {
+                var _dataLength = _source[0] - OFFSET_SHORT_LIST;
+                _data = new byte[_dataLength];
+                Array.Copy(_source, 1, _data, 0, _dataLength);
+            }
+            else
+            {
+                return new byte[0][];
+            }
+
+            int _pos = 0;
+            IList<byte[]> _decoded = new List<byte[]>();
+            while (_pos < _data.Length)
+            {
+                if (_data[_pos] > OFFSET_LONG_LIST) //biglist
+                {
+                    var _headLength = (byte)(_data[_pos] - OFFSET_LONG_LIST);
+                    var _itemLength = DecodeLength(_headLength, _data, _pos);
+                    var _item = new byte[_itemLength + _headLength + 1];
+                    Array.Copy(_data, _pos, _item, 0, _item.Length);
+                    _pos += _headLength + _itemLength + 1;
+                    _decoded.Add(_data);
+                }
+                else if (_data[_pos] >= OFFSET_SHORT_LIST && _data[_pos] <= OFFSET_LONG_LIST) //small list
+                {
+                    var _itemLength = _data[_pos] - OFFSET_SHORT_LIST;
+                    var _item = new byte[_itemLength + 1];
+                    Array.Copy(_data, _pos, _data, 0, _itemLength);
+                    _pos += _itemLength + 1;
+                    _decoded.Add(_data);
+                }
+                else if (_data[_pos] > OFFSET_LONG_ITEM && _data[_pos] < OFFSET_SHORT_LIST) //big item
+                {
+                    var _headLength = (byte)(_data[_pos] - OFFSET_LONG_ITEM);
+                    var _itemlength = DecodeLength((int)_headLength, _data, (int)_pos);
+                    var _item = new byte[_itemlength];
+                    Array.Copy(_data, _pos + _headLength + 1, _item, 0, _itemlength);
+                    _pos += _headLength + _itemlength + 1;
+                    _decoded.Add(_item);
+                }
+                else if (_data[_pos] > OFFSET_SHORT_ITEM && _data[_pos] <= OFFSET_LONG_ITEM) //small item
+                {
+                    var _length = (byte)(_data[_pos] - OFFSET_SHORT_ITEM);
+                    var _item = new byte[_length];
+                    Array.Copy(_data, _pos + 1, _item, 0, _length);
+                    _pos += (1 + _length);
+                    _decoded.Add(_item);
+                }
+                else if (_data[_pos] == OFFSET_SHORT_ITEM) //null
+                {
+                    _decoded.Add(new byte[0]);
+                    _pos += 1;
+                }
+                else if (_data[_pos] < OFFSET_SHORT_ITEM) //single
+                {
+                    _decoded.Add(new byte[] { _data[_pos] });
+                    _pos += 1;
+                }
+            }
+
+            return _decoded.ToArray();
+        }
+        #endregion
+
+        #region DecodeLength
+        private static int DecodeLength(int _length, byte[] _source, int _pos)
         {
             var pow = (byte)(_length - 1);
             var _currentLength = 0;
             for (var i = 1; i <= _length; ++i)
             {
-                _currentLength += _msgData[_pos + i] << (8 * pow);
+                _currentLength += _source[_pos + i] << (8 * pow);
                 pow--;
             }
             return _currentLength;
         }
-        private static int SingleByteItem(byte[] msgData, int _currentPos, RLPItemList _list)
+        #endregion
+
+        public static string DecodeHex(byte[] _source) => HexPlus.ByteArrayToHexString(_source);
+
+        #region DecodeBytes
+        public static byte[] DecodeBytes(byte[] _source)
         {
-            _list.Add(new RLPItem(new byte[] { msgData[_currentPos] }));
-            _currentPos += 1;
-            return _currentPos;
-        }
+            if (_source == null || _source.Length == 0) { return new byte[0]; }
+            if (_source.Length == 1 && _source[0] < 0x80) { return _source; }
 
-        private static int NullItem(int _currentPos, RLPItemList _list)
-        {
-            _list.Add(new RLPItem(EMPTY_BYTE_ARRAY));
-            _currentPos += 1;
-            return _currentPos;
-        }
-
-        private static int ItemLessThan55Bytes(byte[] _msgData, int _currentPos, RLPItemList _list)
-        {
-            var _length = (byte)(_msgData[_currentPos] - OFFSET_SHORT_ITEM);
-            var _item = new byte[_length];
-            Array.Copy(_msgData, _currentPos + 1, _item, 0, _length);
-            var _prefix = new byte[2];
-            Array.Copy(_msgData, _currentPos, _prefix, 0, 2);
-            _list.Add(new RLPItem(_item));
-            _currentPos += 1 + _length;
-            return _currentPos;
-        }
-
-        private static int ItemBiggerThan55Bytes(byte[] _msgData, int _currentPos, RLPItemList _list)
-        {
-            var _currentLength = (byte)(_msgData[_currentPos] - OFFSET_LONG_ITEM);
-            var _length = CalculateLength(_currentLength, _msgData, _currentPos);
-            var _data = new byte[_length];
-            Array.Copy(_msgData, _currentPos + _currentLength + 1, _data, 0, _length);
-            var _prefix = new byte[_currentLength + 1];
-            Array.Copy(_msgData, _currentPos, _prefix, 0, _currentLength + 1);
-            _list.Add(new RLPItem(_data));
-            _currentPos += _currentLength + _length + 1;
-            return _currentPos;
-        }
-
-        private static int ListLessThan55Bytes(byte[] _msgData, int _level, int _levelToIndex, int currentPos, RLPItemList _list)
-        {
-            var _length = _msgData[currentPos] - OFFSET_SHORT_LIST;
-            var _dataLength = _length + 1;
-            var _data = new byte[_length + 1];
-
-            Array.Copy(_msgData, currentPos, _data, 0, _dataLength);
-
-            var _childs = new RLPItemList { Data = _data };
-
-            if (_length > 0)
-                Decode(_msgData, _level + 1, currentPos + 1, currentPos + _dataLength,
-                    _levelToIndex,
-                    _childs);
-
-            _list.Add(_childs);
-
-            currentPos += _dataLength;
-            return currentPos;
-        }
-
-        private static int ListBiggerThan55Bytes(byte[] _msgData, int _level, int _levelToIndex, int _currentPos, RLPItemList _list)
-        {
-            var _listlen = (byte)(_msgData[_currentPos] - OFFSET_LONG_LIST);
-            var _lengthConvert = CalculateLength(_listlen, _msgData, _currentPos);
-
-            var _dataLength = _listlen + _lengthConvert + 1;
-            var _data = new byte[_dataLength];
-
-            Array.Copy(_msgData, _currentPos, _data, 0, _dataLength);
-            var _childList = new RLPItemList { Data = _data };
-
-            Decode(_msgData, _level + 1, _currentPos + _listlen + 1,
-                _currentPos + _dataLength, _levelToIndex,
-                _childList);
-            _list.Add(_childList);
-
-            _currentPos += _dataLength;
-            return _currentPos;
-        }
-
-        public static byte[][] DecodeList(byte[] _msgData)
-        {
-            var _items = new RLPItemList();
-            Decode(_msgData, 0, 0, _msgData.Length, 1, _items);
-            return _items.Select(t=>t.Data).ToArray();
-        }
-            
-        public static void Decode(byte[] _msgData, int _level, int _startPos,
-          int _endPos, int _levelToIndex, RLPItemList _items)
-        {
-            if (_msgData == null || _msgData.Length == 0)
-                return ;
-
-            var currentData = new byte[_endPos - _startPos];
-            Array.Copy(_msgData, _startPos, currentData, 0, currentData.Length);
-
-            try
+            if (_source[0] > OFFSET_LONG_ITEM)
             {
-                var _currentPos = _startPos;
-
-                while (_currentPos < _endPos)
-                {
-                    if (_msgData[_currentPos] > OFFSET_LONG_LIST) //biglist
-                    {
-                        _currentPos = ListBiggerThan55Bytes(_msgData, _level, _levelToIndex, _currentPos, _items);
-                        continue;
-                    }
-                    else if(_msgData[_currentPos] >= OFFSET_SHORT_LIST && _msgData[_currentPos] <= OFFSET_LONG_LIST) //small list
-                    {
-                        _currentPos = ListLessThan55Bytes(_msgData, _level, _levelToIndex, _currentPos, _items);
-                        continue;
-                    }
-                    else if (_msgData[_currentPos] > OFFSET_LONG_ITEM && _msgData[_currentPos] < OFFSET_SHORT_LIST) //big item
-                    {
-                        _currentPos = ItemBiggerThan55Bytes(_msgData, _currentPos, _items);
-                        continue;
-                    }
-                    else if (_msgData[_currentPos] > OFFSET_SHORT_ITEM && _msgData[_currentPos] <= OFFSET_LONG_ITEM) //small item
-                    {
-                        _currentPos = ItemLessThan55Bytes(_msgData, _currentPos, _items);
-                        continue;
-                    }
-
-                    if (_msgData[_currentPos] == OFFSET_SHORT_ITEM) //null
-                    {
-                        _currentPos = NullItem(_currentPos,_items);
-                        continue;
-                    }
-                    else if (_msgData[_currentPos] < OFFSET_SHORT_ITEM) //single
-                        _currentPos = SingleByteItem(_msgData, _currentPos, _items);
-                }
+                var _headLength = (byte)(_source[0] - OFFSET_LONG_ITEM);
+                var _length = DecodeLength((int)_headLength, _source, 0);
+                var _data = new byte[_length];
+                Array.Copy(_source, 1 + _headLength, _data, 0, _data.Length);
+                return _data;
             }
-            catch
+            else if (_source[0] > OFFSET_SHORT_ITEM && _source[0] <= OFFSET_LONG_ITEM)
             {
-                throw new Exception("None rpl encode");
+                var _length = _source[0] - OFFSET_SHORT_ITEM;
+                var _data = new byte[_length];
+                Array.Copy(_source, 1, _data, 0, _data.Length);
+                return _data;
             }
+            return new byte[0];
         }
+        #endregion
     }
 }

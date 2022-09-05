@@ -117,8 +117,8 @@ namespace Lion.CryptoCurrency.Ethereum
             for(int i=0;i<_hexData.Length;i+=2)
             {
                 var _value = _hexData.Substring(i, 2);
-                if (_value == "00")
-                    break;
+                if (_value == "00") { break; }
+                    
                 _resultString.Append((char)int.Parse(_value, System.Globalization.NumberStyles.HexNumber));
             }
             return _resultString.ToString();

@@ -105,10 +105,10 @@ namespace Lion.CryptoCurrency.Ethereum
                 RLP.EncodeUInt(this.GasLimit),
                 RLP.EncodeHex(this.Address.StartsWith("0x")?this.Address[2..]:this.Address),
                 RLP.EncodeBigInteger(this.Value.Integer),
-                RLP.EncodeString(this.DataHex.StartsWith("0x")?this.DataHex[2..]:this.DataHex),
+                RLP.EncodeHex(this.DataHex.StartsWith("0x")?this.DataHex[2..]:this.DataHex),
                 RLP.EncodeInt((int)this.ChainId),
-                RLP.EncodeString(""),
-                RLP.EncodeString("")
+                RLP.EncodeHex(""),
+                RLP.EncodeHex("")
             );
         }
         #endregion
