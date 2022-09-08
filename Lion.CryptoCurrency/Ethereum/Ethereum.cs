@@ -85,7 +85,6 @@ namespace Lion.CryptoCurrency.Ethereum
         public static string Sign(byte[] _basicRaw,string _private,int _chainId = 1)
         {
             byte[] _basicHashedRaw = new Keccak256().Compute(_basicRaw);
-            Console.WriteLine(HexPlus.ByteArrayToHexString(_basicRaw));
             byte[][] rlpItems = RLP.DecodeList(_basicRaw);
 
             BigInteger _limit = BigInteger.Pow(BigInteger.Parse("2"), 256),

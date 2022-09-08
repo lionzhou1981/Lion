@@ -92,7 +92,6 @@ namespace Lion.Encrypt
         public static byte[] EncodeBytes(byte[] _source)
         {
             if (_source == null || _source.Length == 0) { return new[] { OFFSET_SHORT_ITEM }; }
-            if (_source.Length == 1 || _source[0] == 0) { return _source; }
             if (_source.Length == 1 && _source[0] < 0x80) { return _source; }
 
             if (_source.Length < SIZE_THRESHOLD)
