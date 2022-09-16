@@ -44,6 +44,7 @@ namespace Lion.Data.MySqlClient
         #endregion
         #endregion
 
+       
         public MySqlConnection DbConnection { get; set; }
         public MySqlTransaction DbTransaction { get; set; }
         public TransactionScope TransactionScope { get; set; }
@@ -51,7 +52,14 @@ namespace Lion.Data.MySqlClient
         public void Close() { this.DbConnection?.Close(); }
         public void BeginTransaction() { this.DbTransaction = this.DbConnection.BeginTransaction(); }
         public void BeginTransaction(System.Data.IsolationLevel _isolationLevel) { this.DbTransaction = this.DbConnection.BeginTransaction(_isolationLevel); }
-        public void CommitTransaction() { this.DbTransaction.Commit(); }
+
+        public delegate void AfterCommitedEventHandle();
+        public AfterCommitedEventHandle AfterCommited;
+        public void CommitTransaction() 
+        { 
+            this.DbTransaction.Commit(); 
+            if (AfterCommited != null) AfterCommited.Invoke(); 
+        }
         public void RollbackTransaction() { this.DbTransaction.Rollback(); }
         public void TransactionScopeBegin() { this.TransactionScope = new TransactionScope(); }
         public void TransactionScopeComplete() { this.TransactionScope.Complete(); }
