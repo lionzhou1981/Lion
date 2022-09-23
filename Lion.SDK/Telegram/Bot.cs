@@ -21,7 +21,36 @@ namespace Lion.SDK.Telegram
         private string BuildUrl(string _method) =>
             this.urlTemplate.Replace("{{TOKEN}}", this.Token).Replace("{{METHOD_NAME}}", _method);
 
-        public Tuple<bool, JObject> Send(string _channelOrUserId, string _textMsg, bool _disableLinkePreview, bool _disableNotify, bool _protectContent,string _parseMode = "", int _replayMsgId = 0)
+        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text,string switchInlineQuery)
+        {
+            JArray _buttons = new JArray();
+            try
+            {
+                if (_inlineKeyboard.ContainsKey("inline_keyboard"))
+                    _buttons = _inlineKeyboard["inline_keyboard"].Value<JArray>().First.Value<JArray>();
+            }
+            catch { }
+            _buttons.Add(new JObject()
+            {
+                ["text"] = _text,
+                ["switch_inline_query"] = switchInlineQuery
+            });
+            var _setted = new JArray();
+            _setted.Add(_buttons);
+            _inlineKeyboard["inline_keyboard"] = _setted;
+            return _inlineKeyboard;
+        }
+
+        public JObject AddKeyBoardButtons(JObject _replyButtons, List<string> _buttons)
+        {
+            var _jbuttons = new JArray();
+            _jbuttons.Add(JArray.FromObject(_buttons));
+            _replyButtons["keyboard"] = _jbuttons;
+            return _replyButtons;
+        }
+
+
+        public Tuple<bool, JObject> Send(string _channelOrUserId, string _textMsg, bool _disableLinkePreview, bool _disableNotify, bool _protectContent, JObject _replyButtons = null, string _parseMode = "", int _replayMsgId = 0)
         {
             JObject _sendObj = new JObject
             {
@@ -31,6 +60,10 @@ namespace Lion.SDK.Telegram
                 ["disable_notification"] = _disableNotify,
                 ["protect_content"] = _protectContent
             };
+            if(_replyButtons!= null)
+            {
+                _sendObj["reply_markup"] = _replyButtons;
+            }
             if (!string.IsNullOrWhiteSpace(_parseMode))
                 _sendObj["parse_mode"] = _parseMode;
             if (_replayMsgId > 0)
@@ -41,7 +74,6 @@ namespace Lion.SDK.Telegram
             try
             {
                 var _client = new Lion.Net.HttpClient(60 * 1000);
-                //_client.Proxy = new WebProxy("127.0.0.1:1081");
                 _client.ContentType = "application/json";
                 byte[] bytes = Encoding.UTF8.GetBytes(_sendObj.ToString(Newtonsoft.Json.Formatting.None));
                 string json = _client.GetResponseString("POST", url, url, bytes);
