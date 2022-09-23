@@ -21,7 +21,7 @@ namespace Lion.SDK.Telegram
         private string BuildUrl(string _method) =>
             this.urlTemplate.Replace("{{TOKEN}}", this.Token).Replace("{{METHOD_NAME}}", _method);
 
-        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text,string switchInlineQuery)
+        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text,string url)
         {
             JArray _buttons = new JArray();
             try
@@ -33,7 +33,7 @@ namespace Lion.SDK.Telegram
             _buttons.Add(new JObject()
             {
                 ["text"] = _text,
-                ["switch_inline_query"] = switchInlineQuery
+                ["url"] = url
             });
             var _setted = new JArray();
             _setted.Add(_buttons);
