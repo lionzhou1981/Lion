@@ -30,11 +30,8 @@ namespace Lion.Net.Sockets
 
         public bool IsKeepAlivePackage(object _object, object _socket)
         {
-            SocketSession _session = (SocketSession)_socket;
             WstpPackage _package = (WstpPackage)_object;
-            if (_package.Type != WstpPackageType.Ping) { return false; }
-
-            _session.SendPackage(this.KeepAlivePackage); return true;
+            return _package.Type == WstpPackageType.Ping;
         }
 
         #region Check
