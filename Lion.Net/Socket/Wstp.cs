@@ -26,9 +26,16 @@ namespace Lion.Net.Sockets
             this.name = _name;
         }
 
-        public object KeepAlivePackage { get { return ""; } }
+        public object KeepAlivePackage { get { return new WstpPackage(WstpPackageType.Pong); } }
 
-        public bool IsKeepAlivePackage(object _object, object _socket) { return false; }
+        public bool IsKeepAlivePackage(object _object, object _socket)
+        {
+            SocketSession _session = (SocketSession)_socket;
+            WstpPackage _package = (WstpPackage)_object;
+            if (_package.Type != WstpPackageType.Ping) { return false; }
+
+            _session.SendPackage(this.KeepAlivePackage); return true;
+        }
 
         #region Check
         public bool Check(byte[] _byteArray, bool _completely = false, SocketSession _session = null)
