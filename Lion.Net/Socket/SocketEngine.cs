@@ -826,6 +826,28 @@ namespace Lion.Net.Sockets
             }
         }
         #endregion
+
+        #region PushPackage
+        internal int Push(object _package)
+        {
+            try
+            {
+                int _count = 0;
+                for (int i = 0; i < this.Sessions.Length; i++)
+                {
+                    if (this.Sessions[i] == null || this.Sessions[i].Status != SocketSessionStatus.Connected) { continue; }
+                    this.Sessions[i].SendPackage(_package);
+                    _count++;
+                }
+                return _count;
+            }
+            catch (Exception _ex)
+            {
+                this.OnException(_ex);
+                return 0;
+            }
+        }
+        #endregion
         #endregion
 
         #region Client方法
