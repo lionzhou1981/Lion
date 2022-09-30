@@ -48,7 +48,7 @@ namespace  Lion.Encrypt
         public static string Encode(string _source, string _key, CipherMode _mode = CipherMode.CBC)
         {
             byte[] _buffer = System.Text.Encoding.UTF8.GetBytes(_source);
-            return System.Text.Encoding.UTF8.GetString(_buffer);
+            return Lion.HexPlus.ByteArrayToHexString(Encode2ByteArray(_buffer,_key));
         }
         #endregion
     }
