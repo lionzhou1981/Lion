@@ -96,7 +96,29 @@ namespace Lion.SDK.Telegram
             return string.Join("\r\n", _preTable);
         }
 
-        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text,string _type = "url",string value = "")
+        public JObject AddWebappButtons(JObject _inlineKeyboard, string _text,string _type = "url",string value = "")
+        {
+            JArray _buttons = new JArray();
+            try
+            {
+                if (_inlineKeyboard.ContainsKey("inline_keyboard"))
+                    _buttons = _inlineKeyboard["inline_keyboard"].Value<JArray>().First.Value<JArray>();
+            }
+            catch { }
+            JObject _childData = new JObject();
+            _childData[_type] = value;
+            _buttons.Add(new JObject()
+            {
+                ["text"] = _text,
+                ["web_app"] = _childData
+            }) ;
+            var _setted = new JArray();
+            _setted.Add(_buttons);
+            _inlineKeyboard["inline_keyboard"] = _setted;
+            return _inlineKeyboard;
+        }
+
+        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text, string _type = "url", string value = "")
         {
             JArray _buttons = new JArray();
             try
