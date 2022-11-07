@@ -23,13 +23,20 @@ namespace Lion.CryptoCurrency.Tron
             _address.Public = _address.Public.Substring(2);
             Keccak256 _keccakHasher = new Keccak256();
             string _hexAddress = _keccakHasher.ComputeHashByHex(_address.Public);
-            _hexAddress = "41"+_hexAddress.Substring(_hexAddress.Length - 40); //address hex
+            _hexAddress = "41" + _hexAddress.Substring(_hexAddress.Length - 40); //address hex
+            _address.Text = HexToAddress(_hexAddress);
+            return _address;
+        }
+        #endregion
+
+        #region HexToAddress
+        public static string HexToAddress(string _hexAddress)
+        {
             var _sha = SHA256.Create();
             var _doubleShaed = _sha.ComputeHash(_sha.ComputeHash(BigInteger.Parse(_hexAddress, System.Globalization.NumberStyles.HexNumber).ToByteArrayUnsigned(true)));
             var _checkSum = Lion.HexPlus.ByteArrayToHexString(_doubleShaed).Substring(0, 8);
             _hexAddress = _hexAddress + _checkSum;
-            _address.Text = Base58.Encode(_hexAddress);
-            return _address;
+            return Base58.Encode(_hexAddress);
         }
         #endregion
     }
