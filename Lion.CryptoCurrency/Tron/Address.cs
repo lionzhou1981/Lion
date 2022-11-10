@@ -39,5 +39,15 @@ namespace Lion.CryptoCurrency.Tron
             return Base58.Encode(_hexAddress);
         }
         #endregion
+
+
+        #region AddressToHex
+        public static string AddressToHex(string _address)
+        {
+            var _decoded = Base58.Decode(_address);
+            var _hex = Lion.HexPlus.ByteArrayToHexString(_decoded);
+            return _hex.Substring(0,_hex.Length - 8);            
+        }
+        #endregion
     }
 }
