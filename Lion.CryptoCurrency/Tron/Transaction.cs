@@ -49,6 +49,37 @@ namespace Lion.CryptoCurrency.Tron
             return Lion.HexPlus.ByteArrayToHexString(_re);
         }
 
+        public static string BuildRaw(string _from, string _to, string _refBlockBytes, string _refBlockHash, long _expTime, long _timeStamp, decimal _amount, string _assestName)
+        {
+            long _amountValue = decimal.ToInt64(_amount * 1000000M);
+            using MemoryStream _msFrom = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_from));
+            using MemoryStream _msTo = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_to));
+            using MemoryStream _msAssestName = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_assestName));
+            using MemoryStream _refBB = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_refBlockBytes));
+            using MemoryStream _refBH = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_refBlockHash));
+
+            Lion.CryptoCurrency.Tron.TransactionInfo.Transaction _tr = new Lion.CryptoCurrency.Tron.TransactionInfo.Transaction();
+            _tr.RawData = new TransactionInfo.Transaction.Types.raw();
+            _tr.RawData.Contract.Add(
+                new TransactionInfo.Transaction.Types.Contract()
+                {
+                    Type = TransactionInfo.Transaction.Types.Contract.Types.ContractType.TransferAssetContract,
+                    Parameter = Google.Protobuf.WellKnownTypes.Any.Pack(new TransferAssetContract()
+                    {
+                        Amount = _amountValue,
+                        OwnerAddress = ByteString.FromStream(_msFrom),
+                        ToAddress = ByteString.FromStream(_msTo),
+                        AssetName = ByteString.FromStream(_msAssestName),
+                    }),
+                });
+            _tr.RawData.RefBlockHash = ByteString.FromStream(_refBH);
+            _tr.RawData.RefBlockBytes = ByteString.FromStream(_refBB);
+            _tr.RawData.Expiration = _expTime;
+            _tr.RawData.Timestamp = _timeStamp;
+            byte[] _re = _tr.RawData.ToByteArray();
+            return Lion.HexPlus.ByteArrayToHexString(_re);
+        }
+
         public static string Sign(string _private, string _raw)
         {
             Lion.CryptoCurrency.Tron.TransactionInfo.Transaction _tr = new Lion.CryptoCurrency.Tron.TransactionInfo.Transaction();
