@@ -828,7 +828,7 @@ namespace Lion.Net.Sockets
         #endregion
 
         #region PushPackage
-        internal int Push(object _package)
+        public int PushPackage(object _package)
         {
             try
             {
