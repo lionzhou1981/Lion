@@ -21,6 +21,17 @@ namespace Lion.CryptoCurrency.Tron
         }
         #endregion
 
+        #region Wallet_BroadcastHex
+        public static JObject Wallet_BroadcastHex(string _hex)
+        {
+            JObject _params = new JObject();
+            _params["transaction"] = _hex;
+            var (Success, Result) = Call("wallet/broadcasthex", _params);
+
+            return Success ? Result : null;
+        }
+        #endregion
+
         #region Wallet_GetNowBlock
         public static JObject Wallet_GetNowBlock()
         {
