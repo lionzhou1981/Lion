@@ -8,7 +8,7 @@ using Lion.Encrypt;
 
 namespace Lion.SDK.Google
 {
-    public class Authenticator
+    public class GoogleAuthenticator
     {
         private const int PIN_LENGTH = 6;
         private const int INTERVAL_LENGTH = 30;
@@ -33,7 +33,7 @@ namespace Lion.SDK.Google
             {
                 TimeSpan _timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
                 long _currentTimeSeconds = (long)Math.Floor(_timeSpan.TotalSeconds);
-                _tick = _currentTimeSeconds / Authenticator.INTERVAL_LENGTH;
+                _tick = _currentTimeSeconds / GoogleAuthenticator.INTERVAL_LENGTH;
             }
 
             byte[] _keyByteArray = Base32.Decode(_key);
@@ -54,8 +54,8 @@ namespace Lion.SDK.Google
             Array.Reverse(_fourBytes);
             int _finalInt = BitConverter.ToInt32(_fourBytes, 0);
             int _truncatedHash = _finalInt & 0x7FFFFFFF;
-            int _pinValue = _truncatedHash % (int)Math.Pow(10, Authenticator.PIN_LENGTH);
-            return _pinValue.ToString().PadLeft(Authenticator.PIN_LENGTH, '0');
+            int _pinValue = _truncatedHash % (int)Math.Pow(10, GoogleAuthenticator.PIN_LENGTH);
+            return _pinValue.ToString().PadLeft(GoogleAuthenticator.PIN_LENGTH, '0');
         }
 
         public static string MakeQRCode(string _key, string _title, string _issuer)
@@ -70,7 +70,7 @@ namespace Lion.SDK.Google
             StringBuilder _result = new StringBuilder();
             foreach (char _symbol in _param)
             {
-                if (Authenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
+                if (GoogleAuthenticator.UNRESERVED_CHARS.IndexOf(_symbol) != -1)
                 {
                     _result.Append(_symbol);
                 }

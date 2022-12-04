@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.Twilio
 {
-    public class SMS
+    public class TwilioSDK
     {
         private static string Url = "https://api.twilio.com/2010-04-01";
 
@@ -16,6 +16,12 @@ namespace Lion.SDK.Twilio
         public static string Secret = "";
         public static string ServiceId = "";
 
+        public static void Init(JObject _settings)
+        {
+            Account = _settings["Account"].Value<string>();
+            Secret = _settings["Secret"].Value<string>();
+            ServiceId = _settings["ServiceId"].Value<string>();
+        }
         public static bool Send(string _phone, string _text)
         {
             string _data = $"MessagingServiceSid={Uri.EscapeDataString(ServiceId)}&To={Uri.EscapeDataString(_phone)}&Body={Uri.EscapeDataString(_text)}";

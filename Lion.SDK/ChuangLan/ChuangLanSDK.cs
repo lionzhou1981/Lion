@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using Lion.Net;
 using Newtonsoft.Json;
@@ -8,13 +9,19 @@ using Newtonsoft.Json.Linq;
 
 namespace Lion.SDK.ChuangLan
 {
-    public class SMS
+    public class ChuangLanSDK
     {
         private static string Url = "https://smssh1.253.com/msg/v1/send/json ";
         public static string Key = "";
         public static string Secret = "";
 
-        
+        public static void Init(JObject _settings)
+        {
+            Key = _settings["Key"].Value<string>();
+            Secret = _settings["Secret"].Value<string>();
+        }
+
+
         public static bool Send(string _phone,string _text)
         {
             JObject _json = new JObject();

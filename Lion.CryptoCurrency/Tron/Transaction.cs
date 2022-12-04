@@ -15,13 +15,15 @@ namespace Lion.CryptoCurrency.Tron
     {
         public static void Test()
         {
-            var _raw = BuildRaw("4108e16726d0ea16d2ed187c8c20feb86e66ecf832", "416cd8a0295c1e750c4cb20d2e0f0f3f47f0a0b549", "f1a6", "0b01386f2ce3d5a7", 1668068517000, 1668068461406, 0.001M);
+            var _raw = BuildRaw("4108e16726d0ea16d2ed187c8c20feb86e66ecf832", "416cd8a0295c1e750c4cb20d2e0f0f3f47f0a0b549", 0.001M, "f1a6", "0b01386f2ce3d5a7");
             Console.WriteLine("RAW:"+_raw);
             Console.WriteLine("SIGNED:"+ Sign("b6dbf97c509619f122bfe8af187192b03842105b7aa940a52b5059d2cea62623", _raw));
         }
 
-        public static string BuildRaw(string _from,string _to,string _refBlockBytes,string _refBlockHash,long _expTime,long _timeStamp,decimal _amount)
+        public static string BuildRaw(string _from, string _to, decimal _amount, string _refBlockBytes, string _refBlockHash,  int _expSecond = 60)
         {
+            DateTime _now = DateTime.UtcNow;
+
             long _amountValue = decimal.ToInt64(_amount * 1000000M);
             using MemoryStream _msFrom = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_from));
             using MemoryStream _msTo = new MemoryStream(Lion.HexPlus.HexStringToByteArray(_to));
@@ -32,19 +34,19 @@ namespace Lion.CryptoCurrency.Tron
             _tr.RawData = new TransactionInfo.Transaction.Types.raw();
             _tr.RawData.Contract.Add(
                 new TransactionInfo.Transaction.Types.Contract()
-            {
-                Type = TransactionInfo.Transaction.Types.Contract.Types.ContractType.TransferContract,
-                Parameter = Google.Protobuf.WellKnownTypes.Any.Pack(new TransferContract()
                 {
-                    Amount = _amountValue,
-                    OwnerAddress = ByteString.FromStream(_msFrom),
-                    ToAddress = ByteString.FromStream(_msTo)
-                }),
-            });
+                    Type = TransactionInfo.Transaction.Types.Contract.Types.ContractType.TransferContract,
+                    Parameter = Google.Protobuf.WellKnownTypes.Any.Pack(new TransferContract()
+                    {
+                        Amount = _amountValue,
+                        OwnerAddress = ByteString.FromStream(_msFrom),
+                        ToAddress = ByteString.FromStream(_msTo)
+                    }),
+                });
             _tr.RawData.RefBlockHash = ByteString.FromStream(_refBH);
             _tr.RawData.RefBlockBytes = ByteString.FromStream(_refBB);
-            _tr.RawData.Expiration = _expTime;
-            _tr.RawData.Timestamp = _timeStamp;
+            _tr.RawData.Expiration = DateTimePlus.DateTime2UnixTime(_now.AddSeconds(_expSecond));
+            _tr.RawData.Timestamp = DateTimePlus.DateTime2UnixTime(_now);
             byte[] _re = _tr.RawData.ToByteArray();
             return Lion.HexPlus.ByteArrayToHexString(_re);
         }

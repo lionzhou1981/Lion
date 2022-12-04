@@ -17,7 +17,6 @@ namespace Lion.SDK.FomoPay
         public static string Psk = "";
         public static string Auth = "";
         public static string NotifyUrl = "";
-        public static string FomoPayUrl = "https://ipg.fomopay.net/api/orders";
         public static Dictionary<string, string> Currencies = new Dictionary<string,string>();
 
         public static void Init(JObject _settings)
@@ -73,7 +72,7 @@ namespace Lion.SDK.FomoPay
             Console.WriteLine(_json);
 
             HttpClient _http = new HttpClient(5000);
-            _http.BeginResponse(_retry ? "PUT" : "POST", FomoPayUrl, "");
+            _http.BeginResponse(_retry ? "PUT" : "POST", "https://ipg.fomopay.net/api/orders", "");
             _http.Request.ContentType = "application/json";
             _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
             _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Formatting.None)));
@@ -88,6 +87,59 @@ namespace Lion.SDK.FomoPay
 
             string _status = _resultJson["status"].Value<string>();
             if (_status != "SUCCESS") { throw new Exception(_status); }
+
+            return _resultJson;
+        }
+        #endregion
+
+        #region QueryOrder
+        public static JObject QueryOrder(string _id)
+        {
+            HttpClient _http = new HttpClient(5000);
+            _http.BeginResponse("GET", $"https://ipg.fomopay.net/api/orders/{_id}", "");
+            _http.Request.ContentType = "application/json";
+            _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
+            _http.EndResponse();
+
+            Console.WriteLine((int)_http.Response.StatusCode);
+            if ((int)_http.Response.StatusCode != 200) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
+
+            string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
+
+            return JObject.Parse(_result);
+        }
+        #endregion
+
+        #region Refund
+        public static JObject Refund(string _fomopayId, string _transactionNo, decimal _amount, string _currencyCode, string _subject, bool _retry = false)
+        {
+            if (!Currencies.ContainsKey(_currencyCode)) { throw new Exception($"WRONG_CURRENCY:{_currencyCode}"); }
+
+            JObject _json = new JObject();
+            _json["mode"] = "REFUND";
+            _json["transactionNo"] = _transactionNo;
+            _json["amount"] = _amount.ToString(Currencies[_currencyCode]);
+            _json["currencyCode"] = _currencyCode;
+            _json["subject"] = _subject;
+            Console.WriteLine(_json);
+
+            HttpClient _http = new HttpClient(5000);
+            _http.BeginResponse(_retry ? "PUT" : "POST", $"https://ipg.fomopay.net/api/orders/{_fomopayId}/transactions", "");
+            _http.Request.ContentType = "application/json";
+            _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
+            _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Formatting.None)));
+
+            Console.WriteLine((int)_http.Response.StatusCode);
+            if ((int)_http.Response.StatusCode != 200 && (int)_http.Response.StatusCode != 201) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
+
+            string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
+
+            JObject _resultJson = JObject.Parse(_result);
+
+            string _status = _resultJson["status"].Value<string>();
+            if (_status != "CREATED" && _status != "SUCCESS") { throw new Exception(_status); }
 
             return _resultJson;
         }
