@@ -42,7 +42,6 @@ namespace Lion.SDK.Facebook
             try
             {
                 using WebClientPlus _web = new WebClientPlus(60 * 1000, true);
-                _web.Proxy = new WebProxy("127.0.0.1", 1082);
                 string _response = _web.DownloadString($"{TokenUrl}?client_id={cliendId}&client_secret={authKey}&redirect_uri={redirectUrl}&code={_code}");
                 JObject _value = JObject.Parse(_response);
                 string _token = _value["access_token"].ToString();
@@ -60,7 +59,6 @@ namespace Lion.SDK.Facebook
             var _token = RefreshToken(_code);
 
             using WebClientPlus _web = new WebClientPlus(60 * 1000, true);
-            _web.Proxy = new WebProxy("127.0.0.1", 1082);
             var _userId = "";
             try
             {
