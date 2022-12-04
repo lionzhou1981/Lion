@@ -8,6 +8,7 @@ using System.Threading;
 using System.Security.Cryptography;
 using Lion.Encrypt;
 using ECPoint = Lion.Encrypt.ECPoint;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Lion.CryptoCurrency.Ethereum
 {
@@ -140,6 +141,59 @@ namespace Lion.CryptoCurrency.Ethereum
             );
 
             return HexPlus.ByteArrayToHexString(_signed).ToLower();
+        }
+        #endregion
+
+        #region VerifySignedText
+        public static bool VerifySignedText(string _address, string _orgText, string _signed)
+        {
+            var _points = PossiblePubFromSignedText(_orgText, _signed);
+            var _pubKey1 = Lion.BigNumberPlus.BigIntToHex(_points.Item1.X, true) + Lion.BigNumberPlus.BigIntToHex(_points.Item1.Y, true);
+            var _pubKey2 = Lion.BigNumberPlus.BigIntToHex(_points.Item2.X, true) + Lion.BigNumberPlus.BigIntToHex(_points.Item2.Y, true);
+            var _address1 = Address.PubKeyToAddress(_pubKey1).ToLower();
+            var _address2 = Address.PubKeyToAddress(_pubKey2).ToLower();
+            _address = _address.StartsWith("0x") ? _address.ToLower() : "0x" + _address.ToLower();
+            return _address == _address1 || _address == _address2;
+        }
+
+        public static bool VerifySignedTextByPub(string _pubKey, string _orgText, string _signed)
+        {
+            var _points = PossiblePubFromSignedText(_orgText, _signed);
+            var _pubKeyX = BigNumberPlus.HexToBigInt(_pubKey.Substring(0, 64));
+            var _pubKeyY = BigNumberPlus.HexToBigInt(_pubKey.Substring(64, 64));
+            if ((_points.Item1.X == _pubKeyX && _points.Item1.Y == _pubKeyY) || (_points.Item2.X == _pubKeyX && _points.Item2.Y == _pubKeyY))
+                return true;
+            return false;
+        }
+
+        static (ECPoint, ECPoint) PossiblePubFromSignedText(string _orgText, string _signed)
+        {
+            Keccak256 _k = new Keccak256();
+            var _orgBytes = Encoding.UTF8.GetBytes(_orgText);
+            _orgText = $"{"\x19"}Ethereum Signed Message:\n{_orgBytes.Length}{_orgText}";
+            var _hash = _k.Compute(Encoding.UTF8.GetBytes(_orgText));
+            BigInteger _value = BigNumberPlus.HexToBigInt(Lion.HexPlus.ByteArrayToHexString(_hash));
+            BigInteger _r = BigNumberPlus.HexToBigInt(_signed.Substring(0, 64));
+            BigInteger _s = BigNumberPlus.HexToBigInt(_signed.Substring(64, 64));
+            var _ps = R2Points(_r);
+            var _invR = _r.ModInverse(Secp256k1.N);
+            var _sOverR = _s * _invR;
+            var _valueOverInvR = Secp256k1.G.Multiply(_invR * _value);
+            var _minus_E_over_r = new ECPoint(_valueOverInvR.X, Secp256k1.P - _valueOverInvR.Y);
+            var _p0 = _ps.Item1.Multiply(_sOverR).Add(_minus_E_over_r);
+            var _p1 = _ps.Item2.Multiply(_sOverR).Add(_minus_E_over_r);
+            return (_p0, _p1);
+        }
+
+
+        static (ECPoint, ECPoint) R2Points(BigInteger _r)
+        {
+            //alpha = (pow(x, 3, p) + self._a * x + self._b) % p
+            var _alpha = (BigInteger.ModPow(_r, 3, Lion.Encrypt.Secp256k1.P) + Secp256k1.A * _r + Secp256k1.B) % Secp256k1.P;
+            var _y0 = BigInteger.ModPow(_alpha, Lion.Encrypt.Secp256k1.ModSqrtPower, Lion.Encrypt.Secp256k1.P);
+            var _p0 = new ECPoint(_r, _y0);
+            var _p1 = new ECPoint(_r, Lion.Encrypt.Secp256k1.P - _y0);
+            return (_p0, _p1);
         }
         #endregion
     }

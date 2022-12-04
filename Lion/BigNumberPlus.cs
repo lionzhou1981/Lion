@@ -19,6 +19,16 @@ namespace Lion
         }
         #endregion
 
+        #region HexToBigInt
+        public static string BigIntToHex(BigInteger _hex,bool _bigEndian)
+        {
+            var _re = BitConverter.ToString(_hex.ToByteArray(false, _bigEndian)).Replace("-","").ToLower();
+            while (_re.StartsWith("00"))
+                _re = _re.Substring(2);
+            return _re;
+        }
+        #endregion
+
         #region BigValueToDecimal
         public static string ETHToDecimal(string _hex, int _fractionPoint = 18)
         {

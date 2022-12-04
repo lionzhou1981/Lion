@@ -29,6 +29,13 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        public static string PubKeyToAddress(string _pubKey)
+        {
+            Keccak256 _keccakHasher = new Keccak256();
+            string _hexAddress = _keccakHasher.ComputeHashByHex(_pubKey);
+            return "0x" + _hexAddress.Substring(_hexAddress.Length - 40);
+        }
+        
         #region Check
         public static bool Check(string _address)
         {
