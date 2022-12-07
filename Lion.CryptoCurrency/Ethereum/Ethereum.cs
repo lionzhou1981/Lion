@@ -147,6 +147,7 @@ namespace Lion.CryptoCurrency.Ethereum
         #region VerifySignedText
         public static bool VerifySignedText(string _address, string _orgText, string _signed)
         {
+            _signed = _signed.StartsWith("0x")?_signed.Substring(2):_signed;
             var _points = PossiblePubFromSignedText(_orgText, _signed);
             var _pubKey1 = Lion.BigNumberPlus.BigIntToHex(_points.Item1.X, true) + Lion.BigNumberPlus.BigIntToHex(_points.Item1.Y, true);
             var _pubKey2 = Lion.BigNumberPlus.BigIntToHex(_points.Item2.X, true) + Lion.BigNumberPlus.BigIntToHex(_points.Item2.Y, true);
@@ -158,6 +159,7 @@ namespace Lion.CryptoCurrency.Ethereum
 
         public static bool VerifySignedTextByPub(string _pubKey, string _orgText, string _signed)
         {
+            _signed = _signed.StartsWith("0x") ? _signed.Substring(2) : _signed;
             var _points = PossiblePubFromSignedText(_orgText, _signed);
             var _pubKeyX = BigNumberPlus.HexToBigInt(_pubKey.Substring(0, 64));
             var _pubKeyY = BigNumberPlus.HexToBigInt(_pubKey.Substring(64, 64));
