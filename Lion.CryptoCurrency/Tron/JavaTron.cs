@@ -84,6 +84,36 @@ namespace Lion.CryptoCurrency.Tron
         }
         #endregion
 
+        #region Wallet_TriggerConstantContract 
+        public static JObject Wallet_TriggerConstantContract(string _contract, string _function, string _parameter, string _address)
+        {
+            JObject _params = new JObject();
+            _params["contract_address"] = _contract;
+            _params["function_selector"] = _function;
+            _params["parameter"] = _parameter;
+            _params["owner_address"] = _address;
+            var (Success, Result) = Call("wallet/triggerconstantcontract", _params);
+
+            return Success ? Result : null;
+        }
+        #endregion
+
+        #region Wallet_TriggerSmartContract
+        public static JObject Wallet_TriggerSmartContract(string _contract, string _function, string _parameter, string _address, int _fee = 100000000, int _value = 0)
+        {
+            JObject _params = new JObject();
+            _params["contract_address"] = _contract;
+            _params["function_selector"] = _function;
+            _params["parameter"] = _parameter;
+            _params["owner_address"] = _address;
+            _params["fee_limit"] = _fee;
+            _params["call_value"] = _value;
+            var (Success, Result) = Call("wallet/triggersmartcontract ", _params);
+
+            return Success ? Result : null;
+        }
+        #endregion
+
         #region Call
         public static (bool Success, JObject Result) Call(string _method, JObject _params = null)
         {
