@@ -160,7 +160,7 @@ namespace Lion.SDK.FomoPay
             if (!Currencies.ContainsKey(_currencyCode)) { throw new Exception($"WRONG_CURRENCY:{_currencyCode}"); }
 
             JObject _json = new JObject();
-            _json["mode"] = "REFUND";
+            _json["type"] = "REFUND";
             _json["transactionNo"] = _transactionNo;
             _json["amount"] = _amount.ToString(Currencies[_currencyCode]);
             _json["currencyCode"] = _currencyCode;
