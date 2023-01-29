@@ -8,6 +8,7 @@ using System.Threading;
 using Google.Protobuf;
 using Lion.Encrypt;
 using Lion.CryptoCurrency.Tron.TransactionInfo;
+using System.Linq;
 
 namespace Lion.CryptoCurrency.Tron
 {
@@ -15,16 +16,27 @@ namespace Lion.CryptoCurrency.Tron
     {
         public static void Test()
         {
-            var _raw = BuildRaw(Address.AddressToHex("TRmq5nLAHc3L9ijdRnYrVrbHr9rThTkYPZ"), Address.AddressToHex("TSQ3VWJsc99Jj9nZeUX8Jqq91HVgYaKw2A"), 1M, "e370", "f9894b6189980c5a",  Address.AddressToHex("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"), 60);
+            var _raw = BuildTRC20Raw(Address.AddressToHex("TRmq5nLAHc3L9ijdRnYrVrbHr9rThTkYPZ"), Address.AddressToHex("TSQ3VWJsc99Jj9nZeUX8Jqq91HVgYaKw2A"), 1000M, "e370", "f9894b6189980c5a",  Address.AddressToHex("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"), 60);
             Console.WriteLine("RAW:"+_raw);
             Console.WriteLine("SIGNED:"+ Sign("250f698c0ae74a98a9f1d0ae54c2770dddda53a9f62e5fa065ab9772a192c658", _raw));
         }
 
-        public static string BuildRaw(string _from, string _to, decimal _amount, string _refBlockBytes, string _refBlockHash,  int _expSecond = 60)
+        public static string BuildTransferContractRaw(string _from, string _to, decimal _amount, string _refBlockBytes, string _refBlockHash,  int _expSecond = 60)
         {
             DateTime _now = DateTime.UtcNow;
+            ulong _amountValue = decimal.ToUInt64(_amount * 1000000M);
 
-            long _amountValue = decimal.ToInt64(_amount * 1000000M);
+            string _contract = $"0a15{_from}1215{_to}18{UInt64ToRaw(_amountValue)}";
+            _contract = $"12{(_contract.Length / 2).ToString("x2")}{_contract}";
+            _contract = $"0a2d{HexPlus.ByteArrayToHexString(Encoding.UTF8.GetBytes("type.googleapis.com/protocol.TransferContract"))}{_contract}";
+            _contract = $"080112{(_contract.Length / 2).ToString("x2")}{_contract}";
+            _contract = $"5a{(_contract.Length / 2).ToString("x2")}{_contract}";
+
+            string _raw = $"0a02{_refBlockBytes}2208{_refBlockHash}40{DateTime2Raw(_now.AddSeconds(_expSecond))}";
+            _raw += $"{_contract}70{DateTime2Raw(_now)}";
+
+            Console.WriteLine($"RAW1: " + _raw);
+
             using MemoryStream _msFrom = new MemoryStream(HexPlus.HexStringToByteArray(_from));
             using MemoryStream _msTo = new MemoryStream(HexPlus.HexStringToByteArray(_to));
             using MemoryStream _refBB = new MemoryStream(HexPlus.HexStringToByteArray(_refBlockBytes));
@@ -38,7 +50,7 @@ namespace Lion.CryptoCurrency.Tron
                     Type = TransactionInfo.Transaction.Types.Contract.Types.ContractType.TransferContract,
                     Parameter = Google.Protobuf.WellKnownTypes.Any.Pack(new TransferContract()
                     {
-                        Amount = _amountValue,
+                        Amount = decimal.ToInt64(_amount * 1000000M),
                         OwnerAddress = ByteString.FromStream(_msFrom),
                         ToAddress = ByteString.FromStream(_msTo)
                     }),
@@ -48,13 +60,20 @@ namespace Lion.CryptoCurrency.Tron
             _tr.RawData.Expiration = DateTimePlus.DateTime2UnixTime(_now.AddSeconds(_expSecond));
             _tr.RawData.Timestamp = DateTimePlus.DateTime2UnixTime(_now);
             byte[] _re = _tr.RawData.ToByteArray();
-            return HexPlus.ByteArrayToHexString(_re);
+
+            Console.WriteLine($"RAW2: " + HexPlus.ByteArrayToHexString(_re));
+
+            return _raw;
+
         }
 
-        public static string BuildRaw(string _from, string _to, decimal _amount, string _refBlockBytes, string _refBlockHash, string _contractAddress,int _contractDecimal,long _fee = 6000000, int _expSecond = 60)
+        public static string BuildTRC20Raw(string _from, string _to, decimal _amount, string _refBlockBytes, string _refBlockHash, string _contractAddress,int _contractDecimal,long _fee = 6000000, int _expSecond = 60)
         {
             DateTime _now = DateTime.UtcNow;
             long _amountValue = decimal.ToInt64(_amount *  (decimal)Math.Pow(10, _contractDecimal));
+
+
+
             BigInteger _bigAmount = _amountValue;
             using MemoryStream _msFrom = new MemoryStream(HexPlus.HexStringToByteArray(_from));
             using MemoryStream _msTo = new MemoryStream(HexPlus.HexStringToByteArray(_to));
@@ -90,7 +109,7 @@ namespace Lion.CryptoCurrency.Tron
         public static string Sign(string _private, string _raw)
         {
             TransactionInfo.Transaction _tr = new TransactionInfo.Transaction();
-            var _rawBytes = HexPlus.HexStringToByteArray(_raw);
+            byte[] _rawBytes = HexPlus.HexStringToByteArray(_raw);
             try
             {
                 _tr.RawData = TransactionInfo.Transaction.Types.raw.Parser.ParseFrom(_rawBytes);
@@ -149,5 +168,29 @@ namespace Lion.CryptoCurrency.Tron
             return string.Join("", _r.ToString("X"), _s.ToString("X"), _recid.ToString("X").PadLeft(2,'0'));
 
         }
+
+        #region DateTime2RawHex
+        private static string DateTime2Raw(DateTime _time)
+        {
+            long _value = DateTimePlus.DateTime2UnixTime(_time);
+
+            return UInt64ToRaw(ulong.Parse(_value.ToString()));
+        }
+        #endregion
+
+        #region static string Int64ToRaw
+        private static string UInt64ToRaw(ulong _value)
+        {
+            IList<byte> _bytes = new List<byte>();
+            while (_value > 127)
+            {
+                _bytes.Add((byte)((_value & 0x7F) | 0x80));
+                _value >>= 7;
+            }
+            _bytes.Add((byte)_value);
+
+            return HexPlus.ByteArrayToHexString(_bytes.ToArray());
+        }
+        #endregion
     }
 }
