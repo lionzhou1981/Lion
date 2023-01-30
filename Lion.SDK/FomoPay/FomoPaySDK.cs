@@ -17,6 +17,7 @@ namespace Lion.SDK.FomoPay
         public static string Psk = "";
         public static string Auth = "";
         public static string NotifyUrl = "";
+        public static string ReturnUrl = "";
         public static Dictionary<string, string> Currencies = new Dictionary<string,string>();
 
         public static void Init(JObject _settings)
@@ -26,10 +27,57 @@ namespace Lion.SDK.FomoPay
             Psk = _settings["Psk"].Value<string>();
             Auth = _settings["Auth"].Value<string>();
             NotifyUrl = _settings["NotifyUrl"].Value<string>();
+            ReturnUrl = _settings["ReturnUrl"].Value<string>();
 
             Currencies = new Dictionary<string, string>();
             foreach (JProperty _item in _settings["Currencies"]) { Currencies.Add(_item.Name, _item.Value.Value<string>()); }
         }
+
+        #region PayHosted
+        public static JObject PayHosted(
+            string _orderNo,
+            string _subject,
+            string _description,
+            decimal _amount,
+            string _currencyCode,
+            string _backUrl,
+            bool _retry = false
+            )
+        {
+            JObject _json = new JObject();
+            _json["mode"] = "HOSTED";
+            _json["orderNo"] = _orderNo;
+            _json["subMid"] = Sid;
+            _json["subject"] = _subject;
+            _json["description"] = _description;
+            _json["amount"] = _amount.ToString(Currencies[_currencyCode]);
+            _json["currencyCode"] = _currencyCode;
+            _json["notifyUrl"] = NotifyUrl;
+            _json["returnUrl"] = ReturnUrl;
+            _json["backUrl"] = _backUrl;
+            _json["sourceOfFund"] = new JArray("PAYNOW");
+            _json["transactionOptions"] = new JObject();
+
+            HttpClient _http = new HttpClient(5000);
+            _http.BeginResponse(_retry ? "PUT" : "POST", "https://ipg.fomopay.net/api/orders", "");
+            _http.Request.ContentType = "application/json";
+            _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
+            _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Formatting.None)));
+
+            Console.WriteLine((int)_http.Response.StatusCode);
+            if ((int)_http.Response.StatusCode != 200 && (int)_http.Response.StatusCode != 201) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
+
+            string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
+
+            JObject _resultJson = JObject.Parse(_result);
+
+            string _status = _resultJson["status"].Value<string>();
+            if (_status != "SUCCESS") { throw new Exception(_status); }
+
+            return _resultJson;
+        }
+        #endregion
 
         #region PayDirectCard
         public static JObject PayDirectCard(
