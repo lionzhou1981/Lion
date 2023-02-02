@@ -31,7 +31,8 @@ namespace Lion.CryptoCurrency.Tron
         {
             var _len = _ip.Length / 2;
             var _hex = "42" + _len.ToString("X").ToString().ToLower().PadLeft(2, '0') + _ip;
-            var _info = TransactionInfo.NodeInfo.Types.PeerInfo.Parser.ParseFrom(HexPlus.HexStringToByteArray(_hex));
+            //var _info = TransactionInfo.NodeInfo.Types.PeerInfo.Parser.ParseFrom(HexPlus.HexStringToByteArray(_hex));
+            var _info = "";
             return JObject.Parse(_info.ToString())["host"].ToString();
         }
         #endregion

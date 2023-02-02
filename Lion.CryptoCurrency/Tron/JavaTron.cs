@@ -5,7 +5,6 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
-using static Lion.CryptoCurrency.Tron.TransactionInfo.Transaction.Types;
 
 namespace Lion.CryptoCurrency.Tron
 {
