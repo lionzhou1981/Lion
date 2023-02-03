@@ -37,7 +37,7 @@ namespace Lion.CryptoCurrency.Tron
             long _amountValue = decimal.ToInt64(_amount * (decimal)Math.Pow(10, _contractDecimal));
             BigInteger _bigAmount = _amountValue;
             
-            var _data = $"{Tron.TRC20_METHOD_TRANSFER}{(_toHex.StartsWith("41") ? _toHex.Substring(2).PadLeft(64, '0') : _toHex.PadLeft(64, '0'))}{HexPlus.ByteArrayToHexString(_bigAmount.ToByteArrayUnsigned(true)).PadLeft(64, '0')}";
+            string _data = $"{Tron.TRC20_METHOD_TRANSFER}{(_toHex.StartsWith("41") ? _toHex.Substring(2).PadLeft(64, '0') : _toHex.PadLeft(64, '0'))}{HexPlus.ByteArrayToHexString(_bigAmount.ToByteArrayUnsigned(true)).PadLeft(64, '0')}";
 
             var _raw = $"22{(_data.Length / 2).ToString("x2")}{_data}";//data tag=22
             _raw = $"12{(_contractHex.Length / 2).ToString("x2")}{_contractHex}{_raw}";//contract address tag=12
@@ -45,10 +45,26 @@ namespace Lion.CryptoCurrency.Tron
             _raw = $"12{(_raw.Length / 2).ToString("x2")}{_raw}";
             _raw = $"0a31{HexPlus.ByteArrayToHexString(Encoding.UTF8.GetBytes("type.googleapis.com/protocol.TriggerSmartContract"))}{_raw}";
             _raw = $"12{(_raw.Length / 2).ToString("x2")}01{_raw}";
-            _raw = $"081f{_contract}";
+            _raw = $"081f{_raw}";
             _raw = $"5a{(_raw.Length / 2).ToString("x2")}01{_raw}";
             _raw = $"0a02{_refBlockBytes}2208{_refBlockHash}40{DateTime2Raw(_now.AddSeconds(_expSecond))}{_raw}";
-            _raw += $"{_raw}70{DateTime2Raw(_now)}9001{UInt64ToRaw(_fee)}";
+            _raw = $"{_raw}70{DateTime2Raw(_now)}9001{UInt64ToRaw(_fee)}";
+            Console.WriteLine(_raw);
+
+
+            //var _contract = $"22{(_data.Length / 2).ToString("x2")}{_data}";//data tag=22
+            //_contract = $"12{(_contractAddress.Length / 2).ToString("x2")}{_contractAddress}{_contract}";//contract address tag=12
+            //_contract = $"0a{(_from.Length / 2).ToString("x2")}{_from}{_contract}";//owner address tag=0a
+            //_contract = $"12{(_contract.Length / 2).ToString("x2")}{_contract}";
+            //_contract = $"0a31{HexPlus.ByteArrayToHexString(Encoding.UTF8.GetBytes("type.googleapis.com/protocol.TriggerSmartContract"))}{_contract}";
+            //_contract = $"12{(_contract.Length / 2).ToString("x2")}01{_contract}";
+            //_contract = $"081f{_contract}";
+            //_contract = $"5a{(_contract.Length / 2).ToString("x2")}01{_contract}";
+
+            //string _raw = $"0a02{_refBlockBytes}2208{_refBlockHash}40{DateTime2Raw(_now.AddSeconds(_expSecond))}";
+            //_raw += $"{_contract}70{DateTime2Raw(_now)}9001{UInt64ToRaw(_fee)}";
+            //return _raw;
+
             return _raw;
         }
         #endregion
