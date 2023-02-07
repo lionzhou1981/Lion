@@ -270,7 +270,7 @@ namespace Lion.CryptoCurrency.Bitcoin
             _key = _key.Take(_key.Count - 4).ToList();
             _compressed = false;
 
-            if (_key.Last() == 0x01 && _key.Count() == 33)
+            if (_key.Last() == 0x01)
             {
                 _key = _key.Take(_key.Count - 1).ToList();
                 _compressed = true;

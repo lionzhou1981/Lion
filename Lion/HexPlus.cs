@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
 
 namespace Lion
 {
@@ -24,14 +22,6 @@ namespace Lion
             return long.Parse(_hex, System.Globalization.NumberStyles.AllowHexSpecifier);
         }
 
-        #endregion
-
-        #region HexToBigInteger
-        public static BigInteger HexToBigInteger(string _hex)
-        {
-            _hex = "0" + (_hex.StartsWith("0x", StringComparison.Ordinal) ? _hex.Substring(2) : _hex);
-            return BigInteger.Parse(_hex, NumberStyles.AllowHexSpecifier);
-        }
         #endregion
 
         #region ByteArrayToHexString

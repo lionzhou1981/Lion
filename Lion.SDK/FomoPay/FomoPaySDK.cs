@@ -17,7 +17,7 @@ namespace Lion.SDK.FomoPay
         public static string Psk = "";
         public static string Auth = "";
         public static string NotifyUrl = "";
-        public static string[] HostedSource = new string[0];
+        public static string ReturnUrl = "";
         public static Dictionary<string, string> Currencies = new Dictionary<string,string>();
 
         public static void Init(JObject _settings)
@@ -27,7 +27,7 @@ namespace Lion.SDK.FomoPay
             Psk = _settings["Psk"].Value<string>();
             Auth = _settings["Auth"].Value<string>();
             NotifyUrl = _settings["NotifyUrl"].Value<string>();
-            HostedSource = _settings["HostedSource"].Value<string>().Split(',');
+            ReturnUrl = _settings["ReturnUrl"].Value<string>();
 
             Currencies = new Dictionary<string, string>();
             foreach (JProperty _item in _settings["Currencies"]) { Currencies.Add(_item.Name, _item.Value.Value<string>()); }
@@ -40,13 +40,10 @@ namespace Lion.SDK.FomoPay
             string _description,
             decimal _amount,
             string _currencyCode,
-            string _returnUrl,
-            string _cancelUrl,
+            string _backUrl,
             bool _retry = false
             )
         {
-            if (!Currencies.ContainsKey(_currencyCode)) { throw new Exception($"WRONG_CURRENCY:{_currencyCode}"); }
-
             JObject _json = new JObject();
             _json["mode"] = "HOSTED";
             _json["orderNo"] = _orderNo;
@@ -56,10 +53,10 @@ namespace Lion.SDK.FomoPay
             _json["amount"] = _amount.ToString(Currencies[_currencyCode]);
             _json["currencyCode"] = _currencyCode;
             _json["notifyUrl"] = NotifyUrl;
-            _json["returnUrl"] = $"{_returnUrl}?order_no={_orderNo}";
-            _json["backUrl"] = $"{_cancelUrl}?order_no={_orderNo}";
-            _json["sourceOfFunds"] = new JArray(HostedSource);
-            Console.WriteLine(_json);
+            _json["returnUrl"] = ReturnUrl;
+            _json["backUrl"] = _backUrl;
+            _json["sourceOfFund"] = new JArray("PAYNOW");
+            _json["transactionOptions"] = new JObject();
 
             HttpClient _http = new HttpClient(5000);
             _http.BeginResponse(_retry ? "PUT" : "POST", "https://ipg.fomopay.net/api/orders", "");
@@ -67,14 +64,16 @@ namespace Lion.SDK.FomoPay
             _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
             _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Formatting.None)));
 
+            Console.WriteLine((int)_http.Response.StatusCode);
             if ((int)_http.Response.StatusCode != 200 && (int)_http.Response.StatusCode != 201) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
 
             string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
 
             JObject _resultJson = JObject.Parse(_result);
 
             string _status = _resultJson["status"].Value<string>();
-            if (_status != "SUCCESS" && _status != "CREATED") { throw new Exception(_status); }
+            if (_status != "SUCCESS") { throw new Exception(_status); }
 
             return _resultJson;
         }
@@ -118,15 +117,19 @@ namespace Lion.SDK.FomoPay
             _json["transactionOptions"]["ip"] = _ip;
             _json["transactionOptions"]["threeDSecure"] = "auto";
 
+            Console.WriteLine(_json);
+
             HttpClient _http = new HttpClient(5000);
             _http.BeginResponse(_retry ? "PUT" : "POST", "https://ipg.fomopay.net/api/orders", "");
             _http.Request.ContentType = "application/json";
             _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
             _http.EndResponse(Encoding.UTF8.GetBytes(_json.ToString(Formatting.None)));
 
+            Console.WriteLine((int)_http.Response.StatusCode);
             if ((int)_http.Response.StatusCode != 200 && (int)_http.Response.StatusCode != 201) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
 
             string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
 
             JObject _resultJson = JObject.Parse(_result);
 
@@ -146,9 +149,11 @@ namespace Lion.SDK.FomoPay
             _http.Request.Headers.Add("Authorization", $"Basic {Auth}");
             _http.EndResponse();
 
+            Console.WriteLine((int)_http.Response.StatusCode);
             if ((int)_http.Response.StatusCode != 200) { throw new Exception(((int)_http.Response.StatusCode).ToString()); }
 
             string _result = _http.GetResponseString(Encoding.UTF8);
+            Console.WriteLine(_result);
 
             return JObject.Parse(_result);
         }
@@ -160,7 +165,7 @@ namespace Lion.SDK.FomoPay
             if (!Currencies.ContainsKey(_currencyCode)) { throw new Exception($"WRONG_CURRENCY:{_currencyCode}"); }
 
             JObject _json = new JObject();
-            _json["type"] = "REFUND";
+            _json["mode"] = "REFUND";
             _json["transactionNo"] = _transactionNo;
             _json["amount"] = _amount.ToString(Currencies[_currencyCode]);
             _json["currencyCode"] = _currencyCode;
@@ -215,9 +220,9 @@ namespace Lion.SDK.FomoPay
             if (!_authList.ContainsKey("timestamp")) { throw new Exception($"MISSING_TIMESTAMP"); }
             if (!_authList.ContainsKey("signature")) { throw new Exception($"MISSING_SIGNATURE"); }
 
-            DateTime _time = DateTimePlus.JSTime2DateTime(long.Parse(_authList["timestamp"]));
+            DateTime _time = DateTimePlus.UnixTime2DateTime(long.Parse(_authList["timestamp"]));
             DateTime _now = DateTime.UtcNow;
-            if (_time < _now.AddSeconds(-360) || _time > _now.AddSeconds(360)) { throw new Exception($"WRONG_TIMESTAMP:{_authList["timestamp"]}:{_time.ToString("yyyy-MM-dd HH:mm:ss")}:{_now.ToString("yyyy-MM-dd HH:mm:ss")}"); }
+            if (_time < _now.AddSeconds(-300) || _time > _now.AddSeconds(300)) { throw new Exception($"WRONG_TIMESTAMP:{_authList["timestamp"]}:{_now.ToString("yyyy-MM-dd HH:mm:ss")}"); }
 
             string _message = $"{_body}{_authList["timestamp"]}{_authList["nonce"]}";
             string _sign = HexPlus.ByteArrayToHexString(SHA.EncodeHMACSHA256(_message, Psk));

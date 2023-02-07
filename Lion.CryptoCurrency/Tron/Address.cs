@@ -40,6 +40,7 @@ namespace Lion.CryptoCurrency.Tron
         }
         #endregion
 
+
         #region AddressToHex
         public static string AddressToHex(string _address)
         {
