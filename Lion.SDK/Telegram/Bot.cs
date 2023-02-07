@@ -186,5 +186,26 @@ namespace Lion.SDK.Telegram
             }
         }
 
+        public Tuple<bool, JObject> SendWithMethod(string _method = "sendMessage", JObject _sendObj = null)
+        {
+            string url = this.BuildUrl(_method);
+            try
+            {
+                var _client = new Lion.Net.HttpClient(60 * 1000);
+                _client.ContentType = "application/json";
+                byte[] bytes = Encoding.UTF8.GetBytes(_sendObj.ToString(Newtonsoft.Json.Formatting.None));
+                string json = _client.GetResponseString("POST", url, url, bytes);
+                return new Tuple<bool, JObject>(true, JObject.Parse(json));
+            }
+            catch (Exception exception)
+            {
+                return new Tuple<bool, JObject>(true, new JObject
+                {
+                    ["errormsg"] = exception.Message,
+                    ["errorstacktrace"] = exception.StackTrace
+                });
+            }
+        }
+
     }
 }
