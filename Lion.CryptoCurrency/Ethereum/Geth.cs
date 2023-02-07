@@ -118,6 +118,14 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        #region Admin_Peers
+        public static JArray Admin_Peers()
+        {
+            var (Success, Result) = Call("admin_peers");
+            return Success ? Result["result"].Value<JArray>() : null;
+        }
+        #endregion
+
         #region Call
         public static (bool Success,JObject Result) Call(string _method, string _id = "1", params object[] _params)
         {

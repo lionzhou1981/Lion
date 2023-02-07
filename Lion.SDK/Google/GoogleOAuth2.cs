@@ -4,6 +4,7 @@ using System.Text;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
+using System.Net;
 
 namespace Lion.SDK.Google
 {
@@ -57,7 +58,6 @@ namespace Lion.SDK.Google
         public static string GetUserInfo(string _code)
         {
             var _token =  RefreshToken(_code);
-
             using WebClientPlus _http = new WebClientPlus(10000, true);
             return _http.DownloadString($"{UserInfoUrl}?access_token={_token.Item1}");
         }
