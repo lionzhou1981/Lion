@@ -99,6 +99,8 @@ namespace Lion.CryptoCurrency.Ethereum
         #region ToBasicRaw
         public byte[] ToBasicRaw()
         {
+            Console.WriteLine("Raw:" + ToRaw());
+
             return RLP.EncodeList(
                 RLP.EncodeUInt(this.Nonce),
                 RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
