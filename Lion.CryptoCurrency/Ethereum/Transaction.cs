@@ -113,7 +113,55 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
-        #region ToSignedHex
+        #region ToRaw
+        private string BigIntToLenPrefixHex(BigInteger _value, bool _unsigned = true, bool _bigEndian = true)
+        {
+            if (_value == 0)
+                return "80";
+            var _re = Lion.HexPlus.ByteArrayToHexString(_value.ToByteArray(_unsigned, _bigEndian));
+            if (_value < 128)
+                return $"80{_re}";
+            else
+                return $"{80 + _re.Length / 2}{_re}";
+        }
+
+        private string HexToLenPrefix(string _hex)
+        {
+            var _length = _hex.Length / 2;
+            var _byteCount = 0;
+            while (_length != 0) { ++_byteCount; _length = _length >> 8; }
+            return $"{(183 + _byteCount).ToString("x2")}{_hex}";
+        }
+
+        private string ListToLenPrefix(string _hex)
+        {
+            var _length = _hex.Length / 2;
+            var _byteCount = 0;
+            while (_length != 0) { ++_byteCount; _length = _length >> 8; }
+            return $"{(247 + _byteCount).ToString("x2")}{_hex}";
+        }
+
+        public string ToRaw()
+        {
+            var _rawData = BigIntToLenPrefixHex(this.Nonce);
+            _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.GasPrice.ToGWei())}";
+            _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.GasLimit)}";
+            var _address = this.Address[2..].ToLower();
+            _rawData = $"{_rawData}{(_address.Length/2+128).ToString("x2")}{_address}";//address长度恒定            
+            _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.Value.Integer)}";
+            var _dataHex = this.DataHex.StartsWith("0x") ? this.DataHex[2..] : this.DataHex;
+            _dataHex = $"{(_dataHex.Length / 2).ToString("x2")}{_dataHex}";
+            _rawData = $"{_rawData}{HexToLenPrefix(_dataHex)}";//data
+             _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.ChainId)}";            
+            _rawData = $"{_rawData}80";//empty
+            _rawData = $"{_rawData}80";//empty
+            _rawData = $"{(_rawData.Length / 2).ToString("x2")}{_rawData}";
+            _rawData = ListToLenPrefix(_rawData);
+            return _rawData;
+        }
+        #endregion
+
+            #region ToSignedHex
         public string ToSignedHex(string _private)
         {
             byte[] _basicRaw = ToBasicRaw();
