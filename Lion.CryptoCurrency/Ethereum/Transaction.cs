@@ -139,8 +139,12 @@ namespace Lion.CryptoCurrency.Ethereum
         {
             var _length = _hex.Length / 2;
             var _byteCount = 0;
+            if (_length<56)
+            {
+                return $"{(192 + _length).ToString("x2")}{_hex}";
+            }
             while (_length != 0) { ++_byteCount; _length = _length >> 8; }
-            return $"{(247 + _byteCount).ToString("x2")}{_hex}";
+            return $"{(247 + _byteCount).ToString("x2")}{(_hex.Length / 2).ToString("x2")}{_hex}";
         }
 
         public string ToRaw()
@@ -149,15 +153,19 @@ namespace Lion.CryptoCurrency.Ethereum
             _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.GasPrice.ToGWei())}";
             _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.GasLimit)}";
             var _address = this.Address[2..].ToLower();
-            _rawData = $"{_rawData}{(_address.Length/2+128).ToString("x2")}{_address}";//address长度恒定            
+            _rawData = $"{_rawData}{(_address.Length / 2 + 128).ToString("x2")}{_address}";//address长度恒定            
             _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.Value.Integer)}";
-            var _dataHex = this.DataHex.StartsWith("0x") ? this.DataHex[2..] : this.DataHex;
-            _dataHex = $"{(_dataHex.Length / 2).ToString("x2")}{_dataHex}";
-            _rawData = $"{_rawData}{HexToLenPrefix(_dataHex)}";//data
-             _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.ChainId)}";            
+            if (!string.IsNullOrWhiteSpace(this.DataHex))
+            {
+                var _dataHex = this.DataHex.StartsWith("0x") ? this.DataHex[2..] : this.DataHex;
+                _dataHex = $"{(_dataHex.Length / 2).ToString("x2")}{_dataHex}";
+                _rawData = $"{_rawData}{HexToLenPrefix(_dataHex)}";//data
+            }
+            else
+                _rawData = $"{_rawData}80";
+            _rawData = $"{_rawData}{BigIntToLenPrefixHex(this.ChainId)}";            
             _rawData = $"{_rawData}80";//empty
             _rawData = $"{_rawData}80";//empty
-            _rawData = $"{(_rawData.Length / 2).ToString("x2")}{_rawData}";
             _rawData = ListToLenPrefix(_rawData);
             return _rawData;
         }
