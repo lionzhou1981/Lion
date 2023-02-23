@@ -53,53 +53,65 @@ namespace  Lion.Encrypt
         #endregion
 
         #region EncodeHMACSHA1ToBase64
-        public static string EncodeHMACSHA1ToBase64(string _source, string _password, System.Text.Encoding _encoder = null)
+        public static string EncodeHMACSHA1ToBase64(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA1 _provider = new HMACSHA1((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+            HMACSHA1 _provider = new HMACSHA1((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
 
             return Base64.Encode(_hashed);
         }
         #endregion
 
         #region EncodeHMACSHA256
-        public static byte[] EncodeHMACSHA256(string _source, string _password, System.Text.Encoding _encoder = null)
+        public static byte[] EncodeHMACSHA256(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
 
             return _hashed;
         }
         #endregion
 
         #region EncodeHMACSHA256ToHex
-        public static string EncodeHMACSHA256ToHex(string _source, string _password, System.Text.Encoding _encoder = null)
+        public static string EncodeHMACSHA256ToHex(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
 
             return HexPlus.ByteArrayToHexString(_hashed);
         }
         #endregion
 
         #region EncodeHMACSHA256ToBase64
-        public static string EncodeHMACSHA256ToBase64(string _source, string _password, System.Text.Encoding _encoder = null)
+        public static string EncodeHMACSHA256ToBase64(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
 
             return Base64.Encode(_hashed); 
         }
         #endregion
 
         #region EncodeHMACSHA384
-        public static string EncodeHMACSHA384(string _source, string _password, System.Text.Encoding _encoder = null)
+        public static string EncodeHMACSHA384(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA384 _provider = new HMACSHA384((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? System.Text.Encoding.Default : _encoder).GetBytes(_source));
+            HMACSHA384 _provider = new HMACSHA384((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
 
             return HexPlus.ByteArrayToHexString(_hashed);
         }
         #endregion
+
+
+        #region EncodeHMACSHA512ToHex
+        public static string EncodeHMACSHA512ToHex(string _source, string _password, Encoding _encoder = null)
+        {
+            HMACSHA512 _provider = new HMACSHA512((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
+
+            return HexPlus.ByteArrayToHexString(_hashed);
+        }
+        #endregion
+
     }
 }
