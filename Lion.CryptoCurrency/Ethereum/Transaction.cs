@@ -100,7 +100,7 @@ namespace Lion.CryptoCurrency.Ethereum
         public byte[] ToBasicRaw()
         {
             Console.WriteLine("Raw:" + ToRaw());
-
+            var _noce = RLP.EncodeUInt(this.Nonce);
             return RLP.EncodeList(
                 RLP.EncodeUInt(this.Nonce),
                 RLP.EncodeBigInteger(this.GasPrice.ToGWei()),
@@ -120,7 +120,9 @@ namespace Lion.CryptoCurrency.Ethereum
         {
             if (_value == 0)
                 return "80";
-            var _re = Lion.HexPlus.ByteArrayToHexString(_value.ToByteArray(_unsigned, _bigEndian));
+            var _valueArray = _value.ToByteArray(_unsigned, _bigEndian);
+            var _re = Lion.HexPlus.ByteArrayToHexString(_valueArray);
+            if ((_valueArray[0] == 0 && _valueArray.Length == 2) || _valueArray.Length == 1) return _re;
             if (_value < 128)
                 return $"80{_re}";
             else
