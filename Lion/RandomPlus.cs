@@ -42,9 +42,9 @@ namespace Lion
             while (_hexs.Count < _length) 
             {
                 Random _random = new Random(RandomSeed);
-                _hexs.Add(_random.Next(0, 16).ToString()); 
+                _hexs.Add(_random.Next(0, 16).ToString("X")); 
             }
-            return string.Join("\n", _hexs).ToLower();
+            return string.Join("", _hexs).ToLower();
         }
         #endregion
     }
