@@ -118,6 +118,14 @@ namespace Lion.CryptoCurrency.Ethereum
         }
         #endregion
 
+        #region Admin_Peers
+        public static JArray Admin_Peers()
+        {
+            var (Success, Result) = Call("admin_peers");
+            return Success ? Result["result"].Value<JArray>() : null;
+        }
+        #endregion
+
         #region Call
         public static (bool Success,JObject Result) Call(string _method, string _id = "1", params object[] _params)
         {
@@ -162,7 +170,9 @@ namespace Lion.CryptoCurrency.Ethereum
                 }
                 _jsonRpc["params"] = _data;
 
-                if (Debug) { Console.WriteLine(_jsonRpc.ToString(Formatting.None)); }
+                if (Debug 
+                    || _method == "eth_sendRawTransaction"
+                    || _method == "eth_estimateGas") { Console.WriteLine(_jsonRpc.ToString(Formatting.None)); }
 
                 HttpClient _http = new HttpClient(60000);
                 _http.BeginResponse("POST", Host, "");
@@ -171,7 +181,9 @@ namespace Lion.CryptoCurrency.Ethereum
                 string _result = _http.GetResponseString(Encoding.UTF8);
                 _http.Dispose();
 
-                if (Debug) { Console.WriteLine(JObject.Parse(_result).ToString(Formatting.None)); }
+                if (Debug
+                    || _method == "eth_sendRawTransaction"
+                    || _method == "eth_estimateGas") { Console.WriteLine(JObject.Parse(_result).ToString(Formatting.None)); }
 
                 return (true, JObject.Parse(_result));
             }

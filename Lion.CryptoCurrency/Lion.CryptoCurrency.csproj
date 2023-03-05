@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.21.9" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Lion.Net\Lion.Net.csproj" />
     <ProjectReference Include="..\Lion\Lion.csproj" />
   </ItemGroup>
