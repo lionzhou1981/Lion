@@ -104,7 +104,7 @@ namespace Lion.CryptoCurrency.Ethereum
                 {
                     byte[] _kBytes = new byte[33];
                     _rng.GetBytes(_kBytes);
-                    _kBytes[32] = 0;
+                    _kBytes[32] = 0;//little-endian byte order tag for BigInteger
                     _k = new BigInteger(_kBytes);
                 }
                 if (_k.IsZero || _k >= Secp256k1.N) { continue; }
