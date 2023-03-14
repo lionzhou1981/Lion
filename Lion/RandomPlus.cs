@@ -38,9 +38,9 @@ namespace Lion
         #region RandomHex
         public static string RandomHex(int _length = 64)
         {
-            Random _random = new Random(RandomSeed);
             List<string> _hexs = new List<string>();
-            while (_hexs.Count < _length) { _hexs.Add(_random.Next(0, 16).ToString("X")); }
+            Random _random ;
+            while (_hexs.Count < _length) { _random = new Random(RandomSeed); _hexs.Add(_random.Next(0, 16).ToString("X")); }
             return string.Join("", _hexs).ToLower();
         }
         #endregion
