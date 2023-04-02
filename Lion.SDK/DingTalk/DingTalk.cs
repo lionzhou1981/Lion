@@ -13,7 +13,6 @@ namespace Lion.SDK.DingTalk
     {
         private static string token = "";
         private static string secret = "";
-        //priavte static string[] targets=
 
         public static void Init(JObject _settings)
         {
@@ -23,7 +22,7 @@ namespace Lion.SDK.DingTalk
 
         public static bool SendText(string _text)
         {
-            DateTime _now = DateTime.UtcNow.AddHours(5);
+            DateTime _now = DateTime.UtcNow;
             long _timestamp = DateTimePlus.DateTime2UnixTime(_now);
             string _signed = Sign(_timestamp);
 
