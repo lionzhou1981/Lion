@@ -23,7 +23,7 @@ namespace Lion.SDK.Mailgun
 
         public string ApiHost { get => apiHost; set => apiHost = value; }
 
-        public bool Send(string _subject, string _from, string _to, string _nickName, string _content, bool _ishtml, out string _result)
+        public bool Send(string _subject, string _from, string _to,string _senderName, string _nickName, string _content, bool _ishtml, out string _result)
         {
             _result = "";
             ServicePointManager.Expect100Continue = false;
@@ -33,7 +33,7 @@ namespace Lion.SDK.Mailgun
             _headers.Add("key", ApiKey);
             Dictionary<string, string> _formdata = new Dictionary<string, string>();
             _formdata.Add("domain", Domain);
-            _formdata.Add("from", _from);
+            _formdata.Add("from",$"{_senderName} <{_from}>");
             _formdata.Add("to", $"{_nickName} <{_to}>");
             _formdata.Add("subject", _subject);
             if (!_ishtml)
