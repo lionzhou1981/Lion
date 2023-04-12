@@ -69,7 +69,7 @@ namespace Lion.SDK.Telegram
         #endregion
 
         #region AddKeyboardButtons
-        public JObject AddKeyboardButtons(JObject _replyButtons, List<string> _buttons)
+        public static  JObject AddKeyboardButtons(JObject _replyButtons, List<string> _buttons)
         {
             JArray _jbuttons = new JArray();
             _jbuttons.Add(JArray.FromObject(_buttons));
@@ -79,7 +79,7 @@ namespace Lion.SDK.Telegram
         #endregion
 
         #region AddInlineButtons
-        public JObject AddInlineButtons(JObject _inlineKeyboard, string _text, string _type = "url", string _value = "")
+        public static JObject AddInlineButtons(JObject _inlineKeyboard, string _text, string _type = "url", string _value = "")
         {
             JArray _buttons = new JArray();
             try
@@ -98,7 +98,7 @@ namespace Lion.SDK.Telegram
         #endregion
 
         #region AddWebappButtons
-        public JObject AddWebappButtons(JObject _inlineKeyboard, string _text, string _type = "url", string _value = "")
+        public static JObject AddWebappButtons(JObject _inlineKeyboard, string _text, string _type = "url", string _value = "")
         {
             JArray _buttons = new JArray();
             try
