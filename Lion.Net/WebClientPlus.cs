@@ -21,6 +21,7 @@ namespace Lion.Net
             HttpWebRequest _request = (HttpWebRequest)base.GetWebRequest(address);
             _request.Timeout = this.timeout;
             _request.ReadWriteTimeout = this.timeout;
+            _request.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
             return _request;
         }
 
