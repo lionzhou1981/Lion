@@ -9,11 +9,13 @@ namespace Lion.Net
         private int timeout = 0;
         private WebResponse webResponse = null;
         private bool throwWebException = true;
+        private bool allowAutoRedirect = true;
 
-        public WebClientPlus(int _timeout, bool _throwWebException = true) : base()
+        public WebClientPlus(int _timeout, bool _throwWebException = true, bool _allowAutoRedirect=true) : base()
         {
             this.timeout = _timeout;
             this.throwWebException = _throwWebException;
+            this.allowAutoRedirect = _allowAutoRedirect;
         }
 
         protected override WebRequest GetWebRequest(Uri address)
@@ -21,6 +23,7 @@ namespace Lion.Net
             HttpWebRequest _request = (HttpWebRequest)base.GetWebRequest(address);
             _request.Timeout = this.timeout;
             _request.ReadWriteTimeout = this.timeout;
+            _request.AllowAutoRedirect = this.allowAutoRedirect;
             return _request;
         }
 
