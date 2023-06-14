@@ -8,3 +8,4 @@
 Lion.Tester
 .DS_Store
 *.user
+*/Properties/launchSettings.json
