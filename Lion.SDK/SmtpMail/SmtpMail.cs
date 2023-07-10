@@ -13,16 +13,21 @@ namespace Lion.SDK.SmtpMail
         static string Password;
         static string Host;
         static int Port;
+
+        static bool Inited = false;
         public static void Init(string _user,string _password,string _host,int _port)
         {
             User = _user;
             Password = _password;
             Host = _host;
             Port = _port;
+            Inited = true;
         }
 
         public static bool Send(string _senderName, string _receiver, string _title, string _htmlBody)
         {
+            if (!Inited)
+                throw new Exception("Not inited");
             try
             {
                 SmtpClient _client = new SmtpClient();

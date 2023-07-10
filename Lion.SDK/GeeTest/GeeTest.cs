@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -12,14 +13,18 @@ namespace Lion.SDK.GeeTest
         static string Id = "";
         static string Key = "";
         const string ApiServer = "http://gcaptcha4.geetest.com/validate?captcha_id=";
+        static bool Inited = false;
         public static void Init(string _id,string _key)
         {
             Id = _id;
             Key = _key;
+            Inited = true;
         }
 
         public static bool Test(string _lotNumber,string _captchaOutput,string _passToken,string _genTime)
         {
+            if (!Inited)
+                throw new Exception("Not inited");
             using var _hmacsha256 = new HMACSHA256(UTF8Encoding.UTF8.GetBytes(Key));
             byte[] _signed = _hmacsha256.ComputeHash(UTF8Encoding.UTF8.GetBytes(_lotNumber));
             var _form = new Dictionary<string, string>();
