@@ -47,7 +47,7 @@ namespace Lion.SDK.SmtpMail
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Smtp Mail send error:" + ex.Message + "|" + ex.StackTrace);
+                Console.WriteLine("Smtp Mail send error:" + Host + "|" + ex.Message + "|" + ex.StackTrace);
                 return false;
             }
         }
