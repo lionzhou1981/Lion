@@ -34,6 +34,7 @@ namespace Lion.SDK.Twilio
             string _result = _http.GetResponseString(Encoding.UTF8);
 
             JObject _resultJson = JObject.Parse(_result);
+            Console.WriteLine(_result);
             return _resultJson.ContainsKey("status") && _resultJson["status"].Value<string>() == "accepted";
         }
     }

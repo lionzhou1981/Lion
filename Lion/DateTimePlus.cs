@@ -28,6 +28,8 @@ namespace Lion
             return (long)(_time - new DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds;
         }
 
+        public static int UnixTimeSeconds(DateTime _time) => (int)new DateTimeOffset(_time).ToUnixTimeSeconds();
+
         private static string[] chinese_tg = { "甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸" };
         private static string[] chinese_dz = { "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥" };
         private static string[] chinese_sx = { "鼠", "牛", "虎", "免", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪" };
