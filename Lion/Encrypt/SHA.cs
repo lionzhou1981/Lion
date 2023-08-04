@@ -65,11 +65,16 @@ namespace  Lion.Encrypt
         #region EncodeHMACSHA256
         public static byte[] EncodeHMACSHA256(string _source, string _password, Encoding _encoder = null)
         {
-            HMACSHA256 _provider = new HMACSHA256((_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
-            byte[] _hashed = _provider.ComputeHash((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source));
+            return EncodeHMACSHA256((_encoder == null ? Encoding.Default : _encoder).GetBytes(_source), (_encoder == null ? Encoding.Default : _encoder).GetBytes(_password));
+        }
+        public static byte[] EncodeHMACSHA256(byte[] _source, byte[] _password)
+        {
+            HMACSHA256 _provider = new HMACSHA256(_password);
+            byte[] _hashed = _provider.ComputeHash(_source);
 
             return _hashed;
         }
+
         #endregion
 
         #region EncodeHMACSHA256ToHex

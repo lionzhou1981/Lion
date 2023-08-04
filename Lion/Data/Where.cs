@@ -318,7 +318,7 @@ namespace Lion.Data
                         else if (_values[1].ToString() == "IN" || _values[1].ToString() == "NOTIN")
                         {
                             ExpressionRelation _expressRelation = _values[1].ToString() == "IN" ? ExpressionRelation.In : ExpressionRelation.NotIn;
-                            if(_values[2] is Array)
+                            if (_values[2].GetType() == typeof(Array) || _values[2].GetType().BaseType == typeof(Array))
                             {
                                 base.Add(new Where(_relation, ExpressionMode.FieldVsValue, _expressRelation, _values[0], _values[2]));
                             }
