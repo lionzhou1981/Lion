@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
+using System.Drawing;
 
 namespace Lion.SDK.Agora
 {
@@ -14,6 +16,7 @@ namespace Lion.SDK.Agora
         private static string AppId = "";
         private static string AppCert = "";
         private static string Host = "";
+        private static string Temp = "";
 
         private static string appToken = "";
         private static DateTime appTokenTime = DateTime.MinValue;
@@ -36,6 +39,7 @@ namespace Lion.SDK.Agora
             AppId = _settingss["AppId"].Value<string>();
             AppCert = _settingss["AppCert"].Value<string>();
             Host = _settingss["Host"].Value<string>();
+            Temp = _settingss["Temp"].Value<string>();
         }
         #endregion
 
@@ -99,6 +103,53 @@ namespace Lion.SDK.Agora
         }
         #endregion
 
+        #region SendSingleImage
+        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, bool _online = false)
+        {
+            string _file = _filename.Substring(_filename.IndexOf("_") + 1);
+            string _path = $"{Temp}/{_filename}";
+            Image _image = Image.FromFile(_path);
+
+            JObject _upload =  Upload(_path, _file);
+            string _uuid = _upload["entities"]["uuid"].Value<string>();
+            string _secret = _upload["entities"]["share-secret"].Value<string>();
+
+            JObject _data = new JObject();
+            _data["from"] = _from;
+            _data["to"] = new JArray(_tos);
+            _data["type"] = "img";
+            _data["body"] = new JObject()
+            {
+                ["filename"] = _file,
+                ["secret"] = _secret,
+                ["size"] = new JObject() { ["width"] = _image.Width, ["height"] = _image.Height },
+                ["url"] = $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_uuid}"
+            };
+
+            _image.Dispose();
+
+            if (_online)
+            {
+                _data["routetype"] = "ROUTE_ONLINE";
+                _data["sync_device"] = true;
+            }
+
+            JObject _result = Call("/messages/users", _data);
+            _msgid = _result["data"]["user2"].Value<string>();
+            return true;
+        }
+        #endregion
+
+        #region TempFile
+        public static bool TempFile(string _botId, string _filename, byte[] _binary, out string _name)
+        {
+            string _path = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}-{_botId}_{_filename}";
+            File.WriteAllBytes($"{Temp}/{_path}", _binary);
+            _name = _path;
+            return true;
+        }
+        #endregion
+
         #region Call
         public static JObject Call(string _path, JObject _data)
         {
@@ -109,6 +160,19 @@ namespace Lion.SDK.Agora
             _web.Dispose();
 
             return JObject.Parse(_result);
+        }
+        #endregion
+
+        #region Upload
+        public static JObject Upload(string _path, string _filename)
+        {
+            WebClientPlus _web = new WebClientPlus(5000);
+            _web.Headers["Content-Type"] = "multipart/form-data";
+            _web.Headers["Authorization"] = $"Bearer {AppToken}";
+            byte[] _result = _web.UploadFile($"https://{Host}/{OrgName}/{AppName}{_path}", _filename);
+            _web.Dispose();
+
+            return JObject.Parse(Encoding.UTF8.GetString(_result));
         }
         #endregion
     }
