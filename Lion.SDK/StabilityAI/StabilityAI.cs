@@ -18,22 +18,23 @@ namespace Lion.SDK.StabilityAI
         private static int Timeout = 30000;
 
         #region Init
-        public static void Init(JObject _settingss)
+        public static void Init(JObject _settings)
         {
-            Auth = _settingss["Auth"].Value<string>();
-            Host = _settingss["Host"].Value<string>();
-            Engine = _settingss["Engine"].Value<string>();
-            Timeout = _settingss["Timeout"].Value<int>();
+            Auth = _settings["Auth"].Value<string>();
+            Host = _settings["Host"].Value<string>();
+            Engine = _settings["Engine"].Value<string>();
+            Timeout = _settings["Timeout"].Value<int>();
         }
         #endregion
 
         #region SingleText2Image
-        public static bool SingleText2Image(string[] _prompts,int _width, int _height, int _steps, string _style, int _cfg_scale, out byte[] _result)
+        public static bool SingleText2Image(string _prompt,string _disprompt,int _width, int _height, int _steps, string _style, int _cfg_scale, out byte[] _result)
         {
             string _path = $"/v1/generation/{Engine}/text-to-image";
 
             JArray _promptList = new JArray();
-            foreach (string _prompt in _prompts) { _promptList.Add(new JObject() { ["text"] = _prompt }); }
+            _promptList.Add(new JObject() { ["text"] = _prompt, ["weight"] = 1 });
+            if (_disprompt != "") { _promptList.Add(new JObject() { ["text"] = _disprompt, ["weight"] = -1 }); }
 
             JObject _data = new JObject();
             _data["text_prompts"] = _promptList;
