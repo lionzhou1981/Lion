@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
-using System.Drawing;
 
 namespace Lion.SDK.Agora
 {
@@ -84,18 +84,15 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region SendSingleText
-        public static bool SendSingleText(string _from, string[] _tos, string _text, out string _msgid, bool _online= false)
+        public static bool SendSingleText(string _from, string[] _tos, string _text, out string _msgid, bool _online = false, bool _sync = false)
         {
             JObject _data = new JObject();
             _data["from"] = _from;
             _data["to"] = new JArray(_tos);
             _data["type"] = "txt";
             _data["body"] = new JObject() { ["msg"] = _text };
-            if (_online)
-            {
-                _data["routetype"] = "ROUTE_ONLINE";
-                _data["sync_device"] = true;
-            }
+            if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
+            _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
             _msgid = _result["data"]["user2"].Value<string>();
@@ -104,7 +101,7 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region SendSingleImage
-        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, bool _online = false)
+        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, bool _online = false, bool _sync = false)
         {
             string _file = _filename.Substring(_filename.IndexOf("_") + 1);
             string _path = $"{Temp}/{_filename}";
@@ -128,11 +125,25 @@ namespace Lion.SDK.Agora
 
             _image.Dispose();
 
-            if (_online)
-            {
-                _data["routetype"] = "ROUTE_ONLINE";
-                _data["sync_device"] = true;
-            }
+            if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
+            _data["sync_device"] = _sync;
+
+            JObject _result = Call("/messages/users", _data);
+            _msgid = _result["data"]["user2"].Value<string>();
+            return true;
+        }
+        #endregion
+
+        #region SendSingleCommand
+        public static bool SendSingleCommand(string _from, string[] _tos, string _cmd, out string _msgid, bool _online = false, bool _sync = false)
+        {
+            JObject _data = new JObject();
+            _data["from"] = _from;
+            _data["to"] = new JArray(_tos);
+            _data["type"] = "cmd";
+            _data["body"] = new JObject() { ["action"] = _cmd };
+            if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
+            _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
             _msgid = _result["data"]["user2"].Value<string>();

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IdentityModel.Tokens.Jwt;
-using Newtonsoft.Json.Linq;
-using Lion.SDK.Agora;
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+using Lion.Net;
+using System.Transactions;
 
 namespace Lion.SDK.Apple
 {
@@ -17,6 +16,9 @@ namespace Lion.SDK.Apple
         public static string KeyId = "";
         public static string BundleId = "";
         public static string PrivateKey = "";
+        public static bool Sandbox = false;
+        public static string Url = "https://api.storekit.itunes.apple.com";
+        public static string UrlSandbox = "https://api.storekit-sandbox.itunes.apple.com";
 
         private static string token = "";
         private static DateTime tokenTime = DateTime.UtcNow;
@@ -65,5 +67,16 @@ namespace Lion.SDK.Apple
         }
         #endregion
 
+        #region GetTransaction
+        public static string GetTransaction(string _txid)
+        {
+            WebClientPlus _client = new WebClientPlus(10000);
+            _client.Headers.Add("Authorization", $"Bearer {Token}");
+            string _result = _client.DownloadString($"{(Sandbox ? Url : UrlSandbox)}/inApps/v1/transactions/{_txid}");
+            _client.Dispose();
+
+            return _result;
+        }
+        #endregion
     }
 }
