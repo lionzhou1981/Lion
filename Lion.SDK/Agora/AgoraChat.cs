@@ -95,7 +95,8 @@ namespace Lion.SDK.Agora
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            _msgid = _result["data"]["user2"].Value<string>();
+            Console.WriteLine(_result);
+            _msgid = _result["data"][_tos[0]].Value<string>();
             return true;
         }
         #endregion
@@ -129,7 +130,7 @@ namespace Lion.SDK.Agora
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            _msgid = _result["data"]["user2"].Value<string>();
+            _msgid = _result["data"][_tos[0]].Value<string>();
             return true;
         }
         #endregion
@@ -146,7 +147,7 @@ namespace Lion.SDK.Agora
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            _msgid = _result["data"]["user2"].Value<string>();
+            _msgid = _result["data"][_tos[0]].Value<string>();
             return true;
         }
         #endregion
