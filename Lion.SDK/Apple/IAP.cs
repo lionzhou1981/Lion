@@ -3,13 +3,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Lion.Net;
-using System.Transactions;
 
 namespace Lion.SDK.Apple
 {
-    internal interface IAP
+    public interface IAP
     {
         public const string Host = "";
         public static string Issuer = "";
@@ -17,8 +17,10 @@ namespace Lion.SDK.Apple
         public static string BundleId = "";
         public static string PrivateKey = "";
         public static bool Sandbox = false;
-        public static string Url = "https://api.storekit.itunes.apple.com";
-        public static string UrlSandbox = "https://api.storekit-sandbox.itunes.apple.com";
+        public static string Url_StoreKit = "https://api.storekit.itunes.apple.com";
+        public static string Url_StoreKit_Sandbox = "https://api.storekit-sandbox.itunes.apple.com";
+        public static string Url_Verify = "https://buy.itunes.apple.com";
+        public static string Url_Verify_Sandbox = "https://sandbox.itunes.apple.com";
 
         private static string token = "";
         private static DateTime tokenTime = DateTime.UtcNow;
@@ -72,10 +74,33 @@ namespace Lion.SDK.Apple
         {
             WebClientPlus _client = new WebClientPlus(10000);
             _client.Headers.Add("Authorization", $"Bearer {Token}");
-            string _result = _client.DownloadString($"{(Sandbox ? Url : UrlSandbox)}/inApps/v1/transactions/{_txid}");
+            string _result = _client.DownloadString($"{(Sandbox ? Url_StoreKit_Sandbox : Url_StoreKit)}/inApps/v1/history/{_txid}");
             _client.Dispose();
 
             return _result;
+        }
+        #endregion
+
+        #region VerifyReceipt
+        public static JObject VerifyReceipt(string _content)
+        {
+            try
+            {
+                JObject _data = new JObject() { ["receipt-data"] = _content };
+
+                WebClientPlus _client = new WebClientPlus(10000);
+                _client.Headers.Add("Content-Type", $"application/json");
+                string _result = _client.UploadString($"{(Sandbox ? Url_Verify_Sandbox : Url_Verify)}/verifyReceipt", _data.ToString(Formatting.None));
+                _client.Dispose();
+
+                return JObject.Parse(_result);
+            }
+            catch (Exception _ex)
+            {
+                Console.WriteLine($"Lion.SDK.Apple.IAP.VerifyReceipt : {_ex}");
+                return null;
+            }
+
         }
         #endregion
     }
