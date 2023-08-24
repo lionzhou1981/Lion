@@ -84,25 +84,29 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region SendSingleText
-        public static bool SendSingleText(string _from, string[] _tos, string _text, out string _msgid, bool _online = false, bool _sync = false)
+        public static bool SendSingleText(string _from, string[] _tos, string _text, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
         {
+            _payload = new JObject() { ["msg"] = _text };
+
             JObject _data = new JObject();
             _data["from"] = _from;
             _data["to"] = new JArray(_tos);
             _data["type"] = "txt";
-            _data["body"] = new JObject() { ["msg"] = _text };
+            _data["body"] = _payload;
             if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            Console.WriteLine(_result);
+            _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
+            _payload["type"] = "txt";
+
             return true;
         }
         #endregion
 
         #region SendSingleImage
-        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, bool _online = false, bool _sync = false)
+        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
         {
             string _file = _filename.Substring(_filename.IndexOf("_") + 1);
             string _path = $"{Temp}/{_filename}";
@@ -112,11 +116,7 @@ namespace Lion.SDK.Agora
             string _uuid = _upload["entities"]["uuid"].Value<string>();
             string _secret = _upload["entities"]["share-secret"].Value<string>();
 
-            JObject _data = new JObject();
-            _data["from"] = _from;
-            _data["to"] = new JArray(_tos);
-            _data["type"] = "img";
-            _data["body"] = new JObject()
+            _payload = new JObject()
             {
                 ["filename"] = _file,
                 ["secret"] = _secret,
@@ -124,30 +124,45 @@ namespace Lion.SDK.Agora
                 ["url"] = $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_uuid}"
             };
 
+            JObject _data = new JObject();
+            _data["from"] = _from;
+            _data["to"] = new JArray(_tos);
+            _data["type"] = "img";
+            _data["body"] = _payload;
+
             _image.Dispose();
 
             if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
+            Console.WriteLine(_result.ToString());
+            _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
+            _payload["type"] = "img";
             return true;
         }
         #endregion
 
         #region SendSingleCommand
-        public static bool SendSingleCommand(string _from, string[] _tos, string _cmd, out string _msgid, bool _online = false, bool _sync = false)
+        public static bool SendSingleCommand(string _from, string[] _tos, string _cmd, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
         {
+            _payload = new JObject() { ["action"] = _cmd };
+
             JObject _data = new JObject();
             _data["from"] = _from;
             _data["to"] = new JArray(_tos);
             _data["type"] = "cmd";
-            _data["body"] = new JObject() { ["action"] = _cmd };
+            _data["body"] = _payload;
             if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
+            Console.WriteLine(_result.ToString());
+            _timestamp = _result["timestamp"].Value<string>();
+            _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
+            _payload["type"] = "cmd";
             return true;
         }
         #endregion
