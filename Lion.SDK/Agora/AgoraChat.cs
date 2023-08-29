@@ -167,6 +167,32 @@ namespace Lion.SDK.Agora
         }
         #endregion
 
+        #region PushSingle
+    
+        public static bool PushSingle(string[] _tos, string _title, string _subTitle, string _content, out string _timestamp, out JObject _payload,out JArray _results)
+        {
+            _payload = new JObject() {
+                ["title"] = _title,
+                ["subTitle"] = _subTitle,
+                ["content"] = _content,
+            };
+
+            JObject _data = new JObject();
+            _data["targets"] = new JArray(_tos);
+            _data["pushMessage"] = _payload;
+            _data["strategy"] = 0;
+
+            JObject _result = Call("/push/single", _data);
+            _timestamp = _result["timestamp"].Value<string>();
+            _results = _result["data"].Value<JArray>();
+
+            return true;
+        }
+        #endregion
+
+        #region PushAll
+        #endregion
+
         #region TempFile
         public static bool TempFile(string _botId, string _filename, byte[] _binary, out string _name)
         {
