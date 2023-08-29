@@ -136,7 +136,6 @@ namespace Lion.SDK.Agora
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            Console.WriteLine(_result.ToString());
             _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
             _payload["type"] = "img";
@@ -158,7 +157,6 @@ namespace Lion.SDK.Agora
             _data["sync_device"] = _sync;
 
             JObject _result = Call("/messages/users", _data);
-            Console.WriteLine(_result.ToString());
             _timestamp = _result["timestamp"].Value<string>();
             _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
