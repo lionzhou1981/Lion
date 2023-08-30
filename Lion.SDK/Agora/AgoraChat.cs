@@ -5,6 +5,8 @@ using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Graphics.Platform;
 using Lion.Net;
 
 namespace Lion.SDK.Agora
@@ -110,17 +112,20 @@ namespace Lion.SDK.Agora
         {
             string _file = _filename.Substring(_filename.IndexOf("_") + 1);
             string _path = $"{Temp}/{_filename}";
-            Image _image = Image.FromFile(_path);
 
-            JObject _upload =  Upload(_path, _file);
-            string _uuid = _upload["entities"]["uuid"].Value<string>();
-            string _secret = _upload["entities"]["share-secret"].Value<string>();
+            using FileStream _stream = File.OpenRead(_path);
+            using IImage _image = PlatformImage.FromStream(_stream);
+
+            JObject _upload = Upload(_path);
+            Console.WriteLine(_upload);
+            string _uuid = _upload["entities"][0]["uuid"].Value<string>();
+            string _secret = _upload["entities"][0]["share-secret"].Value<string>();
 
             _payload = new JObject()
             {
                 ["filename"] = _file,
                 ["secret"] = _secret,
-                ["size"] = new JObject() { ["width"] = _image.Width, ["height"] = _image.Height },
+                ["size"] = new JObject() { ["width"] = (int)_image.Width, ["height"] = (int)_image.Height },
                 ["url"] = $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_uuid}"
             };
 
@@ -131,6 +136,7 @@ namespace Lion.SDK.Agora
             _data["body"] = _payload;
 
             _image.Dispose();
+            _stream.Close();
 
             if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
             _data["sync_device"] = _sync;
@@ -215,12 +221,12 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region Upload
-        public static JObject Upload(string _path, string _filename)
+        public static JObject Upload(string _path)
         {
             WebClientPlus _web = new WebClientPlus(5000);
-            _web.Headers["Content-Type"] = "multipart/form-data";
             _web.Headers["Authorization"] = $"Bearer {AppToken}";
-            byte[] _result = _web.UploadFile($"https://{Host}/{OrgName}/{AppName}{_path}", _filename);
+            _web.Headers["restrict-access"] = $"true";
+            byte[] _result = _web.UploadFile($"https://{Host}/{OrgName}/{AppName}/chatfiles", _path);
             _web.Dispose();
 
             return JObject.Parse(Encoding.UTF8.GetString(_result));
