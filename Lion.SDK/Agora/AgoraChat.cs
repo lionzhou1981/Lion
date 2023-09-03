@@ -149,6 +149,40 @@ namespace Lion.SDK.Agora
         }
         #endregion
 
+        #region SendSingleVideo
+        public static bool SendSingleVideo(
+            string _from, string[] _tos,
+            string _face, string _faceSecret,
+            string _video,string _videoSecret,int _videoLength,long _videoSize,
+            out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
+        {
+            _payload = new JObject()
+            {
+                ["thumbnail"] = $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_face}",
+                ["length"] = _videoLength,
+                ["file_length"] = _videoSize,
+                ["url"] = _video.StartsWith("http") ? _video : ($"https://{Host}/{OrgName}/{AppName}/chatfiles/{_video}")
+            };
+            if (_faceSecret != "") { _payload["thumb_secret"] = _faceSecret; }
+            if (_videoSecret != "") { _payload["secret"] = _videoSecret; }
+
+            JObject _data = new JObject();
+            _data["from"] = _from;
+            _data["to"] = new JArray(_tos);
+            _data["type"] = "video";
+            _data["body"] = _payload;
+
+            if (_online) { _data["routetype"] = "ROUTE_ONLINE"; }
+            _data["sync_device"] = _sync;
+
+            JObject _result = Call("/messages/users", _data);
+            _timestamp = _result["timestamp"].Value<string>();
+            _msgid = _result["data"][_tos[0]].Value<string>();
+            _payload["type"] = "video";
+            return true;
+        }
+        #endregion
+
         #region SendSingleCommand
         public static bool SendSingleCommand(string _from, string[] _tos, string _cmd, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
         {
