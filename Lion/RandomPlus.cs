@@ -27,7 +27,7 @@ namespace Lion
         public static string RandomNumbers(int _length = 6)
         {
             StringBuilder _builder = new StringBuilder();
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < _length; i++)
             {
                 _builder.Append(new Random(RandomSeed).Next(0, 10).ToString());
             }

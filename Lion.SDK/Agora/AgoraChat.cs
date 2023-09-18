@@ -158,7 +158,7 @@ namespace Lion.SDK.Agora
         {
             _payload = new JObject()
             {
-                ["thumbnail"] = $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_face}",
+                ["thumbnail"] = _face.StartsWith("http") ? _face: $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_face}",
                 ["length"] = _videoLength,
                 ["file_length"] = _videoSize,
                 ["url"] = _video.StartsWith("http") ? _video : ($"https://{Host}/{OrgName}/{AppName}/chatfiles/{_video}")

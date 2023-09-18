@@ -19,7 +19,7 @@
   
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.3" />
     <PackageReference Include="Microsoft.Maui.Graphics" Version="7.0.92" />
   </ItemGroup>
 
