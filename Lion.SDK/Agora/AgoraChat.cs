@@ -18,7 +18,7 @@ namespace Lion.SDK.Agora
         private static string AppId = "";
         private static string AppCert = "";
         private static string Host = "";
-        private static string Temp = "";
+        private static string TempPath = "";
 
         private static string appToken = "";
         private static DateTime appTokenTime = DateTime.MinValue;
@@ -41,7 +41,7 @@ namespace Lion.SDK.Agora
             AppId = _settingss["AppId"].Value<string>();
             AppCert = _settingss["AppCert"].Value<string>();
             Host = _settingss["Host"].Value<string>();
-            Temp = _settingss["Temp"].Value<string>();
+            TempPath = _settingss["Temp"].Value<string>();
         }
         #endregion
 
@@ -108,10 +108,10 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region SendSingleImage
-        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
+        public static bool SendSingleImage(string _from, string[] _tos, string _filename, out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false, bool _cleanup = true)
         {
             string _file = _filename.Substring(_filename.IndexOf("_") + 1);
-            string _path = $"{Temp}/{_filename}";
+            string _path = $"{TempPath}/{_filename}";
 
             using FileStream _stream = File.OpenRead(_path);
             using IImage _image = PlatformImage.FromStream(_stream);
@@ -145,6 +145,9 @@ namespace Lion.SDK.Agora
             _timestamp = _result["timestamp"].Value<string>();
             _msgid = _result["data"][_tos[0]].Value<string>();
             _payload["type"] = "img";
+
+            if (_cleanup) { File.Delete(_path); }
+
             return true;
         }
         #endregion
@@ -235,7 +238,7 @@ namespace Lion.SDK.Agora
         public static bool TempFile(string _botId, string _filename, byte[] _binary, out string _name)
         {
             string _path = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}-{_botId}_{_filename}";
-            File.WriteAllBytes($"{Temp}/{_path}", _binary);
+            File.WriteAllBytes($"{TempPath}/{_path}", _binary);
             _name = _path;
             return true;
         }
