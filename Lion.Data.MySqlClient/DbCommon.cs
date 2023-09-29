@@ -44,7 +44,6 @@ namespace Lion.Data.MySqlClient
         #endregion
         #endregion
 
-       
         public MySqlConnection DbConnection { get; set; }
         public MySqlTransaction DbTransaction { get; set; }
         public TransactionScope TransactionScope { get; set; }

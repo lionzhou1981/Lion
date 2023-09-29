@@ -155,13 +155,15 @@ namespace Lion.SDK.Agora
         #region SendSingleVideo
         public static bool SendSingleVideo(
             string _from, string[] _tos,
+            string _name,
             string _face, string _faceSecret,
             string _video,string _videoSecret,int _videoLength,long _videoSize,
             out string _msgid, out string _timestamp, out JObject _payload, bool _online = false, bool _sync = false)
         {
             _payload = new JObject()
             {
-                ["thumbnail"] = _face.StartsWith("http") ? _face: $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_face}",
+                ["filename"] = _name,
+                ["thumb"] = _face.StartsWith("http") ? _face: $"https://{Host}/{OrgName}/{AppName}/chatfiles/{_face}",
                 ["length"] = _videoLength,
                 ["file_length"] = _videoSize,
                 ["url"] = _video.StartsWith("http") ? _video : ($"https://{Host}/{OrgName}/{AppName}/chatfiles/{_video}")
@@ -258,11 +260,11 @@ namespace Lion.SDK.Agora
         #endregion
 
         #region Upload
-        public static JObject Upload(string _path)
+        public static JObject Upload(string _path, bool _secret = false)
         {
             WebClientPlus _web = new WebClientPlus(5000);
             _web.Headers["Authorization"] = $"Bearer {AppToken}";
-            _web.Headers["restrict-access"] = $"true";
+            _web.Headers["restrict-access"] = _secret.ToString().ToLower();
             byte[] _result = _web.UploadFile($"https://{Host}/{OrgName}/{AppName}/chatfiles", _path);
             _web.Dispose();
 
