@@ -19,6 +19,7 @@ namespace Lion.SDK.Agora
         private static string AppCert = "";
         private static string Host = "";
         private static string TempPath = "";
+        private static string Prefix = "";
 
         private static string appToken = "";
         private static DateTime appTokenTime = DateTime.MinValue;
@@ -42,6 +43,7 @@ namespace Lion.SDK.Agora
             AppCert = _settingss["AppCert"].Value<string>();
             Host = _settingss["Host"].Value<string>();
             TempPath = _settingss["Temp"].Value<string>();
+            Prefix = _settingss["Prefix"].Value<string>();
         }
         #endregion
 
@@ -62,7 +64,7 @@ namespace Lion.SDK.Agora
         public static string BuildUserToken(string _userId, int _expire = 86400)
         {
             AccessToken2 _token = new AccessToken2(AppId, AppCert, _expire);
-            AccessToken2.Service _chat = new AccessToken2.ServiceChat(_userId);
+            AccessToken2.Service _chat = new AccessToken2.ServiceChat($"{Prefix}{_userId}");
 
             _chat.AddPrivilegeChat(AccessToken2.PrivilegeChatEnum.PRIVILEGE_CHAT_USER, _expire);
             _token.AddService(_chat);
@@ -75,7 +77,7 @@ namespace Lion.SDK.Agora
         public static bool Register(string _username, string _password, string _nickname, out string _uuid)
         {
             JObject _data = new JObject();
-            _data["username"] = _username;
+            _data["username"] = $"{Prefix}{_username}";
             _data["password"] = _password;
             _data["nickname"] = _nickname;
 
@@ -91,7 +93,8 @@ namespace Lion.SDK.Agora
             _payload = new JObject() { ["msg"] = _text };
 
             JObject _data = new JObject();
-            _data["from"] = _from;
+            _data["from"] = $"{Prefix}{_from}";
+            for (int i = 0; i < _tos.Length; i++) { _tos[i]= $"{Prefix}{_tos[i]}"; }
             _data["to"] = new JArray(_tos);
             _data["type"] = "txt";
             _data["body"] = _payload;
@@ -130,7 +133,8 @@ namespace Lion.SDK.Agora
             };
 
             JObject _data = new JObject();
-            _data["from"] = _from;
+            _data["from"] = $"{Prefix}{_from}";
+            for (int i = 0; i < _tos.Length; i++) { _tos[i] = $"{Prefix}{_tos[i]}"; }
             _data["to"] = new JArray(_tos);
             _data["type"] = "img";
             _data["body"] = _payload;
@@ -172,7 +176,8 @@ namespace Lion.SDK.Agora
             if (_videoSecret != "") { _payload["secret"] = _videoSecret; }
 
             JObject _data = new JObject();
-            _data["from"] = _from;
+            _data["from"] = $"{Prefix}{_from}";
+            for (int i = 0; i < _tos.Length; i++) { _tos[i] = $"{Prefix}{_tos[i]}"; }
             _data["to"] = new JArray(_tos);
             _data["type"] = "video";
             _data["body"] = _payload;
@@ -194,7 +199,8 @@ namespace Lion.SDK.Agora
             _payload = new JObject() { ["action"] = _cmd };
 
             JObject _data = new JObject();
-            _data["from"] = _from;
+            _data["from"] = $"{Prefix}{_from}";
+            for (int i = 0; i < _tos.Length; i++) { _tos[i] = $"{Prefix}{_tos[i]}"; }
             _data["to"] = new JArray(_tos);
             _data["type"] = "cmd";
             _data["body"] = _payload;
@@ -221,6 +227,7 @@ namespace Lion.SDK.Agora
             };
 
             JObject _data = new JObject();
+            for (int i = 0; i < _tos.Length; i++) { _tos[i] = $"{Prefix}{_tos[i]}"; }
             _data["targets"] = new JArray(_tos);
             _data["pushMessage"] = _payload;
             _data["strategy"] = 0;
