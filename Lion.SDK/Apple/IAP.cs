@@ -82,11 +82,11 @@ namespace Lion.SDK.Apple
         #endregion
 
         #region VerifyReceipt
-        public static JObject VerifyReceipt(string _content)
+        public static JObject VerifyReceipt(string _content, string _password = "")
         {
             try
             {
-                JObject _data = new JObject() { ["receipt-data"] = _content };
+                JObject _data = _password=="" ? new JObject() { ["receipt-data"] = _content } : new JObject() { ["receipt-data"] = _content, ["password"] = _password };
 
                 WebClientPlus _client = new WebClientPlus(10000);
                 _client.Headers.Add("Content-Type", $"application/json");
