@@ -44,12 +44,12 @@ namespace Lion.SDK.StabilityAI
             _data["samples"] = 1;
             _data["steps"] = _steps;
             //3d-model analog-film anime cinematic comic-book digital-art enhance fantasy-art isometric line-art low-poly modeling-compound neon-punk origami photographic pixel-art tile-texture
-            _data["style_preset"] = _style;
+            if (_style != "") { _data["style_preset"] = _style; }
 
             try
             {
                 _result = CallForByteArray(_path, _data);
-                return true;
+                return _result.Length > 0;
             }
             catch(Exception _ex)
             {
@@ -64,13 +64,21 @@ namespace Lion.SDK.StabilityAI
         public static byte[] CallForByteArray(string _path, JObject _data)
         {
             string _url = $"{Host}{_path}";
-            Console.WriteLine(_url);
 
+            byte[] _result = new byte[0];
             WebClientPlus _web = new WebClientPlus(Timeout);
-            _web.Headers["Content-Type"] = "application/json";
-            _web.Headers["Authorization"] = $"Bearer {Auth}";
-            _web.Headers["Accept"] = $"image/png";
-            byte[] _result = _web.UploadData(_url, Encoding.UTF8.GetBytes(_data.ToString(Formatting.None)));
+            try
+            {
+                _web.Headers["Content-Type"] = "application/json";
+                _web.Headers["Authorization"] = $"Bearer {Auth}";
+                _web.Headers["Accept"] = $"image/png";
+                _result = _web.UploadData(_url, Encoding.UTF8.GetBytes(_data.ToString(Formatting.None)));
+            }
+            catch
+            {
+                Console.WriteLine(_web.GetResponseString(Encoding.UTF8));
+            }
+
             _web.Dispose();
 
             return _result;
