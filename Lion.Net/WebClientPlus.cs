@@ -60,7 +60,6 @@ namespace Lion.Net
 
         public string GetResponseString(System.Text.Encoding _encoder)
         {
-
             BinaryReader _reader = new BinaryReader(this.webResponse.GetResponseStream());
             byte[] _result = _reader.ReadBytes((int)this.webResponse.ContentLength);
             _reader.Close();
